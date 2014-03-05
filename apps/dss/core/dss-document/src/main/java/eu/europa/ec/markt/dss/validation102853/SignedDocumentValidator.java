@@ -996,12 +996,14 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
             final XmlBasicSignatureType xmlBasicSignatureType = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlBasicSignatureType();
             final SignatureAlgorithm revocationSignatureAlgo = revocationToken.getSignatureAlgo();
-            final boolean unknownAlgorithm = revocationSignatureAlgo == null || revocationSignatureAlgo.getEncryptionAlgo() == null;
+            final boolean unknownAlgorithm = revocationSignatureAlgo == null;
             final String encryptionAlgorithmName = unknownAlgorithm ? "?" : revocationSignatureAlgo.getEncryptionAlgo().getName();
             xmlBasicSignatureType.setEncryptionAlgoUsedToSignThisToken(encryptionAlgorithmName);
             final String keyLength = revocationToken.getKeyLength();
             xmlBasicSignatureType.setKeyLengthUsedToSignThisToken(keyLength);
-            xmlBasicSignatureType.setDigestAlgoUsedToSignThisToken(revocationSignatureAlgo.getDigestAlgo().getName());
+
+            final String digestAlgorithmName = unknownAlgorithm ? "?" : revocationSignatureAlgo.getDigestAlgo().getName();
+            xmlBasicSignatureType.setDigestAlgoUsedToSignThisToken(digestAlgorithmName);
             final boolean signatureValid = revocationToken.isSignatureValid();
             xmlBasicSignatureType.setReferenceDataFound(signatureValid);
             xmlBasicSignatureType.setReferenceDataIntact(signatureValid);
