@@ -33,17 +33,6 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
-            <modules>
-                <module>dss-test-support</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>hudson</id>
-            <modules>
-                <module>dss-test-support</module>
-                <module>dss-plugtest-cades2013</module>
-                <module>dss-at-test</module>
-            </modules>
         </profile>
     </profiles>
 </project>

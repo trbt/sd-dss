@@ -112,11 +112,6 @@
             <version>1.2.1</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>eu.europa.ec.joinup.sd-dss</groupId>
-            <artifactId>dss-test-support</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
   <dependencyManagement>
     <dependencies>

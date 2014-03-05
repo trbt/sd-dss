@@ -60,22 +60,6 @@
                                     <outputDirectory>${project.build.directory}/${project.artifactId}-${project.version}</outputDirectory>
                                     <destFileName>/jar/bcmail-jdk15on.jar</destFileName>
                                 </artifactItem>
-<!--
-                                <artifactItem>
-                                    <groupId>eu.europa.ec.joinup.sd-dss</groupId>
-                                    <artifactId>tlmanager-package</artifactId>
-                                    <type>jar</type>
-                                    <outputDirectory>${project.build.directory}/${project.artifactId}-${project.version}</outputDirectory>
-                                    <destFileName>/jar/tlmanager-package-r5.jar</destFileName>
-                                </artifactItem>
--->
-                                <artifactItem>
-                                    <groupId>eu.europa.ec.joinup.sd-dss</groupId>
-                                    <artifactId>sscd-mocca-adapter</artifactId>
-                                    <type>jar</type>
-                                    <outputDirectory>${project.build.directory}/${project.artifactId}-${project.version}</outputDirectory>
-                                    <destFileName>/jar/sscd-mocca-adapter.jar</destFileName>
-                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -135,12 +119,6 @@
     </profiles>
 
     <dependencies>
-        <dependency>
-            <groupId>eu.europa.ec.joinup.sd-dss</groupId>
-            <artifactId>sscd-mocca-adapter</artifactId>
-            <type>jar</type>
-            <version>4.0.0-SNAPSHOT</version>
-        </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
