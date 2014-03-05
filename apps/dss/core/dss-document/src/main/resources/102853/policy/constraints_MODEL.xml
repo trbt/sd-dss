@@ -1,0 +1,153 @@
+﻿<ConstraintsParameters Name="QES AdESQC TL based" xmlns="http://dss.markt.ec.europa.eu/validation/diagnostic">
+    <Description>Our validation process follows ETSI TS 102 853 V1.1.1 (2012-07) standard.</Description>
+    <RevocationFreshness Unit="DAYS">9700</RevocationFreshness>
+    <TimestampDelay Unit="DAYS">0</TimestampDelay>
+    <AcceptablePolicies>
+        <Id></Id>
+        <Id>*</Id>
+    </AcceptablePolicies>
+    <Cryptographic>
+        <AlgoExpirationDate Format="yyyy-MM-dd">
+            <Algo Name="SHA1">2017-02-24</Algo>
+            <Algo Name="SHA256">2035-02-24</Algo>
+            <Algo Name="DSA128">2017-02-24</Algo>
+            <Algo Name="RSA1024">2017-02-24</Algo>
+            <Algo Name="ECDSA256">2035-02-24</Algo>
+        </AlgoExpirationDate>
+        <SignatureToValidate>
+            <AcceptableEncryptionAlgo>
+                <Algo>RSA</Algo>
+                <Algo>DSA</Algo>
+                <Algo>ECDSA</Algo>
+            </AcceptableEncryptionAlgo>
+            <MiniPublicKeySize>
+                <Size Algo="RSA">1024</Size>
+                <Size Algo="DSA">128</Size>
+                <Size Algo="ECDSA">256</Size>
+            </MiniPublicKeySize>
+            <AcceptableDigestAlgo>
+                <Algo>SHA256</Algo>
+                <Algo>RIPEMD160</Algo>
+            </AcceptableDigestAlgo>
+        </SignatureToValidate>
+        <SigningCertificate>
+            <AcceptableEncryptionAlgo>
+                <Algo>RSA</Algo>
+                <Algo>DSA</Algo>
+                <Algo>ECDSA</Algo>
+            </AcceptableEncryptionAlgo>
+            <MiniPublicKeySize>
+                <Size Algo="RSA">1024</Size>
+                <Size Algo="DSA">128</Size>
+                <Size Algo="ECDSA">256</Size>
+            </MiniPublicKeySize>
+            <AcceptableDigestAlgo>
+                <Algo>SHA256</Algo>
+            </AcceptableDigestAlgo>
+        </SigningCertificate>
+        <CACertificate>
+            <AcceptableEncryptionAlgo>
+                <Algo>RSA</Algo>
+                <Algo>DSA</Algo>
+            </AcceptableEncryptionAlgo>
+            <MiniPublicKeySize>
+                <Size Algo="RSA">1024</Size>
+                <Size Algo="DSA">128</Size>
+            </MiniPublicKeySize>
+            <AcceptableDigestAlgo>
+                <Algo>SHA256</Algo>
+            </AcceptableDigestAlgo>
+        </CACertificate>
+        <TimestampCertificate>
+            <AcceptableEncryptionAlgo>
+                <Algo>RSA</Algo>
+                <Algo>DSA</Algo>
+            </AcceptableEncryptionAlgo>
+            <MiniPublicKeySize>
+                <Size Algo="RSA">1024</Size>
+                <Size Algo="DSA">128</Size>
+            </MiniPublicKeySize>
+            <AcceptableDigestAlgo>
+                <Algo>SHA256</Algo>
+            </AcceptableDigestAlgo>
+        </TimestampCertificate>
+        <OCSPCertificate>
+            <AcceptableEncryptionAlgo>
+                <Algo>RSA</Algo>
+                <Algo>DSA</Algo>
+            </AcceptableEncryptionAlgo>
+            <MiniPublicKeySize>
+                <Size Algo="RSA">1024</Size>
+                <Size Algo="DSA">128</Size>
+            </MiniPublicKeySize>
+            <AcceptableDigestAlgo>
+                <Algo>SHA256</Algo>
+            </AcceptableDigestAlgo>
+        </OCSPCertificate>
+        <CRLCertificate>
+            <AcceptableEncryptionAlgo>
+                <Algo>RSA</Algo>
+                <Algo>DSA</Algo>
+            </AcceptableEncryptionAlgo>
+            <MiniPublicKeySize>
+                <Size Algo="RSA">1024</Size>
+                <Size Algo="DSA">128</Size>
+            </MiniPublicKeySize>
+            <AcceptableDigestAlgo>
+                <Algo>SHA256</Algo>
+            </AcceptableDigestAlgo>
+        </CRLCertificate>
+    </Cryptographic>
+    <!-- SAV> -->
+    <SigningCertificateChain>
+        <AcceptableChain>
+            <Certificate>
+                <SubjectDistinguishedName></SubjectDistinguishedName>
+                <SerialNumber></SerialNumber>
+            </Certificate>
+            <Certificate>
+                <SubjectDistinguishedName></SubjectDistinguishedName>
+                <SerialNumber></SerialNumber>
+            </Certificate>
+        </AcceptableChain>
+    </SigningCertificateChain>
+    <SigningCertificate>
+        <QualifiedCertificate>false</QualifiedCertificate>
+        <SSCD>false</SSCD>
+        <ForLegalPerson>false</ForLegalPerson>
+    </SigningCertificate>
+    <MandatedSignedQProperties>
+        <SigningTime>true</SigningTime>
+        <ContentType>true</ContentType>
+        <ContentIdentifier>false</ContentIdentifier>
+        <ContentHints>false</ContentHints>
+        <ContentReference>false</ContentReference>
+        <CommitmentTypeIndication>
+            <Check>true</Check>
+            <Identifier>1.2.840.113549.1.9.16.6.1</Identifier>
+            <Identifier>1.2.840.113549.1.9.16.6.4</Identifier>
+            <Identifier>1.2.840.113549.1.9.16.6.5</Identifier>
+            <Identifier>1.2.840.113549.1.9.16.6.6</Identifier>
+        </CommitmentTypeIndication>
+        <SignerLocation>true</SignerLocation>
+        <SignerAttributes>false</SignerAttributes>
+        <ContentTimeStamp>true</ContentTimeStamp>
+    </MandatedSignedQProperties>
+    <MandatedUnsignedQProperties>
+        <CounterSignature>false</CounterSignature>
+        <MandatedSignatureTimeStamp>false</MandatedSignatureTimeStamp>
+        <MandatedLtForm>false</MandatedLtForm>
+        <MandatedArchivalForm>false</MandatedArchivalForm>
+        <SignaturePolicyExtensions>false</SignaturePolicyExtensions>
+    </MandatedUnsignedQProperties>
+    <OnRoles>
+        <ClaimedRoles Attendance="ALL">
+            <Role>supervisor</Role>
+        </ClaimedRoles>
+        <!--
+                <CertifiedRoles>
+                    <Role>supervisor</Role>
+                </CertifiedRoles>
+        -->
+    </OnRoles>
+</ConstraintsParameters>
