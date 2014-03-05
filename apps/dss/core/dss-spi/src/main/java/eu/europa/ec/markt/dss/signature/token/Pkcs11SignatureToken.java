@@ -38,6 +38,8 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import eu.europa.ec.markt.dss.exception.DSSBadPasswordException;
+import eu.europa.ec.markt.dss.exception.DSSBadPasswordException.MSG;
 import eu.europa.ec.markt.dss.exception.DSSConfigurationException;
 import eu.europa.ec.markt.dss.exception.DSSException;
 
@@ -154,9 +156,8 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
         byte[] pkcs11ConfigBytes = pkcs11ConfigSettings.getBytes();
         ByteArrayInputStream confStream = new ByteArrayInputStream(pkcs11ConfigBytes);
 
-        // TODO: (Bob: 2014 Mar 04) to be replaced
-//        sun.security.pkcs11.SunPKCS11 pkcs11 = new sun.security.pkcs11.SunPKCS11(confStream);
-//        _pkcs11Provider = pkcs11;
+        sun.security.pkcs11.SunPKCS11 pkcs11 = new sun.security.pkcs11.SunPKCS11(confStream);
+        _pkcs11Provider = pkcs11;
 
         Security.addProvider(_pkcs11Provider);
     }
@@ -187,13 +188,11 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
                     }
                 });
             } catch (Exception e) {
-
-// TODO: (Bob: 2014 Mar 04) to be replaced
-//                if (e instanceof sun.security.pkcs11.wrapper.PKCS11Exception) {
-//                    if ("CKR_PIN_INCORRECT".equals(e.getMessage())) {
-//                        throw new DSSBadPasswordException(MSG.PKCS11_BAD_PASSWORD, e);
-//                    }
-//                }
+                if (e instanceof sun.security.pkcs11.wrapper.PKCS11Exception) {
+                    if ("CKR_PIN_INCORRECT".equals(e.getMessage())) {
+                        throw new DSSBadPasswordException(MSG.PKCS11_BAD_PASSWORD, e);
+                    }
+                }
                 throw new KeyStoreException("Can't initialize Sun PKCS#11 security " + "provider. Reason: " + getCauseMessage(e), e);
             }
         }
