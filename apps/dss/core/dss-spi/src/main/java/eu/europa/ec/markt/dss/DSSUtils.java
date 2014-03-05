@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.net.URL;
@@ -2228,5 +2229,20 @@ public final class DSSUtils {
         calendar.add(Calendar.DATE, days);
         final Date newDate = calendar.getTime();
         return newDate;
+    }
+
+    /**
+     *
+     *
+     * @param xmlDiagnosticData
+     * @return
+     */
+    public static String getUtf8String(final String xmlDiagnosticData) {
+
+        try {
+            return new String(xmlDiagnosticData.getBytes(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new DSSException(e);
+        }
     }
 }
