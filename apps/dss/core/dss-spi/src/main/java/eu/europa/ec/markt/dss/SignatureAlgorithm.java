@@ -111,6 +111,7 @@ public enum SignatureAlgorithm {
         Map<String, SignatureAlgorithm> oidAlgorithms = new HashMap<String, SignatureAlgorithm>();
 
         oidAlgorithms.put("1.2.840.113549.1.1.5", RSA_SHA1);
+        oidAlgorithms.put("1.3.14.3.2.29", RSA_SHA1);
         oidAlgorithms.put("1.2.840.113549.1.1.14", RSA_SHA224);
         oidAlgorithms.put("1.2.840.113549.1.1.11", RSA_SHA256);
         oidAlgorithms.put("1.2.840.113549.1.1.12", RSA_SHA384);

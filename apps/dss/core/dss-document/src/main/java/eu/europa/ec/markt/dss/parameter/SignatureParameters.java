@@ -20,7 +20,6 @@
 
 package eu.europa.ec.markt.dss.parameter;
 
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +58,16 @@ public class SignatureParameters {
      */
     private DSSPrivateKeyEntry privateKeyEntry;
 
-    private List<X509Certificate> certificateChain = new ArrayList<X509Certificate>();
+    /**
+     * This field contains the signing certificate.
+     */
     private X509Certificate signingCertificate;
+
+    /**
+     * This field contains the chain of certificates. It includes the signing certificate.
+     */
+    private List<X509Certificate> certificateChain = new ArrayList<X509Certificate>();
+
     ProfileParameters context;
     private SignatureLevel signatureLevel;
     private SignaturePackaging signaturePackaging;
@@ -201,7 +208,7 @@ public class SignatureParameters {
     }
 
     /**
-     * Set the signing certificate
+     * Set the signing certificate. If this certificate is not a part of the certificate chain then it's added as the first one of the chain.
      *
      * @param signingCertificate the value
      */
@@ -224,7 +231,7 @@ public class SignatureParameters {
     }
 
     /**
-     * Get the certificate chain
+     * Set the certificate chain
      *
      * @param certificateChain the value
      */
@@ -233,32 +240,39 @@ public class SignatureParameters {
     }
 
     /**
-     * @param certificateChain the value
+     * This method sets the list of certificates which constitute the chain. If the certificate is already present in the array then it is ignored.
+     *
+     * @param certificateChainArray the array containing all certificates composing the chain
      */
-    public void setCertificateChain(final Certificate... certificateChain) {
+    public void setCertificateChain(final X509Certificate... certificateChainArray) {
 
-        if (certificateChain == null) {
+        if (certificateChainArray == null) {
             return;
         }
+        for (final X509Certificate certificate : certificateChainArray) {
 
-        final List<X509Certificate> list = new ArrayList<X509Certificate>();
-        for (final Certificate certificate : certificateChain) {
-
-            if (certificate.equals(signingCertificate)) {
-                list.add((X509Certificate) certificate);
+            if (!certificateChain.contains(certificate)) {
+                certificateChain.add(certificate);
             }
         }
-        this.certificateChain = list;
     }
 
+    /**
+     * This method sets the private key entry used to create the signature. Note that the certificate chain is reset, the encryption algorithm is set and the signature algorithm
+     * is updated.
+     *
+     * @param privateKeyEntry the private key entry used to sign?
+     */
     public void setPrivateKeyEntry(final DSSPrivateKeyEntry privateKeyEntry) {
 
         this.privateKeyEntry = privateKeyEntry;
-        this.signingCertificate = privateKeyEntry.getCertificate();
+        // When the private key entry is set the certificate chain is reset
+        certificateChain.clear();
+        setSigningCertificate(privateKeyEntry.getCertificate());
+        setCertificateChain(privateKeyEntry.getCertificateChain());
         final String encryptionAlgoName = this.signingCertificate.getPublicKey().getAlgorithm();
         this.encryptionAlgorithm = EncryptionAlgorithm.forName(encryptionAlgoName);
         this.signatureAlgorithm = SignatureAlgorithm.getAlgorithm(this.encryptionAlgorithm, this.digestAlgorithm);
-        setCertificateChain(privateKeyEntry.getCertificateChain());
     }
 
     /**

@@ -211,7 +211,7 @@ public class SignatureWizardController extends DSSWizardController<SignatureMode
             policy.setDigestAlgorithm(digestAlgo);
         }
 
-        final DSSDocument signedDocument = SigningUtils.signDocument(serviceURL, fileToSign, parameters, tokenConnection, privateKey);
+        final DSSDocument signedDocument = SigningUtils.signDocument(serviceURL, fileToSign, parameters);
         FileOutputStream fos = new FileOutputStream(model.getTargetFile());
         DSSUtils.copy(signedDocument.openStream(), fos);
         fos.close();

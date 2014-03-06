@@ -36,15 +36,15 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Wrapper of a PrivateKeyEntry coming from a KeyStore.
  *
- * @version $Revision: 3392 $ - $Date: 2014-01-27 09:34:57 +0100 (Mon, 27 Jan 2014) $
+ * @version $Revision: 3558 $ - $Date: 2014-03-06 09:10:20 +0100 (Thu, 06 Mar 2014) $
  */
 public class KSPrivateKeyEntry implements DSSPrivateKeyEntry {
 
-    private X509Certificate certificate;
+    private final X509Certificate certificate;
 
-    private X509Certificate[] certificateChain;
+    private final X509Certificate[] certificateChain;
 
-    private PrivateKey privateKey;
+    private final PrivateKey privateKey;
 
     /**
      * The default constructor for DSSPrivateKeyEntry.
@@ -54,30 +54,20 @@ public class KSPrivateKeyEntry implements DSSPrivateKeyEntry {
         certificate = (X509Certificate) privateKeyEntry.getCertificate();
         final List<X509Certificate> x509CertificateList = new ArrayList<X509Certificate>();
         final Certificate[] simpleCertificateChain = privateKeyEntry.getCertificateChain();
-        for (final java.security.cert.Certificate certificate : simpleCertificateChain) {
+        for (final Certificate certificate : simpleCertificateChain) {
 
             x509CertificateList.add((X509Certificate) certificate);
         }
-        certificateChain = new X509Certificate[x509CertificateList.size()];
-        certificateChain = x509CertificateList.toArray(certificateChain);
+        final X509Certificate[] certificateChain_ = new X509Certificate[x509CertificateList.size()];
+        certificateChain = x509CertificateList.toArray(certificateChain_);
         privateKey = privateKeyEntry.getPrivateKey();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eu.europa.ec.markt.dss.signature.token.DSSPrivateKey#getCertificate()
-     */
     @Override
     public X509Certificate getCertificate() {
         return certificate;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eu.europa.ec.markt.dss.signature.token.DSSPrivateKey#getCertificateChain()
-     */
     @Override
     public X509Certificate[] getCertificateChain() {
         return certificateChain;

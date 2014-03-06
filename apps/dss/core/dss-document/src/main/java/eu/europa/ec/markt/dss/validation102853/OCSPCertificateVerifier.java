@@ -159,12 +159,12 @@ public class OCSPCertificateVerifier implements CertificateStatusVerifier {
             }
         } catch (DSSException e) {
 
-            LOG.error("OCSP exception: " + e.getMessage(), e);
+            LOG.error("OCSP DSS Exception: " + e.getMessage(), e);
             toCheckToken.extraInfo().infoOCSPException(e);
             return null;
         } catch (OCSPException e) {
 
-            LOG.error("OCSP exception: " + e.getMessage());
+            LOG.error("OCSP Exception: " + e.getMessage());
             toCheckToken.extraInfo().infoOCSPException(e);
             throw new DSSException(e);
         } catch (CertificateEncodingException e) {

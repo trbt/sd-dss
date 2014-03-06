@@ -23,6 +23,7 @@ package eu.europa.ec.markt.dss.applet.util;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 
@@ -115,15 +116,12 @@ public final class SigningUtils {
     /**
      * @param file
      * @param parameters
-     * @param tokenConnection
-     * @param privateKey
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws DSSException
      */
-    public static DSSDocument signDocument(final String serviceURL, final File file, final SignatureParameters parameters, final SignatureTokenConnection tokenConnection,
-                                           final DSSPrivateKeyEntry privateKey) throws DSSException {
+    public static DSSDocument signDocument(final String serviceURL, final File file, final SignatureParameters parameters) throws DSSException {
 
         try {
 
@@ -146,6 +144,16 @@ public final class SigningUtils {
 
             wsParameters.setSigningDate(DSSXMLUtils.createXMLGregorianCalendar(new Date()));
             wsParameters.setSigningCertificateBytes(DSSUtils.getEncoded(parameters.getSigningCertificate()));
+
+            final List<X509Certificate> certificateChain = parameters.getCertificateChain();
+            if (certificateChain.size() > 0) {
+
+                final List<byte[]> certificateChainByteArrayList = wsParameters.getCertificateChainByteArrayList();
+                for (final X509Certificate x509Certificate : certificateChain) {
+
+                    certificateChainByteArrayList.add(DSSUtils.getEncoded(x509Certificate));
+                }
+            }
             //wsParameters.setDeterministicId("demo");
             final BLevelParameters bLevelParameters = parameters.bLevel();
             final BLevelParameters.Policy signaturePolicy = bLevelParameters.getSignaturePolicy();
@@ -180,6 +188,8 @@ public final class SigningUtils {
             final String wsDigestAlgorithmValue = digestAlgorithm.value();
             eu.europa.ec.markt.dss.DigestAlgorithm dssDigestAlgorithm = eu.europa.ec.markt.dss.DigestAlgorithm.forName(wsDigestAlgorithmValue);
 
+            final DSSPrivateKeyEntry privateKey = parameters.getPrivateKeyEntry();
+            final SignatureTokenConnection tokenConnection = parameters.getSigningToken();
             final byte[] encrypted = tokenConnection.sign(toBeSignedBytes, dssDigestAlgorithm, privateKey);
 
             final WsDocument wsSignedDocument = signatureServiceImplPort.signDocument(wsDocument, wsParameters, encrypted);

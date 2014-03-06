@@ -91,12 +91,7 @@ public class AdministrationController {
     @RequestMapping(value = "/tsl-info", method = RequestMethod.GET)
     public String showSignature(final Model model) {
 
-        System.out.println("#####: " + reloadableTrustedListCertificateSource);
         final List<CertificateToken> certificates = reloadableTrustedListCertificateSource.getCertificates();
-        for (final CertificateToken certificate : certificates) {
-
-            System.out.println(">>>:" + certificate.getSubjectX500Principal());
-        }
         model.addAttribute("certs", certificates);
         model.addAttribute("tsls", reloadableTrustedListCertificateSource.getDiagnosticInfo().entrySet());
         return "admin-tsl-info";
