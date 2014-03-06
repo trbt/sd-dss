@@ -41,12 +41,19 @@
 				</thead>
 				<tbody>
 					<c:forEach items="${certs}" var="cert">
-					<tr>
-						<td>${cert.certificate.subjectDN.name}</td>
-						<td>${cert.certificate.issuerDN.name}</td>
-						<td>${cert.certificate.notBefore}</td>
-						<td>${cert.certificate.notAfter}</td>
-					</tr>
+                        <tr>
+                            <td colspan="4">${cert.certificate.subjectDN.name}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4">${cert.certificate.issuerDN.name}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">${cert.certificate.notBefore}</td>
+                            <td colspan="2">${cert.certificate.notAfter}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4">&nbsp;</td>
+                        </tr>
 					</c:forEach>
 				</tbody>
 			</table>		
