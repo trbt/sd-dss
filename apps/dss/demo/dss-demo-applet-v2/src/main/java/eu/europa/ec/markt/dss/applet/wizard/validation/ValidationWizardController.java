@@ -173,29 +173,36 @@ public class ValidationWizardController extends DSSWizardController<ValidationMo
             throw new DSSException(e);
         }
 
-        String xmlDiagnosticData = "no data";
+        String xmlData = "";
         try {
 
-            xmlDiagnosticData = wsValidationReport.getXmlDiagnosticData();
-            String xmlDiagnosticData_ = new String(xmlDiagnosticData.getBytes(), "UTF-8");
-            final XmlDom diagnosticDataXmlDom = getXmlDomReport(xmlDiagnosticData_);
+            // In case of some signatures, the returned data are not UTF-8 encoded. The conversion is forced.
+
+            xmlData = wsValidationReport.getXmlDiagnosticData();
+            final String xmlDiagnosticData = DSSUtils.getUtf8String(xmlData);
+            final XmlDom diagnosticDataXmlDom = getXmlDomReport(xmlDiagnosticData);
             model.setDiagnosticData(diagnosticDataXmlDom);
+
+            xmlData = "";
+            xmlData = wsValidationReport.getXmlDetailedReport();
+            final String xmlDetailedReport = DSSUtils.getUtf8String(xmlData);
+            final XmlDom detailedReportXmlDom = getXmlDomReport(xmlDetailedReport);
+            model.setDetailedReport(detailedReportXmlDom);
+
+            xmlData = "";
+            xmlData = wsValidationReport.getXmlSimpleReport();
+            final String xmlSimpleReport = DSSUtils.getUtf8String(xmlData);
+            final XmlDom simpleReportXmlDom = getXmlDomReport(xmlSimpleReport);
+            model.setSimpleReport(simpleReportXmlDom);
         } catch (Exception e) {
-            final String base64Encode = DSSUtils.base64Encode(xmlDiagnosticData.getBytes());
-            System.out.println(base64Encode);
+
+            final String base64Encode = DSSUtils.base64Encode(xmlData.getBytes());
+            LOG.error("Erroneous data: " + base64Encode);
             if (e instanceof DSSException) {
                 throw (DSSException) e;
             }
             throw new DSSException(e);
         }
-
-        final String xmlDetailedReport = wsValidationReport.getXmlDetailedReport();
-        final XmlDom detailedReportXmlDom = getXmlDomReport(xmlDetailedReport);
-        model.setDetailedReport(detailedReportXmlDom);
-
-        final String xmlSimpleReport = wsValidationReport.getXmlSimpleReport();
-        final XmlDom simpleReportXmlDom = getXmlDomReport(xmlSimpleReport);
-        model.setSimpleReport(simpleReportXmlDom);
     }
 
     private WsDocument toWsDocument(final File detachedFile) {
