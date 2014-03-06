@@ -26,6 +26,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import org.bouncycastle.cert.ocsp.OCSPException;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSRevocationUtils;
 import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.SignatureAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
@@ -79,6 +81,9 @@ public class OCSPToken extends RevocationToken {
             throw new DSSNullException(CertificatePool.class);
         }
         this.basicOCSPResp = basicOCSPResp;
+        final ASN1ObjectIdentifier signatureAlgOID = basicOCSPResp.getSignatureAlgOID();
+        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.forOID(signatureAlgOID.getId());
+        this.algoUsedToSignToken = signatureAlgorithm;
         this.extraInfo = new TokenValidationExtraInfo();
         try {
 
@@ -127,7 +132,6 @@ public class OCSPToken extends RevocationToken {
 
                 this.issuerToken = issuerToken;
             }
-            algoUsedToSignToken = issuerToken.getSignatureAlgo();
             issuerX500Principal = issuerToken.getCertificate().getSubjectX500Principal();
         } catch (OCSPException e) {
 
