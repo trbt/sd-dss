@@ -49,14 +49,14 @@ import eu.europa.ec.markt.dss.exception.DSSNullReturnedException;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureExtension;
-import eu.europa.ec.markt.dss.validation.tsp.TSPSource;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerification;
 import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
 
 /**
  * Base class for extending a CAdESSignature.
  *
- * @version $Revision: 3377 $ - $Date: 2014-01-23 00:24:12 +0100 (Thu, 23 Jan 2014) $
+ * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
  */
 
 abstract class CAdESSignatureExtension implements SignatureExtension {

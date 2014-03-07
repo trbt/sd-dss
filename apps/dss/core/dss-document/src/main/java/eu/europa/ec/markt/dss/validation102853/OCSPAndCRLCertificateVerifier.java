@@ -20,8 +20,8 @@
 
 package eu.europa.ec.markt.dss.validation102853;
 
-import eu.europa.ec.markt.dss.validation.crl.CRLSource;
-import eu.europa.ec.markt.dss.validation.ocsp.OCSPSource;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
 
 /**
  * Fetchs revocation data from a certificate by querying an OCSP server first and then a CRL server if no OCSP response

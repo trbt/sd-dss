@@ -51,41 +51,11 @@ public final class CertificateIdentifier {
      */
     private static LinkedHashMap<String, Integer> ids = new LinkedHashMap<String, Integer>();
 
-    /**
-     * This method returns the DSS certificate's id based on the certificate's key: ( issuer distinguished name + "|" +
-     * serial number). If the certificate is not yet stored it is added to the <code>ids</code>.
-     *
-     * @param key
-     * @return
-     */
-    private static int add(final String key) {
-
-        Integer id = ids.get(key);
-        if (id == null) {
-
-            id = nextCertificateIdentifier;
-            ids.put(key, id);
-            nextCertificateIdentifier++;
-        }
-        return id;
+    private CertificateIdentifier() {
     }
 
-//    /**
-//     * This method returns the DSS certificate's id for a given {@link CertificateToken}.
-//     *
-//     * @param certToken
-//     * @return
-//     */
-//    public static int getId(final CertificateToken certToken) {
-//
-//        if (certToken == null) {
-//            return 0;
-//        }
-//        return getId(certToken.getCertificate());
-//    }
-
     /**
-     * Return the DSS certificate's unique id for a given {@link X509Certificate}. If the <code>cert</code> parameter is
+     * Return the DSS certificate's unique id for a given {@link X509Certificate}. If the {@code cert} parameter is
      * null 0 is returned.
      *
      * @param cert
@@ -105,23 +75,27 @@ public final class CertificateIdentifier {
     }
 
     /**
-     * Return the DSS certificate's unique id based on issuerDN and serial number. If the <code>cert</code> parameter is
-     * null null is returned.
+     * This method returns the DSS certificate's id based on the certificate's key: ( issuer distinguished name + "|" +
+     * serial number). If the certificate is not yet stored it is added to the {@code ids}.
      *
-     * @param cert
-     * @return
+     * @param key the key is composed of issuer distinguished name + "|" + serial number
+     * @return DSS certificate's id
      */
-    public static String getIdAsString(final X509Certificate cert) {
-        if (cert == null) {
-            return null;
+    private static int add(final String key) {
+
+        Integer id = ids.get(key);
+        if (id == null) {
+
+            id = nextCertificateIdentifier;
+            ids.put(key, id);
+            nextCertificateIdentifier++;
         }
-        Integer id = getId(cert);
-        return "[" + id + "]";
+        return id;
     }
 
     /**
      * This method returns the unique identifier of a given {@link X509Certificate}. This identifier is used to obtain
-     * the DSS certificate's unique id.
+     * the DSS certificate's unique id. The CANONICAL form of the {@code X500Principal} is used.
      *
      * @param cert
      * @return
@@ -134,7 +108,7 @@ public final class CertificateIdentifier {
     }
 
     /**
-     * This method reset the list of certificates.
+     * This method resets the list of certificates.
      */
     public static void clear() {
         ids.clear();
@@ -143,7 +117,7 @@ public final class CertificateIdentifier {
 
     /**
      * Returns the text representation of all certificates and their internal DSS number. The text is indented with the
-     * given <code>indentStr</code> string.
+     * given {@code indentStr} string.
      *
      * @param indentStr
      * @return

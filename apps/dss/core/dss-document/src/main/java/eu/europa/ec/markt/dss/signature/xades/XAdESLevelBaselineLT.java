@@ -29,7 +29,7 @@ import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation.crl.CRLToken;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.OCSPToken;
@@ -40,7 +40,7 @@ import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerifi
 /**
  * XL profile of XAdES signature
  *
- * @version $Revision: 3406 $ - $Date: 2014-02-04 09:23:21 +0100 (Tue, 04 Feb 2014) $
+ * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
  */
 
 public class XAdESLevelBaselineLT extends XAdESLevelBaselineT {

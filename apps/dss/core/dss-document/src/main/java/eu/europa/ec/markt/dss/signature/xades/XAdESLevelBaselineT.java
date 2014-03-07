@@ -46,7 +46,7 @@ import eu.europa.ec.markt.dss.signature.ProfileParameters;
 import eu.europa.ec.markt.dss.signature.ProfileParameters.Operation;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
-import eu.europa.ec.markt.dss.validation.tsp.TSPSource;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
@@ -57,7 +57,7 @@ import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 /**
  * -T profile of XAdES signature
  *
- * @version $Revision: 3406 $ - $Date: 2014-02-04 09:23:21 +0100 (Tue, 04 Feb 2014) $
+ * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
  */
 
 public class XAdESLevelBaselineT extends ExtensionBuilder implements XAdESSignatureExtension {

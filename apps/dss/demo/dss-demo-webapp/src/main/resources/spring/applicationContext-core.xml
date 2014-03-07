@@ -11,42 +11,47 @@
     <context:component-scan base-package="eu.europa.ec.markt.dss"/>
 
     <bean id="proxyPreferenceManager" class="eu.europa.ec.markt.dss.manager.ProxyPreferenceManager">
-        <property name="proxyDao" ref="proxyDao"/>
-        <!--<property name="proxyDao" ref="proxyFile"/>-->
+        <!--<property name="proxyDao" ref="proxyDao"/>-->
+        <property name="proxyDao" ref="proxyFile"/>
     </bean>
 
-    <bean id="httpDataLoader" class="eu.europa.ec.markt.dss.validation.https.CommonsHttpDataLoader">
+    <bean id="httpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.CommonsHttpDataLoader">
         <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
     </bean>
 
-    <bean id="cacheCrlSource" class="eu.europa.ec.markt.dss.validation.crl.OnlineCRLSource">
+    <bean id="ocspHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.OCSPHttpDataLoader">
+        <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
+    </bean>
+
+    <bean id="fileCacheHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.FileCacheHttpDataLoader">
+        <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
+        <!-- Per default uses "java.io.tmpdir" property -->
+        <!--<property name="fileCacheDirectory" value="/temp"/>-->
+    </bean>
+
+    <bean id="cacheCrlSource" class="eu.europa.ec.markt.dss.validation102853.crl.OnlineCRLSource">
         <property name="dataLoader" ref="httpDataLoader"/>
     </bean>
 
     <bean id="crlSource"
-          class="eu.europa.ec.markt.dss.validation.crl.JdbcCacheCRLSource">
+          class="eu.europa.ec.markt.dss.validation102853.crl.JdbcCacheCRLSource">
         <property name="cachedSource" ref="cacheCrlSource"/>
         <property name="dataSource" ref="dataSource"/>
     </bean>
 
-    <bean id="ocspSource" class="eu.europa.ec.markt.dss.validation.ocsp.OnlineOCSPSource">
-        <property name="dataLoader">
-            <bean class="eu.europa.ec.markt.dss.validation.https.CommonsHttpDataLoader">
-                <constructor-arg index="0" value="application/ocsp-request"/>
-            </bean>
-        </property>
+    <bean id="ocspSource" class="eu.europa.ec.markt.dss.validation102853.ocsp.OnlineOCSPSource">
+        <property name="dataLoader" ref="ocspHttpDataLoader"/>
     </bean>
 
     <bean id="trustedListSource"
           class="eu.europa.ec.markt.dss.validation102853.tsl.ReloadableTrustedListCertificateSource">
-        <property name="dataLoader" ref="httpDataLoader"/>
+        <property name="dataLoader" ref="fileCacheHttpDataLoader"/>
         <property name="checkSignature" value="false"/>
         <property name="lotlCertificate" value="classpath://ec.europa.eu.crt"/>
-        <property name="lotlUrl"
-                  value="https://ec.europa.eu/information_society/policy/esignature/trusted-list/tl-mp.xml"/>
+        <property name="lotlUrl" value="https://ec.europa.eu/information_society/policy/esignature/trusted-list/tl-mp.xml"/>
     </bean>
 
-    <bean id="tspSource" class="eu.europa.ec.markt.dss.validation.tsp.OnlineTSPSource">
+    <bean id="tspSource" class="eu.europa.ec.markt.dss.validation102853.tsp.OnlineTSPSource">
         <property name="tspServer" value="http://tsa.belgium.be/connect"/>
     </bean>
 

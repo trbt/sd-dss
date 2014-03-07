@@ -40,8 +40,8 @@ import org.slf4j.LoggerFactory;
 import eu.europa.ec.markt.dss.DSSRevocationUtils;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation.ocsp.OCSPSource;
-import eu.europa.ec.markt.dss.validation.ocsp.OnlineOCSPSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OnlineOCSPSource;
 
 /**
  * Check the status of the certificate using an OCSPSource

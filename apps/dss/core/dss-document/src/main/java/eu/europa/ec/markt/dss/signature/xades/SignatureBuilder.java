@@ -106,7 +106,8 @@ public abstract class SignatureBuilder extends XAdESBuilder {
     public SignatureBuilder(final SignatureParameters params, final DSSDocument originalDocument) {
 
         this.params = params;
-        this.originalDocument = originalDocument;    }
+        this.originalDocument = originalDocument;
+    }
 
     /**
      * This is the main method which is called to build the XML signature

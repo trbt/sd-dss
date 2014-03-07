@@ -48,13 +48,13 @@ import org.bouncycastle.asn1.x509.X509Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.europa.ec.markt.dss.DSSPKUtils;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.OID;
-import eu.europa.ec.markt.dss.PublicKeyUtils;
 import eu.europa.ec.markt.dss.SignatureAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 import eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo;
 
 /**
@@ -752,7 +752,7 @@ public class CertificateToken extends Token {
      */
     public int getPublicKeyLength() {
 
-        final int publicKeySize = PublicKeyUtils.getPublicKeySize(getPublicKey());
+        final int publicKeySize = DSSPKUtils.getPublicKeySize(getPublicKey());
         return publicKeySize;
     }
 }

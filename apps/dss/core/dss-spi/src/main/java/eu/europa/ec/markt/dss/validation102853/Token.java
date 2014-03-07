@@ -26,7 +26,7 @@ import java.util.List;
 
 import javax.security.auth.x500.X500Principal;
 
-import eu.europa.ec.markt.dss.PublicKeyUtils;
+import eu.europa.ec.markt.dss.DSSPKUtils;
 import eu.europa.ec.markt.dss.SignatureAlgorithm;
 
 /**
@@ -231,7 +231,7 @@ public abstract class Token implements Serializable {
         }
         if (issuerPublicKey != null) {
 
-            keyLength = String.valueOf(PublicKeyUtils.getPublicKeySize(issuerPublicKey));
+            keyLength = String.valueOf(DSSPKUtils.getPublicKeySize(issuerPublicKey));
         }
         return keyLength;
     }

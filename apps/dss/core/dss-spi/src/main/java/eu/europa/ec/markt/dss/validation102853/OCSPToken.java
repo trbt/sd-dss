@@ -42,7 +42,7 @@ import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.SignatureAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 
 /**
  * OCSP Signed Token which encapsulate BasicOCSPResp (BC).

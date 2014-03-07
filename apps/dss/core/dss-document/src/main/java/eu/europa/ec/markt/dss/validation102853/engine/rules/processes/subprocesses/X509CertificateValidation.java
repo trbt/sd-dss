@@ -24,24 +24,24 @@ import java.util.Date;
 import java.util.List;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.RuleUtils;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ValidationXPathQueryHolder;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.ForLegalPerson;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.QualifiedCertificate;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.SSCD;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.rules.RuleConstant;
-import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.ForLegalPerson;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.QualifiedCertificate;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.SSCD;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
 public class X509CertificateValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage, RuleConstant, ValidationXPathQueryHolder {
 

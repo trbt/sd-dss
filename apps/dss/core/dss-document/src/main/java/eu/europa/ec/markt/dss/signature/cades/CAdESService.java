@@ -50,13 +50,13 @@ import eu.europa.ec.markt.dss.signature.SignatureExtension;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
-import eu.europa.ec.markt.dss.validation.tsp.TSPSource;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 
 /**
  * CAdES implementation of DocumentSignatureService
  *
- * @version $Revision: 3434 $ - $Date: 2014-02-10 14:00:08 +0100 (Mon, 10 Feb 2014) $
+ * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
  */
 
 public class CAdESService extends AbstractSignatureService {

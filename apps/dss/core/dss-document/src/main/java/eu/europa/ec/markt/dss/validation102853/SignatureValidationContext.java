@@ -37,10 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
-import eu.europa.ec.markt.dss.validation.crl.CRLSource;
-import eu.europa.ec.markt.dss.validation.https.HTTPDataLoader;
-import eu.europa.ec.markt.dss.validation.ocsp.OCSPSource;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
+import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
 import eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo;
 
 /**

@@ -31,9 +31,9 @@ import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import eu.europa.ec.markt.dss.DSSRevocationUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation.crl.CRLToken;
-import eu.europa.ec.markt.dss.validation.crl.OfflineCRLSource;
-import eu.europa.ec.markt.dss.validation.ocsp.OfflineOCSPSource;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
+import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
 
 /**

@@ -23,7 +23,7 @@ package eu.europa.ec.markt.dss.validation102853;
 import java.util.List;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 
 /**
  * The advanced signature contains a list of certificate that was needed to validate the signature. This class is a

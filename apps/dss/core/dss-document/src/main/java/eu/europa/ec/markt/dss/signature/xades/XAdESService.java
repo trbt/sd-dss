@@ -36,13 +36,13 @@ import eu.europa.ec.markt.dss.signature.ProfileParameters.Operation;
 import eu.europa.ec.markt.dss.signature.SignatureExtension;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
-import eu.europa.ec.markt.dss.validation.tsp.TSPSource;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 
 /**
  * XAdES implementation of DocumentSignatureService
  *
- * @version $Revision: 3378 $ - $Date: 2014-01-23 00:46:55 +0100 (Thu, 23 Jan 2014) $
+ * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
  */
 
 public class XAdESService extends AbstractSignatureService {

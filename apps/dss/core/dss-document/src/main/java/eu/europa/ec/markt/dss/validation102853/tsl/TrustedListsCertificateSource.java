@@ -51,8 +51,8 @@ import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.exception.DSSNullReturnedException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
-import eu.europa.ec.markt.dss.validation.https.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CommonTrustedCertificateSource;
@@ -427,7 +427,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
     }
 
     /**
-     * This method gives  the possibility to extend this class and to add other trusted lists.
+     * This method gives the possibility to extend this class and to add other trusted lists. It is invoked systematically from {@code #init()} method.
      *
      * @param urls
      */

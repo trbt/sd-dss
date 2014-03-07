@@ -36,7 +36,7 @@ import java.util.List;
 
 import eu.europa.ec.markt.dss.exception.DSSEncodingException;
 import eu.europa.ec.markt.dss.exception.DSSEncodingException.MSG;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 
 /**
  * Implements a CertificateSource using a JKS KeyStore.

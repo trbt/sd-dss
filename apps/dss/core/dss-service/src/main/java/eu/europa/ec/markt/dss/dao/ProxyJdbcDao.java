@@ -29,6 +29,9 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * JDBC Implementation for a ProxyDao.
  *
@@ -40,10 +43,13 @@ import javax.sql.DataSource;
  */
 public class ProxyJdbcDao implements ProxyDao {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ProxyJdbcDao.class);
+
     private DataSource dataSource;
 
     public ProxyJdbcDao() {
-        System.out.println("############# ProxyJdbcDao");
+
+        LOG.info(">>> ProxyJdbcDao");
     }
 
     @Override

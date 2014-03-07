@@ -20,9 +20,9 @@
 
 package eu.europa.ec.markt.dss.validation102853;
 
-import eu.europa.ec.markt.dss.validation.crl.CRLSource;
-import eu.europa.ec.markt.dss.validation.https.HTTPDataLoader;
-import eu.europa.ec.markt.dss.validation.ocsp.OCSPSource;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
+import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
 
 /**
  * Provides information on the sources used in the validation process in the context of a signature.

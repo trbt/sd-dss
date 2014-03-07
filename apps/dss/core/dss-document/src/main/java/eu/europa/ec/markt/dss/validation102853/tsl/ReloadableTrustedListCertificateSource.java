@@ -26,7 +26,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.europa.ec.markt.dss.FileCacheHttpDataLoader;
 import eu.europa.ec.markt.dss.exception.DSSEncodingException;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
@@ -36,14 +35,12 @@ import eu.europa.ec.markt.dss.validation102853.CertificateToken;
  * TrustedListsCertificateSource} class is used. This list is refreshed when the method refresh
  * is called.
  *
- * @version $Revision: 3318 $ - $Date: 2014-01-15 17:34:22 +0100 (Wed, 15 Jan 2014) $
+ * @version $Revision: 3573 $ - $Date: 2014-03-07 06:56:00 +0100 (Fri, 07 Mar 2014) $
  */
 
 public class ReloadableTrustedListCertificateSource extends TrustedListsCertificateSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReloadableTrustedListCertificateSource.class);
-
-    private static boolean CACHE_MODE = true;
 
     private TrustedListsCertificateSource currentSource = new TrustedListsCertificateSource();
 
@@ -86,13 +83,6 @@ public class ReloadableTrustedListCertificateSource extends TrustedListsCertific
     public synchronized void refresh() {
 
         final TrustedListsCertificateSource newSource = new TrustedListsCertificateSource(this);
-
-        if (CACHE_MODE) {
-
-            final FileCacheHttpDataLoader fileCacheHttpDataLoader = new FileCacheHttpDataLoader();
-            newSource.setDataLoader(fileCacheHttpDataLoader);
-        }
-
         final Thread reloader = new Thread(new Reloader(newSource));
         LOG.info("--> refresh(): START");
         reloader.start();

@@ -48,12 +48,12 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.DSSASN1Utils;
+import eu.europa.ec.markt.dss.DSSPKUtils;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.EncryptionAlgorithm;
 import eu.europa.ec.markt.dss.OID;
-import eu.europa.ec.markt.dss.PublicKeyUtils;
 import eu.europa.ec.markt.dss.SignatureAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
@@ -63,9 +63,8 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.signature.ProfileException;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation.SignaturePolicy;
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
-import eu.europa.ec.markt.dss.validation.https.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 import eu.europa.ec.markt.dss.validation102853.asic.ASiCXMLDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.bean.CertifiedRole;
 import eu.europa.ec.markt.dss.validation102853.bean.CommitmentType;
@@ -837,8 +836,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
         xmlCert.setNotAfter(DSSXMLUtils.createXMLGregorianCalendar(certToken.getNotAfter()));
         xmlCert.setNotBefore(DSSXMLUtils.createXMLGregorianCalendar(certToken.getNotBefore()));
         final PublicKey publicKey = certToken.getPublicKey();
-        xmlCert.setPublicKeySize(PublicKeyUtils.getPublicKeySize(publicKey));
-        xmlCert.setPublicKeyEncryptionAlgo(PublicKeyUtils.getPublicKeyEncryptionAlgo(publicKey));
+        xmlCert.setPublicKeySize(DSSPKUtils.getPublicKeySize(publicKey));
+        xmlCert.setPublicKeyEncryptionAlgo(DSSPKUtils.getPublicKeyEncryptionAlgo(publicKey));
 
         if (certToken.isOCSPSigning()) {
 

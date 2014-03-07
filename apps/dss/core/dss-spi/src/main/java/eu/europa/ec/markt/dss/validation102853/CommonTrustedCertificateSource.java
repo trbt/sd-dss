@@ -25,7 +25,7 @@ import java.util.List;
 
 import javax.security.auth.x500.X500Principal;
 
-import eu.europa.ec.markt.dss.validation.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 import eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo;
 
 /**

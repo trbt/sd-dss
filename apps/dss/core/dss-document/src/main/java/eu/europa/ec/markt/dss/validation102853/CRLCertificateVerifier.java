@@ -23,8 +23,8 @@ package eu.europa.ec.markt.dss.validation102853;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.europa.ec.markt.dss.validation.crl.CRLSource;
-import eu.europa.ec.markt.dss.validation.crl.CRLToken;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 
 /**
  * Verifier based on CRL

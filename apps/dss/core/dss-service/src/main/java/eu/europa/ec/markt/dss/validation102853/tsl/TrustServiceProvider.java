@@ -30,7 +30,6 @@ import eu.europa.ec.markt.tsl.jaxb.tsl.MultiLangNormStringType;
 import eu.europa.ec.markt.tsl.jaxb.tsl.PostalAddressType;
 import eu.europa.ec.markt.tsl.jaxb.tsl.ServiceHistoryInstanceType;
 import eu.europa.ec.markt.tsl.jaxb.tsl.ServiceHistoryType;
-import eu.europa.ec.markt.tsl.jaxb.tsl.TSPServiceInformationType;
 import eu.europa.ec.markt.tsl.jaxb.tsl.TSPServiceType;
 import eu.europa.ec.markt.tsl.jaxb.tsl.TSPType;
 

@@ -24,12 +24,12 @@ import java.io.InputStream;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
-import eu.europa.ec.markt.dss.validation.tsp.TSPSource;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 
 /**
  * Interface for DocumentSignatureService. Provides operations for sign/verify a document.
  *
- * @version $Revision: 3376 $ - $Date: 2014-01-22 22:20:23 +0100 (Wed, 22 Jan 2014) $
+ * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
  */
 public interface DocumentSignatureService {
 

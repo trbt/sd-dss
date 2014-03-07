@@ -106,7 +106,7 @@ import org.slf4j.LoggerFactory;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
-import eu.europa.ec.markt.dss.validation.https.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 public final class DSSUtils {
