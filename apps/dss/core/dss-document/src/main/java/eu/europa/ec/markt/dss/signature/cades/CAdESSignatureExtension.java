@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -56,7 +55,7 @@ import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
 /**
  * Base class for extending a CAdESSignature.
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
  */
 
 abstract class CAdESSignatureExtension implements SignatureExtension {
@@ -278,11 +277,11 @@ abstract class CAdESSignatureExtension implements SignatureExtension {
         try {
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Message to timestamp is: " + Hex.encodeHexString(messageToTimestamp));
+                LOG.debug("Message to timestamp is: " + DSSUtils.encodeHexString(messageToTimestamp));
             }
             byte[] timestampDigest = DSSUtils.digest(timestampDigestAlgorithm, messageToTimestamp);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Digested ({}) message to timestamp is {}", new Object[]{timestampDigestAlgorithm, Hex.encodeHexString(timestampDigest)});
+                LOG.debug("Digested ({}) message to timestamp is {}", new Object[]{timestampDigestAlgorithm, DSSUtils.encodeHexString(timestampDigest)});
             }
 
             final TimeStampToken timeStampToken = tspSource.getTimeStampResponse(timestampDigestAlgorithm, timestampDigest);
@@ -293,7 +292,7 @@ abstract class CAdESSignatureExtension implements SignatureExtension {
 
             if (LOG.isDebugEnabled()) {
                 final byte[] messageImprintDigest = timeStampToken.getTimeStampInfo().getMessageImprintDigest();
-                LOG.debug("Digested ({}) message in timestamp is {}", new Object[]{timestampDigestAlgorithm, Hex.encodeHexString(messageImprintDigest)});
+                LOG.debug("Digested ({}) message in timestamp is {}", new Object[]{timestampDigestAlgorithm, DSSUtils.encodeHexString(messageImprintDigest)});
             }
 
             CMSSignedData cmsSignedDataTimeStampToken = new CMSSignedData(timeStampToken.getEncoded());

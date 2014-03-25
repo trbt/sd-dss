@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -39,8 +40,6 @@ import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.ArrayUtils;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Encoding;
@@ -120,19 +119,14 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.cades.CadesLevelBaselineLTATimestampExtractor;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLRef;
-import eu.europa.ec.markt.dss.validation102853.certificate.CertificateRef;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPRef;
-import eu.europa.ec.markt.dss.validation102853.SignatureForm;
-import eu.europa.ec.markt.dss.validation102853.SignaturePolicy;
-import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.ArchiveTimestampType;
 import eu.europa.ec.markt.dss.validation102853.CAdESCertificateSource;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
+import eu.europa.ec.markt.dss.validation102853.SignatureForm;
+import eu.europa.ec.markt.dss.validation102853.SignaturePolicy;
 import eu.europa.ec.markt.dss.validation102853.TimestampReference;
 import eu.europa.ec.markt.dss.validation102853.TimestampReferenceCategory;
 import eu.europa.ec.markt.dss.validation102853.TimestampToken;
@@ -142,6 +136,11 @@ import eu.europa.ec.markt.dss.validation102853.bean.CommitmentType;
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerification;
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureProductionPlace;
 import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateRef;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLRef;
+import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPRef;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 
 /**
  * CAdES Signature class helper
@@ -368,7 +367,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
         final DigestAlgorithm digestAlgorithm = DigestAlgorithm.SHA1;
         final byte[] signingTokenCertHash = DSSUtils.digest(digestAlgorithm, signingToken.getEncoded());
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Candidate Certificate Hash {} with algorithm {}", Hex.encodeHexString(signingTokenCertHash), digestAlgorithm.getName());
+            LOG.debug("Candidate Certificate Hash {} with algorithm {}", DSSUtils.encodeHexString(signingTokenCertHash), digestAlgorithm.getName());
         }
 
         final ASN1Set attrValues = signingCertificateAttributeV1.getAttrValues();
@@ -381,7 +380,8 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
                 final byte[] certHash = essCertID.getCertHash();
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Found Certificate Hash in signingCertificateAttributeV1 {} with algorithm {}", Hex.encodeHexString(signingTokenCertHash), digestAlgorithm.getName());
+                    LOG.debug("Found Certificate Hash in signingCertificateAttributeV1 {} with algorithm {}", DSSUtils.encodeHexString(signingTokenCertHash),
+                          digestAlgorithm.getName());
                 }
                 final IssuerSerial issuerSerial = essCertID.getIssuerSerial();
                 final boolean match = verifySigningCertificateReferences(signingTokenSerialNumber, signingTokenIssuerName, signingTokenCertHash, certHash, issuerSerial);
@@ -412,13 +412,14 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
                     signingTokenCertHash = DSSUtils.digest(digestAlgorithm, signingToken.getEncoded());
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Candidate Certificate Hash {} with algorithm {}", Hex.encodeHexString(signingTokenCertHash), digestAlgorithm.getName());
+                        LOG.debug("Candidate Certificate Hash {} with algorithm {}", DSSUtils.encodeHexString(signingTokenCertHash), digestAlgorithm.getName());
                     }
                     lastDigestAlgorithm = digestAlgorithm;
                 }
                 final byte[] certHash = essCertIDv2.getCertHash();
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Found Certificate Hash in signingCertificateAttributeV2 {} with algorithm {}", Hex.encodeHexString(signingTokenCertHash), digestAlgorithm.getName());
+                    LOG.debug("Found Certificate Hash in signingCertificateAttributeV2 {} with algorithm {}", DSSUtils.encodeHexString(signingTokenCertHash),
+                          digestAlgorithm.getName());
                 }
                 final IssuerSerial issuerSerial = essCertIDv2.getIssuerSerial();
                 final boolean match = verifySigningCertificateReferences(signingTokenSerialNumber, signingTokenIssuerName, signingTokenCertHash, certHash, issuerSerial);
@@ -432,7 +433,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
     private boolean verifySigningCertificateReferences(final BigInteger signingTokenSerialNumber, final GeneralNames signingTokenIssuerName, final byte[] signingTokenCertHash,
                                                        final byte[] certHash, final IssuerSerial issuerSerial) {
 
-        final boolean hashEqual = ArrayUtils.isEquals(certHash, signingTokenCertHash);
+        final boolean hashEqual = Arrays.equals(certHash, signingTokenCertHash);
         signingCertificateValidity.setDigestMatch(hashEqual);
 
         boolean serialNumberEqual = false;
@@ -509,7 +510,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
         return getCertificateSource().getCertificates();
     }
 
-    /*
+    /**
      * 31 ETSI TS 101 733 V2.2.1 (2013-04)
      * <p/>
      * 5.8.1 signature-policy-identifier
@@ -531,6 +532,8 @@ public class CAdESSignature extends DefaultAdvancedSignature {
      * ...... sigPolicyQualifiers . SEQUENCE SIZE (1..MAX) OF SigPolicyQualifierInfo OPTIONAL}
      * <p/>
      * ... SignaturePolicyImplied ::= NULL
+     * <p/>
+     * NOTE: {@code SignaturePolicyImplied} -- not used in this version
      *
      * @return
      */
@@ -549,12 +552,12 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
         final ASN1Encodable attrValue = attribute.getAttrValues().getObjectAt(0);
         if (attrValue instanceof DERNull) {
-            return new SignaturePolicy();
+            return null;
         }
 
         final SignaturePolicyId sigPolicy = SignaturePolicyId.getInstance(attrValue);
         if (sigPolicy == null) {
-            return new SignaturePolicy();
+            return null;
         }
 
         final String policyId = sigPolicy.getSigPolicyId().getId();
@@ -890,7 +893,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
     @Override
     public byte[] getContentTimestampData(final TimestampToken timestampToken) {
-        return ArrayUtils.EMPTY_BYTE_ARRAY;
+        return DSSUtils.EMPTY_BYTE_ARRAY;
     }
 
     @Override
@@ -1380,7 +1383,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
         } catch (Exception e) {
             // When error in computing or in format the algorithm just continues.
             LOG.warn("When error in computing or in format the algorithm just continue...", e);
-            return ArrayUtils.EMPTY_BYTE_ARRAY;
+            return DSSUtils.EMPTY_BYTE_ARRAY;
         } finally {
             DSSUtils.closeQuietly(input);
         }

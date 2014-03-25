@@ -20,10 +20,13 @@
 
 package eu.europa.ec.markt.dss.signature;
 
+import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.signature.cades.CAdESService;
 import eu.europa.ec.markt.dss.signature.xades.SignatureBuilder;
 import eu.europa.ec.markt.dss.signature.xades.XAdESLevelBaselineB;
 import eu.europa.ec.markt.dss.signature.xades.XAdESService;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
+import eu.europa.ec.markt.dss.validation102853.SignatureForm;
 
 /**
  * This class This class manages the internal variables used in the process of creating of a signature and which allows to
@@ -92,25 +95,36 @@ public class ProfileParameters {
     }
 
     /*
-     * Used in ASiC signature generation process
+     * This is the underlying service used within the ASiC signature generation process.
      */
-    private XAdESService xadesService;
+    private DocumentSignatureService underlyingASiCService;
 
     /**
-     * @param certificateVerifier
-     * @return
+     * Returns the underlying {@code DocumentSignatureService} to use within the ASiC signature process.
+     *
+     * @param certificateVerifier the certificate verifier to use with the signature service.
+     * @param signatureForm       This is the form of the underlying ASiC signature. Only XAdES ans CAdES forms are acceptable.
+     * @return the underlying ASiC signature service.
      */
-    public XAdESService getXadesService(CertificateVerifier certificateVerifier) {
+    public DocumentSignatureService getXadesService(final CertificateVerifier certificateVerifier, final SignatureForm signatureForm) {
 
-        if (xadesService == null) {
+        if (underlyingASiCService == null) {
 
-            xadesService = new XAdESService(certificateVerifier);
+            if (signatureForm == SignatureForm.XAdES) {
+
+                underlyingASiCService = new XAdESService(certificateVerifier);
+            } else if (signatureForm == SignatureForm.CAdES) {
+
+                underlyingASiCService = new CAdESService(certificateVerifier);
+            } else {
+                throw new DSSException("Unsupported parameter value: only XAdES and CAdES forms are acceptable!");
+            }
         }
-        return xadesService;
+        return underlyingASiCService;
     }
 
-    public void setXadesService(XAdESService xadesService) {
-
-        this.xadesService = xadesService;
-    }
+//    public void setXadesService(XAdESService underlyingASiCService) {
+//
+//        this.underlyingASiCService = underlyingASiCService;
+//    }
 }

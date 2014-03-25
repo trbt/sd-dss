@@ -20,24 +20,68 @@
 
 package eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses;
 
+import java.util.Date;
 import java.util.List;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
+import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ValidationXPathQueryHolder;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.Constraint;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.SignatureCryptographicConstraint;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
+import eu.europa.ec.markt.dss.validation102853.rules.MessageTag;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
-import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
-public class SignatureAcceptanceValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage {
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.*;
+
+/**
+ * 5.5 Signature Acceptance Validation (SAV)
+ * 5.5.1 Description
+ * This building block covers any additional verification that shall be performed on the attributes/properties of the signature.
+ *
+ * 5.5.2 Inputs
+ * Table 10: Inputs to the SVA process
+ * - Input                                Requirement
+ * - Signature                            Mandatory
+ * - Cryptographic verification output    Optional
+ * - Cryptographic Constraints            Optional
+ * - Signature Constraints                Optional
+ *
+ * 5.5.3 Outputs
+ * The process outputs one of the following indications:
+ * Table 11: Outputs of the SVA process
+ * - Indication: VALID
+ * - Description: The signature is conformant with the validation constraints.
+ *
+ * - Indication: INVALID.SIG_CONSTRAINTS_FAILURE
+ * - Description: The signature is not conformant with the validation constraints.
+ * - Additional data items: The process shall output:
+ * • The set of constraints that are not verified by the signature.
+ * - Indication: INDETERMINATE.CRYPTO_CONSTRAINTS_FAILURE_NO_POE
+ * - Description: At least one of the algorithms used in validation of the signature together with the size of the key, if applicable, used with that algorithm is no longer
+ * considered reliable.
+ * - Additional data items: The process shall output:
+ * • A list of algorithms, together with the size of the key, if applicable, that have been used in validation of the signature but no longer are considered reliable together
+ * with a time up to which each of the listed algorithms were considered secure.
+ * <p>
+ * DISCLAIMER: Project owner DG-MARKT.
+ *
+ * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
+ * @version $Revision: 1016 $ - $Date: 2011-06-17 15:30:45 +0200 (Fri, 17 Jun 2011) $
+ */
+public class SignatureAcceptanceValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage, ValidationXPathQueryHolder {
 
     /**
      * The following variables are used only in order to simplify the writing of the rules!
@@ -47,6 +91,11 @@ public class SignatureAcceptanceValidation implements Indication, SubIndication,
      * See {@link ProcessParameters#getValidationPolicy()}
      */
     private ValidationPolicy constraintData;
+
+    /**
+     * See {@link ProcessParameters#getCurrentTime()}
+     */
+    private Date currentTime;
 
     /**
      * See {@link ProcessParameters#getSignatureContext()}
@@ -61,8 +110,8 @@ public class SignatureAcceptanceValidation implements Indication, SubIndication,
     private void prepareParameters(final ProcessParameters params) {
 
         this.constraintData = params.getValidationPolicy();
-
         this.signatureContext = params.getSignatureContext();
+        this.currentTime = params.getCurrentTime();
 
         isInitialised();
     }
@@ -75,9 +124,34 @@ public class SignatureAcceptanceValidation implements Indication, SubIndication,
         if (signatureContext == null) {
             throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "signatureContext"));
         }
+        if (currentTime == null) {
+            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "currentTime"));
+        }
     }
 
-    public boolean run(final ProcessParameters params, final XmlNode processNode) {
+    /**
+     * 5.5.4 Processing
+     * This process consists in checking the Signature and Cryptographic Constraints against the signature. The
+     * general principle is as follows: perform the following for each constraint:
+     *
+     * • If the constraint necessitates processing a property/attribute in the signature, perform the processing of
+     * the property/attribute as specified from clause 5.5.4.1 to 5.5.4.8.
+     *
+     * 5.5.4.1 Processing AdES properties/attributes This clause describes the application of Signature Constraints on
+     * the content of the signature including the processing on signed and unsigned properties/attributes.
+     * Constraint XML description:
+     * <SigningCertificateChainConstraint><br>
+     * <MandatedSignedQProperties>
+     *
+     * Indicates the mandated signed qualifying properties that are mandated to be present in the signature.
+     *
+     * This method prepares the execution of the SAV process.
+     *
+     * @param params      validation process parameters
+     * @param processNode the parent process {@code XmlNode} to use to include the validation information
+     * @return the {@code Conclusion} which indicates the result of the process
+     */
+    public Conclusion run(final ProcessParameters params, final XmlNode processNode) {
 
         if (processNode == null) {
 
@@ -88,212 +162,63 @@ public class SignatureAcceptanceValidation implements Indication, SubIndication,
         /**
          * 5.5 Signature Acceptance Validation (SAV)
          */
-
         subProcessNode = processNode.addChild(SAV);
-        final XmlNode conclusionNode = new XmlNode(CONCLUSION);
 
-        final boolean valid = process(params, conclusionNode);
+        final Conclusion conclusion = process(params);
 
-        if (valid) {
-
-            conclusionNode.addChild(INDICATION, VALID);
-            conclusionNode.setParent(subProcessNode);
-        } else {
-
-            subProcessNode.addChild(conclusionNode);
-            processNode.addChild(conclusionNode);
-        }
-        return valid;
+        final XmlNode conclusionXmlNode = conclusion.toXmlNode();
+        subProcessNode.addChild(conclusionXmlNode);
+        return conclusion;
     }
 
     /**
-     * @param params
-     * @param conclusionNode
-     * @return
+     * This method implement SAV process.
+     *
+     * @param params validation process parameters
+     * @return the {@code Conclusion} which indicates the result of the process
      */
-    private boolean process(final ProcessParameters params, final XmlNode conclusionNode) {
+    private Conclusion process(final ProcessParameters params) {
 
+        final Conclusion conclusion = new Conclusion();
         /**
-         * This process consists in checking the Signature and Cryptographic Constraints against the signature. The
-         * general principle is as follows: perform the following for each constraint:
-         *
-         * • If the constraint necessitates processing a property/attribute in the signature, perform the processing of
-         * the property/attribute as specified from clause 5.5.4.1 to 5.5.4.8.
-         *
-         * 5.5.4.1 Processing AdES properties/attributes This clause describes the application of Signature Constraints on
-         * the content of the signature including the processing on signed and unsigned properties/attributes.
-         *
-         * <SigningCertificateChainConstraint><br>
-         * <MandatedSignedQProperties>
-         *
-         * Indicates the mandated signed qualifying properties that are mandated to be present in the signature. This
-         * includes:
-         *
-         * • signing-time
+         * 5.5.4.1 Processing AdES properties/attributes
+         * This clause describes the application of Signature Constraints on the content of the signature including the processing
+         *on signed and unsigned properties/attributes.
          */
-
-        final boolean checkIfSigningTimeIsPresent = constraintData.shouldCheckIfSigningTimeIsPresent();
-        if (checkIfSigningTimeIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ISQPSTP_LABEL, BBB_SAV_ISQPSTP);
-
-            final String signingTime = signatureContext.getValue("./DateTime/text()");
-            if (signingTime.isEmpty()) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                conclusionNode.addChild(INFO, BBB_SAV_ISQPSTP_ANS_LABEL);
-                return false;
-            }
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, signingTime).setAttribute(FIELD, SIGNING_TIME);
+        // signing-time
+        if (!checkSigningTimeConstraint(conclusion)) {
+            return conclusion;
         }
 
-        /**
-         * • content-hints<br>
-         */
-
-        final boolean checkIfContentHintsIsPresent = constraintData.shouldCheckIfContentHintsIsPresent();
-        if (checkIfContentHintsIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ISQPCHP_LABEL, BBB_SAV_ISQPCHP);
-
-            final String contentHints = signatureContext.getValue("./ContentHints/text()");
-            if (contentHints.isEmpty()) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                conclusionNode.addChild(INFO, BBB_SAV_ISQPCHP_ANS_LABEL);
-                return false;
-            }
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, contentHints).setAttribute(FIELD, CONTENT_HINTS);
+        // content-hints
+        if (!checkContentHintsConstraint(conclusion)) {
+            return conclusion;
         }
 
-        /**
-         * • content-reference<br>
-         */
+        // content-reference
+        // TODO: (Bob: 2014 Mar 07)
 
-        /**
-         * • content-identifier
-         */
-        final boolean checkIfContentIdentifierIsPresent = constraintData.shouldCheckIfContentIdentifierIsPresent();
-        if (checkIfContentIdentifierIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ISQPCIP_LABEL, BBB_SAV_ISQPCIP);
-
-            final String contentIdentifier = signatureContext.getValue("./ContentIdentifier/text()");
-            if (contentIdentifier.isEmpty()) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                conclusionNode.addChild(INFO, BBB_SAV_ISQPCIP_ANS_LABEL);
-                return false;
-            }
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, contentIdentifier).setAttribute(FIELD, CONTENT_IDENTIFIER);
+        // content-identifier
+        if (!checkContentIdentifierConstraint(conclusion)) {
+            return conclusion;
         }
 
-        /**
-         * • content type
-         */
-        final boolean checkIfContentTypeIsPresent = constraintData.shouldCheckIfContentTypeIsPresent();
-        if (checkIfContentTypeIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ISQPCTP_LABEL, BBB_SAV_ISQPCTP);
-
-            final String contentType = signatureContext.getValue("./ContentType/text()");
-            if (contentType.isEmpty()) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                conclusionNode.addChild(INFO, BBB_SAV_ISQPCTP_ANS_LABEL);
-                return false;
-            }
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, contentType).setAttribute(FIELD, CONTENT_TYPE);
+        // commitment-type-indication
+        if (!checkCommitmentTypeIndicationConstraint(conclusion)) {
+            return conclusion;
         }
 
-        /**
-         * • commitment-type-indication
-         */
-        final boolean checkIfCommitmentTypeIndicationIsPresent = constraintData.shouldCheckIfCommitmentTypeIndicationIsPresent();
-        if (checkIfCommitmentTypeIndicationIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ISQPXTIP_LABEL, BBB_SAV_ISQPXTIP);
-            ///final List<XmlDom> commitmentTypeIndications = signatureContext.getElements("./CommitmentTypeIndication/Identifier");
-            final String commitment_type_indication = signatureContext.getValue("./CommitmentTypeIndication/Identifier/text()");
-            final List<String> commitmentTypeIndications = constraintData.getCommitmentTypeIndications();
-            final boolean contains = RuleUtils.contains1(commitment_type_indication, commitmentTypeIndications);
-            if (!contains) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                return false;
-            }
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, commitment_type_indication).setAttribute(FIELD, COMMITMENT_TYPE_INDICATION_IDENTIFIER);
+        // signer-location
+        if (!checkSignerLocationConstraint(conclusion)) {
+            return conclusion;
         }
 
-        /**
-         * • signer-location
-         */
+        // signer-attributes
+        // TODO: (Bob: 2014 Mar 08)
 
-        final boolean checkIfSignerLocationIsPresent = constraintData.shouldCheckIfSignerLocationIsPresent();
-        if (checkIfSignerLocationIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ISQPSLP_LABEL, BBB_SAV_ISQPSLP);
-
-            final XmlDom signProductionPlaceXmlDom = signatureContext.getElement("./SignatureProductionPlace");
-            String signProductionPlace = "";
-            if (signProductionPlaceXmlDom != null) {
-
-                final List<XmlDom> elements = signProductionPlaceXmlDom.getElements("./*");
-                for (final XmlDom element : elements) {
-
-                    if (!signProductionPlace.isEmpty()) {
-
-                        signProductionPlace += "; ";
-                    }
-                    signProductionPlace += element.getName() + ": " + element.getText();
-                }
-            }
-            if (signProductionPlace.isEmpty()) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                return false;
-            }
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, signProductionPlace).setAttribute(FIELD, SIGNATURE_PRODUCTION_PLACE);
-        }
-
-        /**
-         * • signer-attributes<br>
-         */
-        /**
-         * • content-time-stamp
-         */
-        final boolean checkIfContentTimeStampIsPresent = constraintData.shouldCheckIfContentTimeStampIsPresent();
-        if (checkIfContentTimeStampIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ISQPCTSIP_LABEL, BBB_SAV_ISQPCTSIP);
-            final long count = signatureContext.getCountValue("count(./Timestamps/Timestamp[@Type='%s'])", TimestampType.CONTENT_TIMESTAMP);
-            if (count <= 0) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                conclusionNode.addChild(INFO, BBB_SAV_ISQPCTSIP_ANS_LABEL);
-                return false;
-            }
-            constraintNode.addChild(STATUS, OK);
+        // content-time-stamp
+        if (!checkContentTimeStampConstraint(conclusion)) {
+            return conclusion;
         }
 
         /**
@@ -303,51 +228,24 @@ public class SignatureAcceptanceValidation implements Indication, SubIndication,
          *
          * <OnRoles>
          */
-
-        final boolean checkIfClaimedRoleIsPresent = constraintData.shouldCheckIfClaimedRoleIsPresent();
-        if (checkIfClaimedRoleIsPresent) {
-
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ICRM_LABEL, BBB_SAV_ICRM);
-
-            final List<String> requestedClaimedRoles = constraintData.getClaimedRoles();
-            final String requestedClaimedRolesString = RuleUtils.toString(requestedClaimedRoles);
-
-            final List<XmlDom> claimedRolesXmlDom = signatureContext.getElements("./ClaimedRoles/ClaimedRole");
-            final List<String> claimedRoles = RuleUtils.toStringList(claimedRolesXmlDom);
-            final String claimedRolesString = RuleUtils.toString(claimedRoles);
-
-            String attendance = constraintData.getCertifiedRolesAttendance();
-            if (!"ANY".equals(attendance)) {
-
-                boolean contains = RuleUtils.contains(requestedClaimedRoles, claimedRoles);
-
-                if (!contains) {
-
-                    constraintNode.addChild(STATUS, KO);
-                    conclusionNode.addChild(INDICATION, INVALID);
-                    conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                    conclusionNode.addChild(INFO, claimedRolesString).setAttribute(FIELD, CLAIMED_ROLES);
-                    conclusionNode.addChild(INFO, requestedClaimedRolesString).setAttribute(FIELD, REQUESTED_ROLES);
-                    return false;
-                }
-            }
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, claimedRolesString).setAttribute(FIELD, CLAIMED_ROLES);
+        if (!checkClaimedRoleConstraint(conclusion)) {
+            return conclusion;
         }
 
         /**
-         * 5.5.4.2 Processing signing certificate reference constraint<br>
-         * If the SigningCertificate property contains references to other certificates in the path, the verifier shall
-         * check each of the certificates in the certification path against these references as specified in steps 1 and 2
-         * in clause 5.1.4.1 (resp clause 5.1.4.2) for XAdES (resp CAdES). Should this property contain one or more
-         * references to certificates other than those present in the certification path, the verifier shall assume that a
-         * failure has occurred during the verification. Should one or more certificates in the certification path not be
-         * referenced by this property, the verifier shall assume that the verification is successful unless the signature
-         * policy mandates that references to all the certificates in the certification path "shall" be present.
+         * 5.5.4.2 Processing signing certificate reference constraint
+         * If the SigningCertificate property contains references to other certificates in the path, the verifier shall check
+         * each of the certificates in the certification path against these references as specified in steps 1 and 2 in clause 5.1.4.1
+         * (resp clause 5.1.4.2) for XAdES (resp CAdES).
+         * Should this property contain one or more references to certificates other than those present in the certification path, the
+         * verifier shall assume that a failure has occurred during the verification.
+         * Should one or more certificates in the certification path not be referenced by this property, the verifier shall assume that
+         * the verification is successful unless the signature policy mandates that references to all the certificates in the
+         * certification path "shall" be present.
          *
-         * ../..
+         * // TODO: (Bob: 2014 Mar 07) This is not yet implemented.
          *
-         * 5.5.4.3 Processing claimed signing time<br>
+         * 5.5.4.3 Processing claimed signing time
          * If the signature constraints contain constraints regarding this property, the verifying application shall
          * follow its rules for checking this signed property. Otherwise, the verifying application shall make the value
          * of this property/attribute available to its DA, so that it may decide additional suitable processing, which is
@@ -398,16 +296,17 @@ public class SignatureAcceptanceValidation implements Indication, SubIndication,
          the present document.
          */
 
+        // TODO: (Bob: 2014 Mar 23) To be converted to the WARNING system
         final boolean checkIfCertifiedRoleIsPresent = constraintData.shouldCheckIfCertifiedRoleIsPresent();
         if (checkIfCertifiedRoleIsPresent) {
 
-            final XmlNode constraintNode = addConstraint(BBB_SAV_ICERRM_LABEL, BBB_SAV_ICERRM);
+            final XmlNode constraintNode = addConstraint(BBB_SAV_ICERRM);
 
             final List<String> requestedCertifiedRoles = constraintData.getCertifiedRoles();
             final String requestedCertifiedRolesString = RuleUtils.toString(requestedCertifiedRoles);
 
             final List<XmlDom> certifiedRolesXmlDom = signatureContext.getElements("./CertifiedRoles/CertifiedRole");
-            final List<String> certifiedRoles = RuleUtils.toStringList(certifiedRolesXmlDom);
+            final List<String> certifiedRoles = XmlDom.convertToStringList(certifiedRolesXmlDom);
             final String certifiedRolesString = RuleUtils.toString(certifiedRoles);
 
             boolean contains = RuleUtils.contains(requestedCertifiedRoles, certifiedRoles);
@@ -415,56 +314,255 @@ public class SignatureAcceptanceValidation implements Indication, SubIndication,
             if (!contains) {
 
                 constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, SIG_CONSTRAINTS_FAILURE);
-                conclusionNode.addChild(INFO, certifiedRolesString).setAttribute(FIELD, CERTIFIED_ROLES);
-                conclusionNode.addChild(INFO, requestedCertifiedRolesString).setAttribute(FIELD, REQUESTED_ROLES);
-                return false;
+                conclusion.setIndication(INVALID, SIG_CONSTRAINTS_FAILURE);
+                conclusion.addError(BBB_SAV_ICERRM_ANS).setAttribute(CERTIFIED_ROLES, certifiedRolesString).setAttribute(REQUESTED_ROLES, requestedCertifiedRolesString);
+                return conclusion;
             }
             constraintNode.addChild(STATUS, OK);
             constraintNode.addChild(INFO, certifiedRolesString).setAttribute(FIELD, CERTIFIED_ROLES);
             constraintNode.addChild(INFO, "WARNING: The attribute certificate is not cryptographically validated.");
         }
 
-        /**
-         * ../..
-         * 5.5.4 Processing
-         * ../..
-         * • If at least one of the algorithms that have been used in validation of the signature or the size of the keys
-         * used with such an algorithm is no longer considered reliable, return
-         * INDETERMINATE/CRYPTO_CONSTRAINTS_FAILURE_NO_POE together with the list of algorithms and key sizes, if
-         * applicable, that are concerned and the time for each of the algorithms up to which the resp. algorithm was
-         * considered secure.
-         */
-        final XmlNode constraintNode = addConstraint(BBB_SAV_ASCCM_LABEL, BBB_SAV_ASCCM);
-
-        final SAVCryptographicConstraint cryptoConstraints = new SAVCryptographicConstraint();
-        final SAVCryptoConstraintParameters cryptoParams = new SAVCryptoConstraintParameters(params, SIGNATURE_TO_VALIDATE);
-        final XmlNode infoContainerNode = new XmlNode("Container");
-        final boolean cryptographicStatus = cryptoConstraints.run(cryptoParams, infoContainerNode);
-        if (cryptographicStatus) {
-
-            constraintNode.addChild(STATUS, OK);
-        } else {
-
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(INDICATION, INDETERMINATE);
-            conclusionNode.addChild(SUB_INDICATION, CRYPTO_CONSTRAINTS_FAILURE_NO_POE);
-            conclusionNode.addChildrenOf(infoContainerNode);
-            return false;
+        // Main signature cryptographic constraints validation
+        if (!checkMainSignatureCryptographicConstraint(conclusion)) {
+            return conclusion;
         }
-        return true;
+
+        // This validation process returns VALID
+        conclusion.setIndication(VALID);
+        return conclusion;
     }
 
     /**
-     * @param label
-     * @param nameId
+     * @param messageTag
      * @return
      */
-    private XmlNode addConstraint(final String label, final String nameId) {
+    private XmlNode addConstraint(final MessageTag messageTag) {
 
         final XmlNode constraintNode = subProcessNode.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, label).setAttribute(NAME_ID, nameId);
+        constraintNode.addChild(NAME, messageTag.getMessage()).setAttribute(NAME_ID, messageTag.name());
         return constraintNode;
+    }
+
+    /**
+     * Check of signing-time
+     *
+     * 5.5.4.3 Processing claimed signing time
+     * If the signature constraints contain constraints regarding this property, the verifying application shall follow its rules for
+     * checking this signed property.
+     * Otherwise, the verifying application shall make the value of this property/attribute available to its DA, so that it may
+     * decide additional suitable processing, which is out of the scope of the present document.
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkSigningTimeConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getSigningTimeConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, BBB_SAV_ISQPSTP);
+        final String signingTime = signatureContext.getValue("./DateTime/text()");
+        constraint.setValue(DSSUtils.isNotBlank(signingTime));
+        constraint.setIndications(INVALID, SIG_CONSTRAINTS_FAILURE, BBB_SAV_ISQPSTP_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Check of content-hints
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkContentHintsConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getContentHintsConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, BBB_SAV_ISQPCHP);
+        final String contentHints = signatureContext.getValue("./ContentHints/text()");
+        constraint.setValue(contentHints);
+        constraint.setIndications(INVALID, SIG_CONSTRAINTS_FAILURE, BBB_SAV_ISQPCHP_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Check of content-identifier
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkContentIdentifierConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getContentIdentifierConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, BBB_SAV_ISQPCIP);
+        final String contentIdentifier = signatureContext.getValue("./ContentIdentifier/text()");
+        constraint.setValue(contentIdentifier);
+        constraint.setIndications(INVALID, SIG_CONSTRAINTS_FAILURE, BBB_SAV_ISQPCIP_ANS);
+        //constraint.setAttribute()
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Check of commitment-type-indication
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkCommitmentTypeIndicationConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getCommitmentTypeIndicationConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, BBB_SAV_ISQPXTIP);
+        final String commitmentTypeIndicationIdentifier = signatureContext.getValue("./CommitmentTypeIndication/Identifier/text()");
+        constraint.setValue(commitmentTypeIndicationIdentifier);
+        constraint.setIndications(INVALID, SIG_CONSTRAINTS_FAILURE, BBB_SAV_ISQPXTIP_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.checkInList();
+    }
+
+    /**
+     * Check of signer-location
+     *
+     * 5.5.4.5 Processing indication of production place of the signature
+     * If the signature constraints contain constraints regarding this property, the verifying application shall follow its rules for
+     * checking this signed property.
+     * Otherwise, the verifying application shall make the value of this property/attribute available to its DA, so that it may
+     * decide additional suitable processing, which is out of the scope of the present document.
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkSignerLocationConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getSignerLocationConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, BBB_SAV_ISQPSLP);
+        String signatureProductionPlace = signatureContext.getValue("./SignatureProductionPlace/text()");
+        final XmlDom signProductionPlaceXmlDom = signatureContext.getElement("./SignatureProductionPlace");
+        if (signProductionPlaceXmlDom != null) {
+
+            final List<XmlDom> elements = signProductionPlaceXmlDom.getElements("./*");
+            for (final XmlDom element : elements) {
+
+                if (!signatureProductionPlace.isEmpty()) {
+
+                    signatureProductionPlace += "; ";
+                }
+                signatureProductionPlace += element.getName() + ": " + element.getText();
+            }
+        }
+        constraint.setValue(signatureProductionPlace);
+        constraint.setIndications(INVALID, SIG_CONSTRAINTS_FAILURE, BBB_SAV_ISQPSLP_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Check of content-time-stamp
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkContentTimeStampConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getContentTimeStampConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, BBB_SAV_ISQPCTSIP);
+        final long count = signatureContext.getCountValue("count(./Timestamps/Timestamp[@Type='%s'])", TimestampType.CONTENT_TIMESTAMP);
+        final String countValue = count <= 0 ? "" : String.valueOf(count);
+        constraint.setValue(countValue);
+        constraint.setIndications(INVALID, SIG_CONSTRAINTS_FAILURE, BBB_SAV_ISQPCTSIP_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Check of unsigned qualifying property: claimed roles
+     * // TODO: (Bob: 2014 Mar 08)
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkClaimedRoleConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getClaimedRoleConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, BBB_SAV_ICRM);
+        final List<XmlDom> claimedRolesXmlDom = signatureContext.getElements("./ClaimedRoles/ClaimedRole");
+        //     constraint.setValue(countValue);
+        constraint.setIndications(INVALID, SIG_CONSTRAINTS_FAILURE, BBB_SAV_ISQPCTSIP_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+
+//        final List<String> requestedClaimedRoles = constraintData.getClaimedRoles();
+//        final String requestedClaimedRolesString = RuleUtils.toString(requestedClaimedRoles);
+//
+//        final List<XmlDom> claimedRolesXmlDom = signatureContext.getElements("./ClaimedRoles/ClaimedRole");
+//        final List<String> claimedRoles = RuleUtils.toStringList(claimedRolesXmlDom);
+//        final String claimedRolesString = RuleUtils.toString(claimedRoles);
+//
+//        String attendance = constraintData.getCertifiedRolesAttendance();
+//        if (!"ANY".equals(attendance)) {
+//
+//            boolean contains = RuleUtils.contains(requestedClaimedRoles, claimedRoles);
+//
+//            if (!contains) {
+//
+//                constraintNode.addChild(STATUS, KO);
+//                conclusion.setIndication(INVALID, SIG_CONSTRAINTS_FAILURE);
+//                conclusion.addInfo(claimedRolesString).setAttribute(FIELD, CLAIMED_ROLES);
+//                conclusion.addInfo(requestedClaimedRolesString).setAttribute(FIELD, REQUESTED_ROLES);
+//                return conclusion;
+//            }
+//        }
+//        constraintNode.addChild(STATUS, OK);
+//        constraintNode.addChild(INFO, claimedRolesString).setAttribute(FIELD, CLAIMED_ROLES);
+    }
+
+    /**
+     * Check of: main signature cryptographic verification
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkMainSignatureCryptographicConstraint(final Conclusion conclusion) {
+
+        final SignatureCryptographicConstraint constraint = constraintData.getSignatureCryptographicConstraint(MAIN_SIGNATURE);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(subProcessNode, ASCCM);
+        constraint.setCurrentTime(currentTime);
+        constraint.setEncryptionAlgorithm(signatureContext.getValue(XP_ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN));
+        constraint.setDigestAlgorithm(signatureContext.getValue(XP_DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN));
+        constraint.setKeyLength(signatureContext.getValue(XP_KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN));
+        constraint.setIndications(INDETERMINATE, CRYPTO_CONSTRAINTS_FAILURE_NO_POE, EMPTY);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
     }
 }

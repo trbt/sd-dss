@@ -36,9 +36,6 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
  */
 public class ProcessParameters implements ExceptionMessage {
 
-    // Logging the result of the validation process on the System.out.
-    private static boolean loggingEnabled = false;
-
     /**
      * This variable contains the diagnostic data which is used to carry out all validation processes. It is extracted
      * from the signature(s) being validated. This data is independent of the form of source signature (PDF, XAdES,
@@ -60,14 +57,16 @@ public class ProcessParameters implements ExceptionMessage {
     /**
      * This variable contains the Signing Certificate Id. It is initialised by
      * {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.IdentificationOfTheSignersCertificate} sub process.
+     * This variable is different for each context.
      */
-    private String signCertId;
+    private String signingCertificateId;
 
     /**
      * This variable contains the Signing Certificate Node from diagnostic data. It is initialised by
      * {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.IdentificationOfTheSignersCertificate} sub process.
+     * This variable is different for each context.
      */
-    private XmlDom signCert;
+    private XmlDom signingCertificate;
 
     /**
      * Represents the current main signature DOM element being validated. This element provides general information used
@@ -77,52 +76,49 @@ public class ProcessParameters implements ExceptionMessage {
 
     /**
      * Represents the current signature DOM element being validated:<br>
-     * in the case of main signature validation <code>contextElement</code> is the signature element being validated;<br>
-     * in case of Timestamp signature validation <code>contextElement</code> is the timestamp element being validated.
+     * in the case of main signature validation {@code contextElement} is the signature element being validated;<br>
+     * in case of Timestamp signature validation {@code contextElement} is the timestamp element being validated.
      */
     protected XmlDom contextElement;
 
     /**
-     * Indicates the current validation element like: SignatureToValidate, SigningCertificate...
+     * Indicates the current validation element like: MainSignature, SigningCertificate...
      */
     protected String contextName;
 
     /**
-     * This <code>XmlDom</code> is returned by the Basic Building Blocks process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.BasicBuildingBlocks}).
+     * This {@code XmlDom} is returned by the Basic Building Blocks process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.BasicBuildingBlocks}) and
+     * it depicts the validation detailed report.
      */
-    private XmlDom bbbData;
+    private XmlDom basicBuildingBlocksReport;
 
     /**
-     * This <code>XmlDom</code> is returned by the Basic Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.BasicValidation}).
+     * This {@code XmlDom} is returned by the Basic Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.BasicValidation}) and
+     * it depicts the validation detailed report.
      */
     private XmlDom bvData;
 
     /**
-     * This <code>XmlDom</code> is returned by the Basic Timestamp Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.TimestampValidation}).
+     * This {@code XmlDom} is returned by the Basic Timestamp Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.TimestampValidation})
+     * and it depicts the validation detailed report.
      */
     private XmlDom tsData;
 
     /**
-     * This <code>XmlDom</code> is returned by the AdEST Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.AdESTValidation}).
+     * This {@code XmlDom} is returned by the AdEST Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.AdESTValidation}) and
+     * it depicts the validation detailed report.
      */
     private XmlDom adestData;
 
     /**
-     * This <code>XmlDom</code> is returned by the Long Term Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.LongTermValidation}).
+     * This {@code XmlDom} is returned by the Long Term Validation process (see {@link eu.europa.ec.markt.dss.validation102853.engine.rules.processes.LongTermValidation}) and
+     * it depicts the validation detailed report.
      */
     private XmlDom ltvData;
 
     private XmlDom certPool;
 
     private POEExtraction poe;
-
-    public static boolean isLoggingEnabled() {
-        return loggingEnabled;
-    }
-
-    public static void setLoggingEnabled(final boolean loggingEnabled) {
-        ProcessParameters.loggingEnabled = loggingEnabled;
-    }
 
     /**
      * See {@link #diagnosticData}
@@ -161,57 +157,57 @@ public class ProcessParameters implements ExceptionMessage {
     }
 
     /**
-     * See {@link #signCertId}
+     * See {@link #signingCertificateId}
      *
      * @return
      */
-    public String getSignCertId() {
-        return signCertId;
+    public String getSigningCertificateId() {
+        return signingCertificateId;
     }
 
     /**
-     * See {@link #signCertId}
+     * See {@link #signingCertificateId}
      *
      * @return
      */
-    public void setSignCertId(final String signCertId) {
-        this.signCertId = signCertId;
+    public void setSigningCertificateId(final String signingCertificateId) {
+        this.signingCertificateId = signingCertificateId;
     }
 
     /**
-     * See {@link #signCert}
+     * See {@link #signingCertificate}
      *
      * @return
      */
-    public XmlDom getSignCert() {
-        return signCert;
+    public XmlDom getSigningCertificate() {
+        return signingCertificate;
     }
 
     /**
-     * See {@link #signCert}
+     * See {@link #signingCertificate}
      *
      * @return
      */
-    public void setSignCert(final XmlDom signCert) {
-        this.signCert = signCert;
+    public void setSigningCertificate(final XmlDom signingCertificate) {
+        this.signingCertificate = signingCertificate;
     }
 
     /**
-     * See {@link #bbbData}
+     * See {@link #basicBuildingBlocksReport}
      *
      * @return
      */
-    public XmlDom getBBBData() {
-        return bbbData;
+    public XmlDom getBasicBuildingBlocksReport() {
+        return basicBuildingBlocksReport;
     }
 
     /**
-     * See {@link #bbbData}
+     * See {@link #basicBuildingBlocksReport}
      *
      * @return
      */
     public void setBBBData(final XmlDom bbbData) {
-        this.bbbData = bbbData;
+        this.basicBuildingBlocksReport = bbbData;
     }
 
     /**
@@ -365,9 +361,7 @@ public class ProcessParameters implements ExceptionMessage {
     }
 
     /**
-     * Returns the XmlDom object representing the pool of the certificates used in the validation process.
-     *
-     * @return
+     * @return the {@code XmlDom} object representing the pool of the certificates used in the validation process.
      */
     public XmlDom getCertPool() {
         return certPool;
@@ -378,10 +372,8 @@ public class ProcessParameters implements ExceptionMessage {
     }
 
     /**
-     * Returns the XmlDom representing the corresponding certificate or null.
-     *
-     * @param id
-     * @return
+     * @param id the {@code int} SD-DSS certificate unique identifier
+     * @return the {@code XmlDom} representing the corresponding certificate or null.
      */
 
     public XmlDom getCertificate(int id) {
@@ -390,13 +382,11 @@ public class ProcessParameters implements ExceptionMessage {
     }
 
     /**
-     * Returns the XmlDom representing the corresponding certificate or null.
-     *
-     * @param id
-     * @return
+     * @param id the {@code String} SD-DSS certificate unique identifier
+     * @return Returns the {@code XmlDom} representing the corresponding certificate or null.
      */
 
-    public XmlDom getCertificate(String id) {
+    public XmlDom getCertificate(final String id) {
 
         return certPool == null ? certPool : certPool.getElement("./Certificate[@Id='%s']", id);
     }
@@ -416,7 +406,7 @@ public class ProcessParameters implements ExceptionMessage {
 
             StringBuilder builder = new StringBuilder();
             builder.append("currentTime: ").append(currentTime).append("\n");
-            builder.append("signCertId: ").append(signCertId).append("\n");
+            builder.append("signingCertificateId: ").append(signingCertificateId).append("\n");
             builder.append("contextName: ").append(contextName).append("\n");
 
             return builder.toString();

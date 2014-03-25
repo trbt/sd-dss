@@ -55,19 +55,14 @@ public class ForLegalPerson implements NodeName, NodeValue, AttributeName, Attri
      * The ForLegalPerson constraint is to be applied to the signer's certificate of the main signature or of the
      * timestamp before considering it as valid for the intended use.
      *
-     * @param isTimestamp indicates if this is a timestamp signing cert or main signature signing cert.
-     * @param cert        the cert to be processed
+     * // @param isTimestamp indicates if this is a timestamp signing cert or main signature signing cert.
+     *
+     * @param cert the cert to be processed
      * @return
      */
-    public Boolean run(final boolean isTimestamp, final XmlDom cert) {
+    public Boolean run(final XmlDom cert) {
 
-        final String context = isTimestamp ? TIMESTAMP_SIGNING_CERTIFICATE : SIGNING_CERTIFICATE;
-        final boolean mustBeForLegalPersonCertificate = constraintData.mustBeForLegalPersonCertificate(context);
-        if (mustBeForLegalPersonCertificate) {
-
-            return process(cert);
-        }
-        return null;
+        return process(cert);
     }
 
     /**

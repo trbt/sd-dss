@@ -55,16 +55,17 @@ import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.AbstractSignatureService;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
+import eu.europa.ec.markt.dss.signature.DocumentSignatureService;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.signature.MimeType;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
-import eu.europa.ec.markt.dss.signature.xades.XAdESService;
-import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
+import eu.europa.ec.markt.dss.validation102853.SignatureForm;
 import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 
 /**
  * Implementation of DocumentSignatureService for ASiC-S documents.
@@ -97,7 +98,7 @@ public class ASiCXMLSignatureService extends AbstractSignatureService {
     }
 
     /**
-     * Creates specific XAdES signature parameters on base of the provided parameters. Forces the signature packaging to
+     * Creates a specific XAdES signature parameters on base of the provided parameters. Forces the signature packaging to
      * DETACHED
      *
      * @param parameters must provide signingToken, PrivateKeyEntry and date
@@ -107,17 +108,27 @@ public class ASiCXMLSignatureService extends AbstractSignatureService {
 
         final SignatureParameters xadesParameters = new SignatureParameters(parameters);
         final SignatureLevel asicProfile = parameters.getSignatureLevel();
+        final SignatureForm asicSignatureForm = parameters.getAsicSignatureForm();
         SignatureLevel xadesLevel;
         switch (asicProfile) {
 
             case ASiC_S_BASELINE_B:
-                xadesLevel = SignatureLevel.XAdES_BASELINE_B;
+                xadesLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_B : SignatureLevel.CAdES_BASELINE_B;
                 break;
             case ASiC_S_BASELINE_T:
-                xadesLevel = SignatureLevel.XAdES_BASELINE_T;
+                xadesLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_T : SignatureLevel.CAdES_BASELINE_T;
                 break;
             case ASiC_S_BASELINE_LT:
-                xadesLevel = SignatureLevel.XAdES_BASELINE_LT;
+                xadesLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LT : SignatureLevel.CAdES_BASELINE_LT;
+                break;
+            case ASiC_E_BASELINE_B:
+                xadesLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_B : SignatureLevel.CAdES_BASELINE_B;
+                break;
+            case ASiC_E_BASELINE_T:
+                xadesLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_T : SignatureLevel.CAdES_BASELINE_T;
+                break;
+            case ASiC_E_BASELINE_LT:
+                xadesLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LT : SignatureLevel.CAdES_BASELINE_LT;
                 break;
             default:
                 throw new DSSException("Unsupported format: " + asicProfile.name());
@@ -165,9 +176,9 @@ public class ASiCXMLSignatureService extends AbstractSignatureService {
         final SignatureParameters xadesParameters = getXAdESParams(parameters);
         xadesParameters.setOriginalDocument(document);
 
-        final XAdESService xadesService = xadesParameters.getContext().getXadesService(certificateVerifier);
-        xadesService.setTspSource(tspSource);
-        final DSSDocument signedDocument = xadesService.signDocument(document, xadesParameters, signatureValue);
+        final DocumentSignatureService underlyingService = xadesParameters.getContext().getXadesService(certificateVerifier, SignatureForm.XAdES);
+        underlyingService.setTspSource(tspSource);
+        final DSSDocument signedDocument = underlyingService.signDocument(document, xadesParameters, signatureValue);
 
         // Creates the XAdES signature
         final Document xmlSignatureDoc = DSSXMLUtils.buildDOM(signedDocument);
@@ -245,7 +256,7 @@ public class ASiCXMLSignatureService extends AbstractSignatureService {
     @Override
     public byte[] getDataToSign(DSSDocument document, SignatureParameters parameters) throws DSSException {
         final SignatureParameters xadesParameters = getXAdESParams(parameters);
-        final XAdESService xadesService = xadesParameters.getContext().getXadesService(certificateVerifier);
+        final DocumentSignatureService xadesService = xadesParameters.getContext().getXadesService(certificateVerifier, SignatureForm.XAdES);
         return xadesService.getDataToSign(document, xadesParameters);
     }
 
@@ -280,7 +291,7 @@ public class ASiCXMLSignatureService extends AbstractSignatureService {
                 originalDocument = validator.getExternalContent();
             }
 
-            final XAdESService service = parameters.getContext().getXadesService(certificateVerifier);
+            final DocumentSignatureService service = parameters.getContext().getXadesService(certificateVerifier, SignatureForm.XAdES);
             service.setTspSource(tspSource);
 
             final SignatureParameters xadesParameters = getXAdESParams(parameters);

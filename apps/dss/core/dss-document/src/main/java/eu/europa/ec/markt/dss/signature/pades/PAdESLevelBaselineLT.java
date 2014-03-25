@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,14 +104,12 @@ class PAdESLevelBaselineLT implements SignatureExtension {
 
             assertExtendSignaturePossible(pdfDocumentValidator);
 
-
             for (final AdvancedSignature signature : signatures) {
                 if (signature instanceof PAdESSignature) {
                     PAdESSignature pAdESSignature = (PAdESSignature) signature;
                     validate(pAdESSignature);
                 }
             }
-
 
             final PdfObjFactory factory = PdfObjFactory.getInstance();
             PdfDict dssDictionary = factory.newDict("DSS");
@@ -146,7 +143,7 @@ class PAdESLevelBaselineLT implements SignatureExtension {
                         PAdESSignature pAdESSignature = (PAdESSignature) signature;
 
                         final byte[] digest = DSSUtils.digest(DigestAlgorithm.SHA1, pAdESSignature.getCAdESSignature().getCmsSignedData().getEncoded());
-                        String hexHash = Hex.encodeHexString(digest).toUpperCase();
+                        String hexHash = DSSUtils.encodeHexString(digest).toUpperCase();
 
                         vriDictionary.add(hexHash, sigVriDictionary);
 
@@ -215,6 +212,5 @@ class PAdESLevelBaselineLT implements SignatureExtension {
         //TODO (nicolas pdfbox): missing looking into PADES document-timestamp to add CRL/OCSP/Certificates ?. (Some of these timestamp are included in the cadesSignaure , but not the document-timestamp)
 
     }
-
 
 }

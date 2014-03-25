@@ -23,9 +23,11 @@ package eu.europa.ec.markt.dss.signature.pades;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 
 /**
+ * TODO: (Bob: 2014 Mar 07) To be removed in next version
+ *
  * PAdES implementation of the DocumentSignatureService
  *
- * @version $Revision: 3330 $ - $Date: 2014-01-16 08:14:50 +0100 (Thu, 16 Jan 2014) $
+ * @version $Revision: 3574 $ - $Date: 2014-03-07 16:14:50 +0100 (Fri, 07 Mar 2014) $
  * @deprecated use {@code PAdESService} instead
  */
 @Deprecated

@@ -29,21 +29,22 @@ import org.slf4j.LoggerFactory;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.Conclusion.Info;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ValidationXPathQueryHolder;
+import eu.europa.ec.markt.dss.validation102853.report.Conclusion.Info;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.ForLegalPerson;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.QualifiedCertificate;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.SSCD;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
-import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
-import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
-import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
-import eu.europa.ec.markt.dss.validation102853.rules.Indication;
-import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
-import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
-import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.X509CertificateValidation;
+import eu.europa.ec.markt.dss.validation102853.rules.MessageTag;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
+
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CCCBB;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ICSI_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.PCV_ICTSC;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.PCV_ICTSC_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.PCV_TINTA_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.PCV_TIOOCIC_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.XCV_IFCCIIPC_ANS;
 
 /**
  * 9.2 Additional Building blocks<br>
@@ -91,17 +92,14 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
  *
  * @author bielecro
  */
-public class PastCertificateValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage, ValidationXPathQueryHolder {
+public class PastCertificateValidation extends X509CertificateValidation {
 
     private static final Logger LOG = LoggerFactory.getLogger(PastCertificateValidation.class);
 
     /**
-     * See {@link eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters#getValidationPolicy()}
+     * // TODO: (Bob: 2014 Mar 12)
      */
-    private ValidationPolicy constraintData;
-
-    // returned data
-    private XmlNode pastCertValidationData;
+    private String contextName;
 
     /**
      * @param params
@@ -123,7 +121,7 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
     }
 
     /**
-     * This method carries out the Past certificate validation.
+     * This method prepares the past certificate validation process.
      * <p/>
      * Input<br>
      * - Signature or time-stamp token . Mandatory<br>
@@ -138,40 +136,39 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
      * - VALID<br>
      * - INDETERMINATE CHAIN_CONSTRAINTS_FAILURE, NO_CERTIFICATE_CHAIN_FOUND, NO_POE (returned by ControlTimeSliding)
      *
-     * @param params    validation process parameters
-     * @param signature signature to be validated
-     * @return
+     * @param params          validation process parameters
+     * @param signatureXmlDom {@code XmlDom} representation of the signature to validate
+     * @return {@code PastCertificateValidationConclusion} including information collected during the validation process.
      */
-    public PastCertificateValidationConclusion run(final ProcessParameters params, final XmlDom signature) {
+    public PastCertificateValidationConclusion run(final ProcessParameters params, final XmlDom signatureXmlDom, final String context) {
 
+        this.contextName = context;
         prepareParameters(params);
         LOG.debug(this.getClass().getSimpleName() + ": start.");
 
-        pastCertValidationData = new XmlNode(PAST_CERT_VALIDATION_DATA);
-        pastCertValidationData.setNameSpace(XmlDom.NAMESPACE);
+        validationDataXmlNode = new XmlNode(PAST_CERT_VALIDATION_DATA);
+        validationDataXmlNode.setNameSpace(XmlDom.NAMESPACE);
 
-        PastCertificateValidationConclusion conclusion = process(params, signature);
+        contextElement = signatureXmlDom;
 
-        conclusion.setValidationData(pastCertValidationData);
+        final PastCertificateValidationConclusion conclusion = process(params);
 
-        if (ProcessParameters.isLoggingEnabled()) {
+        conclusion.setValidationData(validationDataXmlNode);
 
-            System.out.println("");
-            System.out.println(pastCertValidationData.toString());
-        }
         return conclusion;
     }
 
     /**
-     * @param params    validation process parameters
-     * @param signature signature to be validated
+     * This method carries out the past certificate validation process.
+     *
+     * @param params validation process parameters
      * @return
      */
-    private PastCertificateValidationConclusion process(final ProcessParameters params, final XmlDom signature) {
+    private PastCertificateValidationConclusion process(final ProcessParameters params) {
 
         final PastCertificateValidationConclusion conclusion = new PastCertificateValidationConclusion();
 
-        final XmlDom certificateChain = signature.getElement("./CertificateChain");
+        final XmlDom certificateChainXmlDom = contextElement.getElement("./CertificateChain");
 
         /**
          * 9.2.1.4 Processing<br>
@@ -188,13 +185,18 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
 
         // The current status is not used in this implementation because the DSS framework build just one chain.
 
-        final String signingCertificateId = certificateChain.getValue("./ChainCertificate[1]/@Id");
+        final String signingCertificateId = certificateChainXmlDom.getValue("./ChainCertificate[1]/@Id");
 
-        pastCertValidationData.setAttribute(ID, signingCertificateId);
+        validationDataXmlNode.setAttribute(CERTIFICATE_ID, signingCertificateId);
 
-        XmlNode constraintNode = addConstraint(BBB_XCV_CCCBB_LABEL, BBB_XCV_CCCBB);
+        final boolean trustedProspectiveCertificateChain = Boolean.valueOf(isTrustedProspectiveCertificateChain(params));
+        if (!checkProspectiveCertificateChainConstraint(conclusion, trustedProspectiveCertificateChain)) {
+            return conclusion;
+        }
 
-        final String trustedAnchorId = certificateChain.getValue("./ChainCertificate[last()]/@Id");
+        XmlNode constraintNode = addConstraint(BBB_XCV_CCCBB);
+
+        final String trustedAnchorId = certificateChainXmlDom.getValue("./ChainCertificate[last()]/@Id");
         final XmlDom trustedAnchor = params.getCertificate(trustedAnchorId);
         boolean isLastTrusted = false;
         if (trustedAnchor != null) {
@@ -205,7 +207,7 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
 
             constraintNode.addChild(STATUS, KO);
             conclusion.setIndication(INDETERMINATE, NO_CERTIFICATE_CHAIN_FOUND);
-            final Info info = conclusion.addInfo(PCV_TINTA_LABEL);
+            final Info info = conclusion.addInfo(PCV_TINTA_ANS);
             info.addTo(constraintNode);
             return conclusion;
         }
@@ -222,12 +224,12 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
          * - a date from the intersection of the validity intervals of all the certificates in the prospective chain.<br>
          * <b>The validation shall not include revocation checking</b>:<br>
          */
-        final List<XmlDom> certChain = certificateChain.getElements("./ChainCertificate");
+        final List<XmlDom> certChain = certificateChainXmlDom.getElements("./ChainCertificate");
         if (certChain.size() < 2) {
 
             constraintNode.addChild(STATUS, KO);
             conclusion.setIndication(INDETERMINATE, NO_CERTIFICATE_CHAIN_FOUND);
-            final Info info = conclusion.addInfo(PCV_TIOOCIC_LABEL);
+            final Info info = conclusion.addInfo(PCV_TIOOCIC_ANS);
             info.addTo(constraintNode);
             return conclusion;
         }
@@ -260,9 +262,8 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
 
                 constraintNode.addChild(STATUS, KO);
                 conclusion.setIndication(INDETERMINATE, NO_CERTIFICATE_CHAIN_FOUND);
-                final Info info = conclusion.addInfo(String.format(XCV_IFCCIIPC_LABEL, notAfter, notAfter, certificateId));
-                info.setAttribute(FIELD, CERT_ID);
-                info.setAttribute(CERT_ID, certificateId);
+                final Info info = conclusion.addInfo(XCV_IFCCIIPC_ANS, notAfter.toString(), notAfter.toString(), certificateId);
+                info.setAttribute(CERTIFICATE_ID, certificateId);
                 info.addTo(constraintNode);
                 return conclusion;
             }
@@ -326,14 +327,13 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
              * - - (4) The certificate issuer name is the working_issuer_name.<br>
              *
              */
-            final boolean isSignatureIntact = certificate.getBoolValue(SIGNATURE_VALID);
+            final boolean isSignatureIntact = certificate.getBoolValue(XP_SIGNATURE_VALID);
             if (!isSignatureIntact) {
 
                 constraintNode.addChild(STATUS, KO);
                 conclusion.setIndication(INDETERMINATE, NO_CERTIFICATE_CHAIN_FOUND);
-                final Info info = conclusion.addInfo(XCV_SOCIS_LABEL);
-                info.setAttribute(FIELD, CERT_ID);
-                info.setAttribute(CERT_ID, certificateId);
+                final Info info = conclusion.addInfo(BBB_XCV_ICSI_ANS);
+                info.setAttribute(CERTIFICATE_ID, certificateId);
                 info.addTo(constraintNode);
                 return conclusion;
             }
@@ -359,16 +359,16 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
          */
 
         final ControlTimeSliding controlTimeSliding = new ControlTimeSliding();
-        ControlTimeSlidingConclusion ctsConclusion = controlTimeSliding.run(params, certificateChain);
+        final ControlTimeSlidingConclusion ctsConclusion = controlTimeSliding.run(params, certificateChainXmlDom);
 
-        pastCertValidationData.addChild(ctsConclusion.getValidationData());
+        validationDataXmlNode.addChild(ctsConclusion.getValidationData());
 
         /**
          * If it outputs a success indication, go to the next step.<br>
          * Otherwise, set the current status to the returned indication and sub-indication and go back to step 1.<br>
          */
 
-        constraintNode = addConstraint(PCV_ICTSC_LABEL, PCV_ICTSC);
+        constraintNode = addConstraint(PCV_ICTSC);
 
         // --> DSS builds only one chain
         // From 1):
@@ -380,110 +380,67 @@ public class PastCertificateValidation implements Indication, SubIndication, Nod
             constraintNode.addChild(STATUS, KO);
 
             conclusion.setIndication(ctsConclusionIndication, ctsConclusion.getSubIndication());
-            conclusion.addInfo(CTS_RBCTSSP_LABEL);
+            conclusion.addInfo(PCV_ICTSC_ANS);
             return conclusion;
         }
         constraintNode.addChild(STATUS, OK);
         final Date controlTime = ctsConclusion.getControlTime();
         final String formatedControlTime = RuleUtils.formatDate(controlTime);
-        constraintNode.addChild(INFO, formatedControlTime).setAttribute(FIELD, CONTROL_TIME);
+        constraintNode.addChild(INFO).setAttribute(CONTROL_TIME, formatedControlTime);
         /**
          * 4) Apply the Chain Constraints to the chain. Certificate meta-data has to be taken into account when checking
          * these constraints against the chain. If the chain does not match these constraints, set the current status to
          * INVALID/CHAIN_CONSTRAINTS_FAILURE and go to step 1.<br>
          */
 
-        final String attribute = signature.getValue("./@Type");
-        final boolean isTimestamp = !attribute.isEmpty();
-
-        /**
-         * A.2 Constraints on X.509 Certificate meta-data
-         *
-         * The following constraints are to be applied to the signer's certificate before considering it as valid for the
-         * intended use.
-         */
-
-        final XmlDom signingCertificate = params.getCertificate(signingCertificateId);
-
-        final QualifiedCertificate qc = new QualifiedCertificate(constraintData);
-        Boolean isQC = qc.run(isTimestamp, signingCertificate);
-
-        if (isQC != null) { // The constraint is defined to true: <QualifiedCertificate>true</QualifiedCertificate>
+        if (MAIN_SIGNATURE.equals(contextName)) {
 
             /**
-             * Mandates the signer's certificate used in validating the signature to be a qualified certificate as defined
-             * in Directive 1999/93/EC [9]. This status can be derived from:
+             * A.2 Constraints on X.509 Certificate meta-data
+             *
+             * The following constraints are to be applied to the signer's certificate before considering it as valid for the
+             * intended use.
              */
-            constraintNode = addConstraint(BBB_XCV_CMDCIQC_LABEL, BBB_XCV_CMDCIQC);
 
-            if (!isQC) {
+            final XmlDom signingCertificate = params.getCertificate(signingCertificateId);
 
-                constraintNode.addChild(STATUS, KO);
-                conclusion.setIndication(INVALID, CHAIN_CONSTRAINTS_FAILURE);
-                conclusion.addInfo(BBB_XCV_SCINQ_LABEL);
+            final QualifiedCertificate qc = new QualifiedCertificate(constraintData);
+            boolean isQC = qc.run(signingCertificate);
+            if (!checkSigningCertificateQualificationConstraint(conclusion, isQC)) {
                 return conclusion;
             }
-            constraintNode.addChild(STATUS, OK);
-        }
 
-        final SSCD sscd = new SSCD(constraintData);
-        final Boolean isSSCD = sscd.run(isTimestamp, signingCertificate);
-
-        if (isSSCD != null) { // The constraint is defined to true: <SSCD>true</SSCD>
-
-            /**
-             * Mandates the end user certificate used in validating the signature to be supported by a secure signature
-             * creation device (SSCD) as defined in Directive 1999/93/EC [9].
-             */
-            addConstraint(BBB_XCV_CMDCISSCD_LABEL, BBB_XCV_CMDCISSCD);
-
-            if (!isSSCD) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusion.setIndication(INVALID, CHAIN_CONSTRAINTS_FAILURE);
+            final SSCD sscd = new SSCD(constraintData);
+            final Boolean isSSCD = sscd.run(signingCertificate);
+            if (!checkSigningCertificateSupportedBySSCDConstraint(conclusion, isSSCD)) {
                 return conclusion;
             }
-            constraintNode.addChild(STATUS, OK);
-        }
 
-        final ForLegalPerson forLegalPerson = new ForLegalPerson(constraintData);
-        final Boolean isForLegalPerson = forLegalPerson.run(isTimestamp, trustedAnchor);
-
-        if (isForLegalPerson != null) { // The constraint is defined to true: <ForLegalPerson>true</ForLegalPerson>
-
-            /**
-             * Mandates the signer's certificate used in validating the signature to be issued by a certificate authority
-             * issuing certificate as having been issued to a legal person.
-             */
-            addConstraint(BBB_XCV_CMDCIITLP_LABEL, BBB_XCV_CMDCIITLP);
-
-            if (!isForLegalPerson) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusion.setIndication(INVALID, CHAIN_CONSTRAINTS_FAILURE);
+            final ForLegalPerson forLegalPerson = new ForLegalPerson(constraintData);
+            final Boolean isForLegalPerson = forLegalPerson.run(signingCertificate);
+            if (!checkSigningCertificateIssuedToLegalPersonConstraint(conclusion, isForLegalPerson)) {
                 return conclusion;
             }
-            constraintNode.addChild(STATUS, OK);
         }
-
         /**
          * 5) Terminate with the current status and, if VALID, the certificate chain and the calculated control-time
          * returned in step 3.
          */
 
         conclusion.setIndication(VALID);
-        conclusion.addInfo(formatedControlTime).setAttribute(FIELD, CONTROL_TIME);
+        conclusion.addInfo().setAttribute(CONTROL_TIME, formatedControlTime);
         conclusion.setControlTime(controlTime);
         return conclusion;
     }
 
     /**
+     * @param messageTag
      * @return
      */
-    private XmlNode addConstraint(final String label, final String nameId) {
+    private XmlNode addConstraint(final MessageTag messageTag) {
 
-        XmlNode constraintNode = pastCertValidationData.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, label).setAttribute(NAME_ID, nameId);
+        XmlNode constraintNode = validationDataXmlNode.addChild(CONSTRAINT);
+        constraintNode.addChild(NAME, messageTag.getMessage()).setAttribute(NAME_ID, messageTag.name());
         return constraintNode;
     }
 }

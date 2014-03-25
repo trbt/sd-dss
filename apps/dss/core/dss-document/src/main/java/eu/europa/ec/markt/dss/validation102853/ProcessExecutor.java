@@ -129,7 +129,7 @@ public class ProcessExecutor {
         final LongTermValidation ltv = new LongTermValidation();
         ltv.run(mainNode, processParams);
 
-        final Document validationReportDocument = ValidationResourceManager.xmlNodeIntoDom(mainNode);
+        final Document validationReportDocument = mainNode.toDocument();
         detailedReport = new DetailedReport(validationReportDocument);
 
         final SimpleReportBuilder simpleReportBuilder = new SimpleReportBuilder(validationPolicy, diagnosticData);
@@ -176,4 +176,40 @@ public class ProcessExecutor {
 
         return detailedReport;
     }
+
+    /**
+     * Returns an object containing all reports.
+     *
+     * @return
+     */
+    public Reports getReports() {
+
+        final Reports reports = new Reports();
+        reports.diagnosticData = diagnosticData;
+        reports.detailedReport = detailedReport;
+        reports.simpleReport = simpleReport;
+        return reports;
+    }
+
+    public static class Reports {
+
+        public DiagnosticData diagnosticData;
+        public DetailedReport detailedReport;
+        public SimpleReport simpleReport;
+
+        public void print() {
+
+            System.out.println("----------------Diagnostic data-----------------");
+            System.out.println(diagnosticData);
+
+            System.out.println("----------------Validation report---------------");
+            System.out.println(detailedReport);
+
+            System.out.println("----------------Simple report-------------------");
+            System.out.println(simpleReport);
+
+            System.out.println("------------------------------------------------");
+        }
+    }
+
 }

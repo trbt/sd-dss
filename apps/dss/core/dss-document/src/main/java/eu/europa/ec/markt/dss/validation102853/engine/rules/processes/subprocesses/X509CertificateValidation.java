@@ -23,6 +23,7 @@ package eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subproces
 import java.util.Date;
 import java.util.List;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
@@ -31,7 +32,11 @@ import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.Validation
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.ForLegalPerson;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.QualifiedCertificate;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.SSCD;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.CertificateExpirationConstraint;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.Constraint;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.SignatureCryptographicConstraint;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
+import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
@@ -42,6 +47,36 @@ import eu.europa.ec.markt.dss.validation102853.rules.RuleConstant;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
+
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ASCCM;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ACCM;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CCCBB;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CCCBB_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CMDCIITLP;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CMDCIITLP_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CMDCIQC;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CMDCIQC_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CMDCISSCD;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_CMDCISSCD_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ICSI;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ICSI_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ICTIVRSC;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ICTIVRSC_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IICR;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IICR_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IRDPFC;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IRDPFC_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IRDTFC;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IRDTFC_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IRIF;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_IRIF_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ISCOH;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ISCOH_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ISCR;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ISCR_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_WITSS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_WITSS_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.EMPTY;
 
 public class X509CertificateValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage, RuleConstant, ValidationXPathQueryHolder {
 
@@ -57,7 +92,7 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
     /**
      * See {@link ProcessParameters#getValidationPolicy()}
      */
-    private ValidationPolicy constraintData;
+    protected ValidationPolicy constraintData;
 
     /**
      * See {@link ProcessParameters#getCurrentTime()}
@@ -72,27 +107,27 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
     /**
      * See {@link ProcessParameters#getContextElement()}
      */
-    private XmlDom contextElement;
-
-    // /**
-    // * See {@link ProcessParameters#getContextName()}
-    // */
-    // private String contextName;
+    protected XmlDom contextElement;
 
     /**
-     * See {@link ProcessParameters#getSignCertId()}
+     * // TODO: (Bob: 2014 Mar 12)
      */
-    private String signingCertId;
+    private String contextName;
 
     /**
-     * See {@link ProcessParameters#getSignCert()}
+     * See {@link ProcessParameters#getSigningCertificateId()}
      */
-    private XmlDom signingCert;
+    private String signingCertificateId;
+
+    /**
+     * See {@link ProcessParameters#getSigningCertificate()}
+     */
+    private XmlDom signingCertificate;
 
     /**
      * This node is used to add the constraint nodes.
      */
-    private XmlNode subProcessNode;
+    protected XmlNode validationDataXmlNode;
 
     private void prepareParameters(final ProcessParameters params) {
 
@@ -103,8 +138,8 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
         this.contextElement = params.getContextElement();
         this.currentTime = params.getCurrentTime();
 
-        this.signingCertId = params.getSignCertId();
-        this.signingCert = params.getSignCert();
+        this.signingCertificateId = params.getSigningCertificateId();
+        this.signingCertificate = params.getSigningCertificate();
 
         isInitialised(params);
     }
@@ -126,124 +161,72 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
         if (contextElement == null) {
             throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "contextElement"));
         }
-        if (signingCertId == null) {
-            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "signCertId"));
-        }
-        if (signingCert == null) {
-            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "signCert"));
-        }
+        /*
+            --> With the Warning system everything is possible
+            if (signingCertificateId == null) {
+                throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "signCertId"));
+            }
+            if (signingCertificate == null) {
+                throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "signCert"));
+            }
+        */
     }
 
     /**
      * 5.3 X.509 Certificate Validation (XCV)<br>
      * This method carry out the XCV process.
      *
-     * @param params      validation process parameters
-     * @param processNode the <code>XmlNode</code> to be used to contain the validation information
-     * @return
+     * @param params validation process parameters
+     * @return false if the validation failed, true otherwise
      */
-    public boolean run(final ProcessParameters params, final XmlNode processNode) {
+    public Conclusion run(final ProcessParameters params, final String contextName) {
 
-        if (processNode == null) {
-
-            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "processNode"));
-        }
+        this.contextName = contextName;
         prepareParameters(params);
 
-        subProcessNode = processNode.addChild(XCV);
-        final XmlNode conclusionNode = new XmlNode(CONCLUSION);
+        validationDataXmlNode = new XmlNode(XCV);
+        validationDataXmlNode.setNameSpace(XmlDom.NAMESPACE);
 
-        final boolean valid = process(params, conclusionNode);
+        final Conclusion conclusion = process(params);
 
-        if (valid) {
-
-            /**
-             * 6) Return the chain with the indication VALID.
-             */
-            conclusionNode.addChild(INDICATION, VALID);
-            conclusionNode.setParent(subProcessNode);
-        } else {
-
-            subProcessNode.addChild(conclusionNode);
-            processNode.addChild(conclusionNode);
-        }
-        return valid;
+        conclusion.setValidationData(validationDataXmlNode);
+        return conclusion;
     }
 
     /**
-     * @param params         validation process parameters
-     * @param conclusionNode the <code>XmlNode</code> to be used to contain the validation information
+     * 5.3.4 Processing This process consists in the following steps:
+     *
+     * @param params validation process parameters
      * @return
      */
-    private boolean process(final ProcessParameters params, final XmlNode conclusionNode) {
+    private Conclusion process(final ProcessParameters params) {
+
+        final Conclusion conclusion = new Conclusion();
 
         /**
-         * 5.3.4 Processing This process consists in the following steps:
-         *
          * 1) Check that the current time is in the validity range of the signer's certificate. If this constraint is not
          * satisfied, abort the processing with the indication INDETERMINATE and the sub indication OUT_OF_BOUNDS_NO_POE.
          */
-        XmlNode constraintNode = addConstraint(BBB_XCV_ICTIVRSC_LABEL, BBB_XCV_ICTIVRSC);
-
-        final String formatedNotAfter = signingCert.getValue("./NotAfter/text()");
-        final Date notAfter = RuleUtils.parseDate(formatedNotAfter);
-
-        final String formatedNotBefore = signingCert.getValue("./NotBefore/text()");
-        final Date notBefore = RuleUtils.parseDate(formatedNotBefore);
-
-        final boolean certValidity = currentTime.compareTo(notBefore) >= 0 && currentTime.compareTo(notAfter) <= 0;
-        final String expiredCertsRevocationInfo = signingCert.getValue("./TrustedServiceProvider/ExpiredCertsRevocationInfo/text()");
-        Date expiredCertsRevocationInfoDate = null;
-        if (!expiredCertsRevocationInfo.isEmpty()) {
-
-            expiredCertsRevocationInfoDate = RuleUtils.parseDate(expiredCertsRevocationInfo);
+        if (!checkCertificateExpirationConstraint(conclusion, contextName, SIGNING_CERTIFICATE)) {
+            return conclusion;
         }
-        if (expiredCertsRevocationInfoDate == null && !certValidity) {
 
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(INDICATION, INDETERMINATE);
-            conclusionNode.addChild(SUB_INDICATION, OUT_OF_BOUNDS_NO_POE);
-            conclusionNode.addChild(INFO, BBB_XCV_CTINIVRSC_LABEL);
-            conclusionNode.addChild(INFO, formatedNotBefore).setAttribute(FIELD, NOT_BEFORE);
-            conclusionNode.addChild(INFO, formatedNotAfter).setAttribute(FIELD, NOT_AFTER);
-            return false;
-        }
-        constraintNode.addChild(STATUS, OK);
-        if (expiredCertsRevocationInfoDate != null) {
-
-            constraintNode.addChild(INFO, expiredCertsRevocationInfo).setAttribute(FIELD, EXPIRED_CERTS_REVOCATION_INFO);
-        }
         /**
          * 2) Build a new prospective certificate chain that has not yet been evaluated. The chain shall satisfy the
          * conditions of a prospective certificate chain as stated in [4], clause 6.1, using one of the trust anchors
          * provided in the inputs:
-         *
-         * a) If no new chain can be built, abort the processing with the current status and the last chain built or, if
-         * no chain was built, with INDETERMINATE/NO_CERTIFICATE_CHAIN_FOUND.
          */
 
-        constraintNode = addConstraint(BBB_XCV_CCCBB_LABEL, BBB_XCV_CCCBB);
-
-        final String lastChainCertId = contextElement.getValue("./CertificateChain/ChainCertificate[last()]/@Id");
-        final XmlDom lastChainCert = params.getCertificate(lastChainCertId);
-        boolean isLastTrusted = false;
-        if (lastChainCert != null) {
-
-            isLastTrusted = lastChainCert.getBoolValue("./Trusted/text()");
+        final boolean trustedProspectiveCertificateChain = Boolean.valueOf(isTrustedProspectiveCertificateChain(params));
+        if (!checkProspectiveCertificateChainConstraint(conclusion, trustedProspectiveCertificateChain)) {
+            return conclusion;
         }
-        if (!isLastTrusted) {
-
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(INDICATION, INDETERMINATE);
-            conclusionNode.addChild(SUB_INDICATION, NO_CERTIFICATE_CHAIN_FOUND);
-            conclusionNode.addChild(INFO, BBB_XCV_CCINT_LABEL);
-            return false;
-        }
-        constraintNode.addChild(STATUS, OK);
 
         /**
          * b) Otherwise, add this chain to the set of prospected chains and go to step 3.
-         *
+         */
+
+        /**
          * 3) Run the Certification Path Validation [4], clause 6.1, with the following inputs:<br>
          * - the prospective chain built in the previous step,<br>
          * - the trust anchor used in the previous step,<br>
@@ -255,54 +238,56 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
         // boolean signingCertRevocationStatus = true;
         // boolean intermediateCARevocationStatus = true;
 
-        final List<XmlDom> certChain = contextElement.getElements("./CertificateChain/ChainCertificate");
-        for (final XmlDom certToken : certChain) {
+        final List<XmlDom> certificateChainXmlDom = contextElement.getElements("./CertificateChain/ChainCertificate");
+        for (final XmlDom chainCertificateXmlDom : certificateChainXmlDom) {
 
-            final String certId = certToken.getValue("./@Id");
-            final XmlDom certificate = params.getCertificate(certId);
+            final String certificateId = chainCertificateXmlDom.getValue("./@Id");
+            final XmlDom certificateXmlDom = params.getCertificate(certificateId);
 
-            final boolean isTrusted = certificate.getBoolValue("./Trusted/text()");
+            final boolean isTrusted = certificateXmlDom.getBoolValue("./Trusted/text()");
             if (isTrusted) {
 
                 continue;
             }
 
-            constraintNode = addConstraint(String.format(BBB_XCV_IRDPFC_LABEL, certId), BBB_XCV_IRDPFC);
+            String subContext = SIGNING_CERTIFICATE;
+            // The case of other certificates then the signing certificate:
+            if (!signingCertificateId.equals(certificateId)) {
 
-            final XmlDom revocation = certificate.getElement("./Revocation");
-            if (revocation == null) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INDETERMINATE);
-                conclusionNode.addChild(SUB_INDICATION, TRY_LATER);
-                conclusionNode.addChild(INFO, String.format(BBB_XCV_NRDFC_LABEL, certId));
-                return false;
-            }
-            final String anchorSource = certificate.getValue("./Revocation/CertificateChain/ChainCertificate[last()]/Source/text()");
-            final CertificateSourceType anchorSourceType = CertificateSourceType.valueOf(anchorSource);
-            if (!CertificateSourceType.TRUSTED_LIST.equals(anchorSourceType) && !CertificateSourceType.TRUSTED_STORE.equals(anchorSourceType)) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INDETERMINATE);
-                conclusionNode.addChild(SUB_INDICATION, TRY_LATER);
-                conclusionNode.addChild(INFO, String.format(BBB_XCV_RDFCINT_LABEL, certId, anchorSource));
-                return false;
-            }
-            final String revocationSource = certificate.getValue("./Revocation/Source/text()");
-            final String revocationSigningCertificateId = certificate.getValue("./Revocation/SigningCertificate/@Id");
-            final String anchorId = certificate.getValue("./Revocation/CertificateChain/ChainCertificate[last()]/@Id");
-            if ("OCSPToken".equals(revocationSource)) {
-
-            } else if ("CRLToken".equals(revocationSource)) {
-
+                subContext = CA_CERTIFICATE;
+                // The check is already done for the signing certificate.
+                // TODO: (Bob: 2014 Mar 09) Notify ETSI: This step is not indicated in the standard!!!
+                if (!checkCertificateExpirationConstraint(conclusion, contextName, subContext)) {
+                    return conclusion;
+                }
             }
 
-            constraintNode.addChild(STATUS, OK);
+            if (!checkCertificateSignatureConstraint(conclusion, certificateId, certificateXmlDom, subContext)) {
+                return conclusion;
+            }
+
+            if (!checkRevocationDataAvailableConstraint(conclusion, certificateId, certificateXmlDom, subContext)) {
+                return conclusion;
+            }
+
+            if (!checkRevocationDataIsTrustedConstraint(conclusion, certificateId, certificateXmlDom, subContext)) {
+                return conclusion;
+            }
+//            final String revocationSource = certificateXmlDom.getValue("./Revocation/Source/text()");
+//            final String revocationSigningCertificateId = certificateXmlDom.getValue("./Revocation/SigningCertificate/@Id");
+//            final String anchorId = certificateXmlDom.getValue("./Revocation/CertificateChain/ChainCertificate[last()]/@Id");
+//            if ("OCSPToken".equals(revocationSource)) {
+//
+//            } else if ("CRLToken".equals(revocationSource)) {
+//
+//            }
+
             // Preparation of information about revocation data and their freshness.
             boolean revocationFreshnessToBeChecked = constraintData.isRevocationFreshnessToBeChecked();
             boolean revocationFresh = !revocationFreshnessToBeChecked;
 
-            final String revocationIssuingTimeString = revocation.getValue("./IssuingTime/text()");
+            final XmlDom revocation = certificateXmlDom.getElement("./Revocation");
+            final String revocationIssuingTimeString = getValue(revocation, "./IssuingTime/text()");
             if (revocationFreshnessToBeChecked && !revocationIssuingTimeString.isEmpty()) {
 
                 final Date revocationIssuingTime = RuleUtils.parseDate(revocationIssuingTimeString);
@@ -319,9 +304,9 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
              * considered fresh, go to the next step.
              */
 
-         /*
-          * --> This is done when other conditions are not met
-          */
+            /*
+             * --> This is done when other conditions are not met
+             */
 
             /**
              * b) If the certificate path validation returns a success indication and the revocation information used is
@@ -329,325 +314,583 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
              * the content of the NEXT_UPDATE-field of the CRL used as the suggestion for when to try the validation again.
              */
 
-            final boolean revocationStatus = revocation.getBoolValue("./Status/text()");
-            final String revocationNextUpdate = revocation.getValue("./NextUpdate/text()");
+            final boolean revocationStatus = getBoolValue(revocation, "./Status/text()");
+            final String revocationNextUpdate = getValue(revocation, "./NextUpdate/text()");
 
-            // If the revocation status equals false --> The process will finished so don't need to check the freshness.
-            if (revocationStatus) {
-
-                constraintNode = addConstraint(String.format(BBB_XCV_IRIF_LABEL, certId), BBB_XCV_IRIF);
-
-                if (!revocationFresh) {
-
-                    constraintNode.addChild(STATUS, KO);
-                    conclusionNode.addChild(INDICATION, INDETERMINATE);
-                    conclusionNode.addChild(SUB_INDICATION, TRY_LATER);
-                    conclusionNode.addChild(INFO, String.format(BBB_XCV_TVA_LABEL, revocationNextUpdate));
-                    conclusionNode.addChild(INFO, String.format(BBB_XCV_RIT_LABEL, revocationIssuingTimeString));
-                    conclusionNode.addChild(INFO, String.format(BBB_XCV_MAORD_LABEL, constraintData.getFormatedMaxRevocationFreshness()));
-                    return false;
-                }
-                constraintNode.addChild(STATUS, OK);
+            if (!checkRevocationFreshnessConstraint(conclusion, certificateId, revocationFresh, revocationNextUpdate, revocationIssuingTimeString, subContext)) {
+                return conclusion;
             }
 
+            final String revocationReason = getValue(revocation, "./Reason/text()");
+            final String revocationDatetime = getValue(revocation, "./DateTime/text()");
+
             // The case of the signing certificate:
-            if (signingCertId.equals(certId)) {
+            if (signingCertificateId.equals(certificateId)) {
 
-                constraintNode = addConstraint(BBB_XCV_ISCR_LABEL, BBB_XCV_ISCR);
-
-                final String revocationReason = revocation.getValue("./Reason/text()");
-                final String revocationDatetime = revocation.getValue("./DateTime/text()");
-
-                /**
-                 * c) If the certificate path validation returns a failure indication because the signer's certificate has
-                 * been determined to be revoked, abort the process with the indication INDETERMINATE, the sub indication
-                 * REVOKED_NO_POE, the validated chain, the revocation date and the reason for revocation.
-                 */
-
-                if (!revocationStatus && !revocationReason.equals(CRL_REASON_CERTIFICATE_HOLD)) {
-
-                    // signingCertRevocationStatus = certRevocationStatus;
-
-                    constraintNode.addChild(STATUS, KO);
-                    conclusionNode.addChild(INDICATION, INDETERMINATE);
-                    conclusionNode.addChild(SUB_INDICATION, REVOKED_NO_POE);
-                    if (!revocationDatetime.isEmpty()) {
-
-                        conclusionNode.addChild(INFO, revocationDatetime).setAttribute(FIELD, REVOCATION_TIME);
-                    }
-                    if (!revocationReason.isEmpty()) {
-
-                        conclusionNode.addChild(INFO, revocationReason).setAttribute(FIELD, REVOCATION_REASON);
-                    }
-                    return false;
-                }
-                constraintNode.addChild(STATUS, OK);
-
-                /**
-                 * d) If the certificate path validation returns a failure indication because the signer's certificate has
-                 * been determined to be on hold, abort the process with the indication INDETERMINATE, the sub indication
-                 * TRY_LATER, the suspension time and, if available, the content of the NEXT_UPDATE-field of the CRL used as
-                 * the suggestion for when to try the validation again.
-                 */
-                constraintNode = addConstraint(BBB_XCV_ISCOH_LABEL, BBB_XCV_ISCOH);
-
-                if (!revocationStatus && revocationReason.equals(CRL_REASON_CERTIFICATE_HOLD)) {
-
-                    constraintNode.addChild(STATUS, KO);
-                    conclusionNode.addChild(INDICATION, INDETERMINATE);
-                    conclusionNode.addChild(SUB_INDICATION, TRY_LATER);
-                    conclusionNode.addChild(INFO, String.format(BBB_XCV_ST_LABEL, revocationDatetime));
-                    conclusionNode.addChild(INFO, String.format(BBB_XCV_TVA_LABEL, revocationNextUpdate));
-                    return false;
-                }
-                constraintNode.addChild(STATUS, OK);
-
-                // The status of the trusted service is checked:
-
-                constraintNode = addConstraint(CTS_WITSS_LABEL, CTS_ITSUS);
-
-                final XmlDom trustedServiceProvider = certificate.getElement("./TrustedServiceProvider");
-
-                final String status = trustedServiceProvider.getValue("./Status/text()");
-                constraintNode.addChild(STATUS, OK);
-                constraintNode.addChild(INFO, status).setAttribute(FIELD, TRUSTED_SERVICE_STATUS);
-                if (!SERVICE_STATUS_UNDERSUPERVISION.equals(status) && !SERVICE_STATUS_SUPERVISIONINCESSATION.equals(status) && !SERVICE_STATUS_ACCREDITED.equals(status)) {
-
-                    /**
-                     * ...where the trust anchor is broken at a known date by initialising control-time to this date/time.<br>
-                     */
-                    if (status.isEmpty()) {
-
-                        // Trusted service is unknown
-                        // TODO: cannot continue
-                    } else {
-
-                        final Date statusDate = trustedServiceProvider.getTimeValue("./StartDate/text()");
-                    }
+                if (!checkSigningCertificateRevokedConstraint(conclusion, certificateId, revocationStatus, revocationReason, revocationDatetime, subContext)) {
+                    return conclusion;
                 }
 
+                if (!checkSigningCertificateOnHoldConstraint(conclusion, certificateId, revocationStatus, revocationReason, revocationDatetime, revocationNextUpdate, subContext)) {
+                    return conclusion;
+                }
+
+                if (!checkSigningCertificateTSLStatusConstraint(conclusion, certificateId, certificateXmlDom)) {
+                    return conclusion;
+                }
                 // There is not need to check the revocation data for trusted and self-signed certificates
             } else {
 
                 // For all certificates different from the signing certificate and trust anchor.
 
-                /**
-                 * e) If the certificate path validation returns a failure indication because an intermediate CA has been
-                 * determined to be revoked, set the current status to INDETERMINATE/REVOKED_CA_NO_POE and go to step 2.
-                 */
-
-                constraintNode = addConstraint(String.format(BBB_XCV_IICR_LABEL, certId), BBB_XCV_IICR);
-
-                if (!revocationStatus) {
-
-                    // intermediateCARevocationStatus = certRevocationStatus;
-
-                    constraintNode.addChild(STATUS, KO);
-                    conclusionNode.addChild(INDICATION, INDETERMINATE);
-                    conclusionNode.addChild(SUB_INDICATION, REVOKED_CA_NO_POE);
-                    return false;
+                if (!checkIntermediateCertificateRevokedConstraint(conclusion, certificateId, revocationStatus, revocationReason, revocationDatetime, subContext)) {
+                    return conclusion;
                 }
-                constraintNode.addChild(STATUS, OK);
             }
 
-            // We check cryptographic constraints on the revocation data
-            constraintNode = addConstraint(BBB_XCV_ARDCCM_LABEL, BBB_XCV_ARDCCM);
-
-            final RevocationCryptographicConstraint cryptoConstraints = new RevocationCryptographicConstraint();
-            final XmlDom contextElementBackup = params.getContextElement();
-            params.setContextElement(revocation);
-            final XmlNode infoNode = new XmlNode("");
-            boolean cryptographicStatus = cryptoConstraints.run(params, infoNode);
-            params.setContextElement(contextElementBackup);
-            if (!cryptographicStatus) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, CRYPTO_CONSTRAINTS_FAILURE);
-                conclusionNode.addChildrenOf(infoNode);
-                return false;
+            // revocation data signature cryptographic constraints validation
+            if (!checkCertificateCryptographicConstraint(conclusion, revocation, REVOCATION, subContext)) {
+                return conclusion;
             }
-            constraintNode.addChild(STATUS, OK);
 
             /**
              * f) If the certificate path validation returns a failure indication with any other reason, go to step 2.
              */
-            final boolean isSignatureIntact = certificate.getBoolValue(SIGNATURE_VALID);
-            if (!isSignatureIntact) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INDETERMINATE);
-                conclusionNode.addChild(SUB_INDICATION, NO_CERTIFICATE_CHAIN_FOUND);
-                final XmlNode info = conclusionNode.addChild(INFO, XCV_SOCIS_LABEL);
-                info.setAttribute(FIELD, CERT_ID);
-                info.setAttribute(CERT_ID, certId);
-
-                return false;
-            }
-
             // --> DSS builds only one chain
 
         } // loop end
 
-        /**
-         * 4) Apply the Chain Constraints to the chain. Certificate meta-data shall be taken into account when checking
-         * these constraints against the chain. If the chain does not match these constraints, set the current status to
-         * INVALID/CHAIN_CONSTRAINTS_FAILURE and go to step 2.
-         */
-
-        constraintNode = addConstraint(BBB_XCV_ACCM_LABEL, BBB_XCV_ACCM);
-
-        // --> DSS does not check these constraints
-        final boolean chainConstraintStatus = true;
-
-        if (!chainConstraintStatus) {
-
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(INDICATION, INVALID);
-            conclusionNode.addChild(SUB_INDICATION, CHAIN_CONSTRAINTS_FAILURE);
-            return false;
+        if (!checkChainConstraint(conclusion)) {
+            return conclusion;
         }
-        constraintNode.addChild(STATUS, OK);
 
         /**
          * A.2 Constraints on X.509 Certificate meta-data
          *
          * The following constraints are to be applied to the signer's certificate before considering it as valid for the
          * intended use.
+         * --> These constraints apply only to the main signature
          */
+        if (MAIN_SIGNATURE.equals(contextName)) {
 
-        final String nodeName = contextElement.getName();
-        final boolean isTimestamp = TIMESTAMP.equals(nodeName);
-
-        final QualifiedCertificate qc = new QualifiedCertificate(constraintData);
-        final Boolean isQC = qc.run(isTimestamp, signingCert);
-        if (isQC != null) { // The constraint is defined to true: <QualifiedCertificate>true</QualifiedCertificate>
-
-            /**
-             * Mandates the signer's certificate used in validating the signature to be a qualified certificate as defined
-             * in Directive 1999/93/EC [9]. This status can be derived from:
-             */
-
-            constraintNode = addConstraint(BBB_XCV_CMDCIQC_LABEL, BBB_XCV_CMDCIQC);
-
-            if (!isQC) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, CHAIN_CONSTRAINTS_FAILURE);
-                conclusionNode.addChild(INFO, BBB_XCV_SCINQ_LABEL);
-                return false;
+            final QualifiedCertificate qc = new QualifiedCertificate(constraintData);
+            final boolean isQC = qc.run(signingCertificate);
+            if (!checkSigningCertificateQualificationConstraint(conclusion, isQC)) {
+                return conclusion;
             }
-            constraintNode.addChild(STATUS, OK);
-        }
 
-        final SSCD sscd = new SSCD(constraintData);
-        final Boolean isSSCD = sscd.run(isTimestamp, signingCert);
-
-        if (isSSCD != null) { // The constraint is defined to true: <SSCD>true</SSCD>
-
-            /**
-             * Mandates the end user certificate used in validating the signature to be supported by a secure signature
-             * creation device (SSCD) as defined in Directive 1999/93/EC [9].
-             */
-
-            constraintNode = addConstraint(BBB_XCV_CMDCISSCD_LABEL, BBB_XCV_CMDCISSCD);
-
-            if (!isSSCD) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, CHAIN_CONSTRAINTS_FAILURE);
-                return false;
+            final SSCD sscd = new SSCD(constraintData);
+            final Boolean isSSCD = sscd.run(signingCertificate);
+            if (!checkSigningCertificateSupportedBySSCDConstraint(conclusion, isSSCD)) {
+                return conclusion;
             }
-            constraintNode.addChild(STATUS, OK);
-        }
 
-        final ForLegalPerson forLegalPerson = new ForLegalPerson(constraintData);
-        final Boolean isForLegalPerson = forLegalPerson.run(isTimestamp, signingCert);
-
-        if (isForLegalPerson != null) { // The constraint is defined to true: <ForLegalPerson>true</ForLegalPerson>
-
-            /**
-             * Mandates the signer's certificate used in validating the signature to be issued by a certificate authority
-             * issuing certificate as having been issued to a legal person.
-             */
-
-            constraintNode = addConstraint(BBB_XCV_CMDCIITLP_LABEL, BBB_XCV_CMDCIITLP);
-
-            if (!isForLegalPerson) {
-
-                constraintNode.addChild(STATUS, KO);
-                conclusionNode.addChild(INDICATION, INVALID);
-                conclusionNode.addChild(SUB_INDICATION, CHAIN_CONSTRAINTS_FAILURE);
-                return false;
+            final ForLegalPerson forLegalPerson = new ForLegalPerson(constraintData);
+            final Boolean isForLegalPerson = forLegalPerson.run(signingCertificate);
+            if (!checkSigningCertificateIssuedToLegalPersonConstraint(conclusion, isForLegalPerson)) {
+                return conclusion;
             }
-            constraintNode.addChild(STATUS, OK);
         }
 
         /**
          * 5) Apply the cryptographic constraints to the chain. If the chain does not match these constraints, set the
          * current status to INDETERMINATE/CRYPTO_CONSTRAINTS_FAILURE_NO_POE and go to step 2.
          */
-        constraintNode = addConstraint(BBB_XCV_ACCCM_LABEL, BBB_XCV_ACCCM);
-
-        boolean cryptographicStatus = false;
-        final XmlNode infoContainerNode = new XmlNode("Container");
-
-        for (final XmlDom certToken : certChain) {
+        final String lastChainCertId = contextElement.getValue("./CertificateChain/ChainCertificate[last()]/@Id");
+        for (final XmlDom certToken : certificateChainXmlDom) {
 
             final String certificateId = certToken.getValue("./@Id");
-            if (certificateId.equals(lastChainCertId) && isLastTrusted) {
+            if (certificateId.equals(lastChainCertId) && trustedProspectiveCertificateChain) {
 
                 /**
                  * The trusted anchor is not checked. In the case of a certificate chain consisting of a single certificate
                  * which is trusted we need to set this variable to true.
                  */
-                cryptographicStatus = true;
                 continue;
             }
-
             final XmlDom certificate = params.getCertificate(certificateId);
+            final String subContext = certificateId.equals(signingCertificateId) ? SIGNING_CERTIFICATE : CA_CERTIFICATE;
 
-            final XCVCryptographicConstraint cryptoConstraints = new XCVCryptographicConstraint();
-            final ProcessParameters cryptoParams = new XCVCryptoConstraintParameters(params);
-            cryptoParams.setContextElement(certificate);
-            if (!certificateId.equals(signingCertId)) {
-
-                cryptoParams.setContextName(CA_CERTIFICATE);
+            // certificate signature cryptographic constraints validation
+            if (!checkCertificateCryptographicConstraint(conclusion, certificate, contextName, subContext)) {
+                return conclusion;
             }
-
-            cryptographicStatus = cryptoConstraints.run(cryptoParams, infoContainerNode);
-            if (!cryptographicStatus) {
-
-                break;
-            }
-
         }
+        // This validation process returns VALID
+        conclusion.setIndication(VALID);
+        return conclusion;
+    }
 
-        if (!cryptographicStatus) {
+    private boolean getBoolValue(final XmlDom xmlDom, final String xPath) {
+        return xmlDom == null ? false : xmlDom.getBoolValue(xPath);
+    }
 
-            constraintNode.addChild(STATUS, KO);
-
-            conclusionNode.addChild(INDICATION, INDETERMINATE);
-            conclusionNode.addChild(SUB_INDICATION, CRYPTO_CONSTRAINTS_FAILURE_NO_POE);
-            conclusionNode.addChildrenOf(infoContainerNode);
-            return false;
-        }
-        constraintNode.addChild(STATUS, OK);
-
-        return true;
+    private String getValue(final XmlDom xmlDom, final String xPath) {
+        return xmlDom == null ? "" : xmlDom.getValue(xPath);
     }
 
     /**
-     * @param label
-     * @param nameId
+     * This method checks that the current time is in the validity range of the certificate. If this constraint is not
+     * satisfied, abort the processing with the indication INDETERMINATE and the sub indication OUT_OF_BOUNDS_NO_POE.
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @param context
+     * @param subContext
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkCertificateExpirationConstraint(final Conclusion conclusion, final String context, final String subContext) {
+
+        final CertificateExpirationConstraint constraint = constraintData.getSigningCertificateExpirationConstraint(context, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_ICTIVRSC);
+        constraint.setCurrentTime(currentTime);
+        constraint.setNotAfter(getDate(signingCertificate, "./NotAfter"));
+        constraint.setNotBefore(getDate(signingCertificate, "./NotBefore"));
+        constraint.setExpiredCertsRevocationInfo(getDate(signingCertificate, "./TrustedServiceProvider/ExpiredCertsRevocationInfo"));
+        constraint.setIndications(INDETERMINATE, OUT_OF_BOUNDS_NO_POE, BBB_XCV_ICTIVRSC_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * a) If no new chain can be built, abort the processing with the current status and the last chain built or, if
+     * no chain was built, with INDETERMINATE/NO_CERTIFICATE_CHAIN_FOUND.
+     *
+     * @param conclusion                         the conclusion to use to add the result of the check.
+     * @param trustedProspectiveCertificateChain
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    protected boolean checkProspectiveCertificateChainConstraint(final Conclusion conclusion, boolean trustedProspectiveCertificateChain) {
+
+        final Constraint constraint = constraintData.getProspectiveCertificateChainConstraint(contextName);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_CCCBB);
+        constraint.setValue(trustedProspectiveCertificateChain);
+        constraint.setIndications(INDETERMINATE, NO_CERTIFICATE_CHAIN_FOUND, BBB_XCV_CCCBB_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    protected boolean isTrustedProspectiveCertificateChain(final ProcessParameters params) {
+
+        final String lastChainCertId = contextElement.getValue("./CertificateChain/ChainCertificate[last()]/@Id");
+        final XmlDom lastChainCertificate = params.getCertificate(lastChainCertId);
+        boolean lastChainCertificateTrusted = false;
+        if (lastChainCertificate != null) {
+
+            lastChainCertificateTrusted = lastChainCertificate.getBoolValue("./Trusted/text()");
+        }
+        return lastChainCertificateTrusted;
+    }
+
+    /**
+     * Retrieves the {@code Date} from an {@code XmlNode} using the XPath query.
+     *
+     * @param xmlDom     {@code XmlDom} containing the desired date.
+     * @param xPathQuery XPath query to run
+     * @return {@code Date} or null if the XPath query returns no element or if the date conversion is impossible.
+     */
+    private Date getDate(final XmlDom xmlDom, final String xPathQuery) {
+
+        final String formatedDate = xmlDom.getValue(xPathQuery + "/text()");
+        try {
+            return RuleUtils.parseDate(formatedDate);
+        } catch (DSSException e) {
+            return null;
+        }
+    }
+
+    /**
+     * This method checks if the signature of the given certificate.
+     *
+     * @param conclusion        the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param certificateXmlDom
+     * @param subContext
      * @return
      */
-    private XmlNode addConstraint(final String label, final String nameId) {
+    private boolean checkCertificateSignatureConstraint(final Conclusion conclusion, final String certificateId, final XmlDom certificateXmlDom, final String subContext) {
 
-        final XmlNode constraintNode = subProcessNode.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, label).setAttribute(NAME_ID, nameId);
-        return constraintNode;
+        final Constraint constraint = constraintData.getCertificateSignatureConstraint(contextName, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_ICSI);
+        constraint.setValue(certificateXmlDom.getBoolValue(XP_SIGNATURE_VALID));
+        constraint.setIndications(INDETERMINATE, NO_CERTIFICATE_CHAIN_FOUND, BBB_XCV_ICSI_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * This method checks if the revocation data is available for the given certificate.
+     *
+     * @param conclusion        the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param certificateXmlDom
+     * @param subContext
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkRevocationDataAvailableConstraint(final Conclusion conclusion, final String certificateId, final XmlDom certificateXmlDom, String subContext) {
+
+        final Constraint constraint = constraintData.getRevocationDataAvailableConstraint(contextName, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_IRDPFC);
+        constraint.setValue(isRevocationDataAvailable(certificateXmlDom));
+        constraint.setIndications(INDETERMINATE, TRY_LATER, BBB_XCV_IRDPFC_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    private String isRevocationDataAvailable(final XmlDom certificateXmlDom) {
+
+        final XmlDom revocation = certificateXmlDom.getElement("./Revocation");
+        return String.valueOf(revocation != null);
+    }
+
+    /**
+     * This method checks if the revocation data is trusted for the given certificate.
+     *
+     * @param conclusion        the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param certificateXmlDom
+     * @param subContext
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkRevocationDataIsTrustedConstraint(Conclusion conclusion, String certificateId, XmlDom certificateXmlDom, String subContext) {
+
+        final Constraint constraint = constraintData.getRevocationDataIsTrustedConstraint(contextName, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_IRDTFC, certificateId);
+        final String anchorSource = certificateXmlDom.getValue("./Revocation/CertificateChain/ChainCertificate[last()]/Source/text()");
+        final CertificateSourceType anchorSourceType = DSSUtils.isBlank(anchorSource) ? CertificateSourceType.UNKNOWN : CertificateSourceType.valueOf(anchorSource);
+        constraint.setValue(isRevocationDataTrusted(anchorSourceType));
+        constraint.setIndications(INDETERMINATE, TRY_LATER, BBB_XCV_IRDTFC_ANS);
+        constraint.setAttribute(CERTIFICATE_ID, certificateId);
+        constraint.setAttribute(CERTIFICATE_SOURCE, anchorSource);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    private String isRevocationDataTrusted(final CertificateSourceType anchorSourceType) {
+
+        final boolean trusted = CertificateSourceType.TRUSTED_LIST.equals(anchorSourceType) || CertificateSourceType.TRUSTED_STORE.equals(anchorSourceType);
+        return String.valueOf(trusted);
+    }
+
+    /**
+     * This method checks if the revocation data is fresh for the given certificate.
+     *
+     * @param conclusion                  the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param revocationFresh
+     * @param revocationNextUpdate
+     * @param revocationIssuingTimeString
+     * @param subContext
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkRevocationFreshnessConstraint(final Conclusion conclusion, final String certificateId, final boolean revocationFresh, final String revocationNextUpdate,
+                                                       final String revocationIssuingTimeString, String subContext) {
+
+        final Constraint constraint = constraintData.getRevocationDataFreshnessConstraint(contextName, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_IRIF, certificateId);
+        constraint.setValue(String.valueOf(revocationFresh));
+        constraint.setIndications(INDETERMINATE, TRY_LATER, BBB_XCV_IRIF_ANS);
+        constraint.setAttribute(CERTIFICATE_ID, certificateId);
+        constraint.setAttribute(REVOCATION_NEXT_UPDATE, revocationNextUpdate);
+        constraint.setAttribute(REVOCATION_ISSUING_TIME, revocationIssuingTimeString);
+        constraint.setAttribute(MAXIMUM_REVOCATION_FRESHNESS, constraintData.getFormatedMaxRevocationFreshness());
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * This method checks if the signing certificate is revoked.
+     *
+     * c) If the certificate path validation returns a failure indication because the signer's certificate has
+     * been determined to be revoked, abort the process with the indication INDETERMINATE, the sub indication
+     * REVOKED_NO_POE, the validated chain, the revocation date and the reason for revocation.
+     *
+     * @param conclusion         the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param revocationStatus
+     * @param revocationReason
+     * @param revocationDatetime @return false if the check failed and the process should stop, true otherwise.
+     * @param subContext
+     */
+    private boolean checkSigningCertificateRevokedConstraint(final Conclusion conclusion, final String certificateId, boolean revocationStatus, final String revocationReason,
+                                                             final String revocationDatetime, String subContext) {
+
+        final Constraint constraint = constraintData.getSigningCertificateRevokedConstraint(contextName, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_ISCR);
+        final boolean revoked = !revocationStatus && !revocationReason.equals(CRL_REASON_CERTIFICATE_HOLD);
+        constraint.setValue(String.valueOf(revoked));
+        constraint.setIndications(INDETERMINATE, REVOKED_NO_POE, BBB_XCV_ISCR_ANS);
+        constraint.setAttribute(CERTIFICATE_ID, certificateId);
+        if (DSSUtils.isNotBlank(revocationDatetime)) {
+            constraint.setAttribute(REVOCATION_TIME, revocationDatetime);
+        }
+        if (DSSUtils.isNotBlank(revocationReason)) {
+            constraint.setAttribute(REVOCATION_REASON, revocationReason);
+        }
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * This method checks if the signing certificate is on hold.
+     *
+     * d) If the certificate path validation returns a failure indication because the signer's certificate has
+     * been determined to be on hold, abort the process with the indication INDETERMINATE, the sub indication
+     * TRY_LATER, the suspension time and, if available, the content of the NEXT_UPDATE-field of the CRL used as
+     * the suggestion for when to try the validation again.
+     *
+     * @param conclusion           the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param revocationStatus
+     * @param revocationReason
+     * @param revocationDatetime
+     * @param revocationNextUpdate
+     * @param subContext
+     * @return
+     */
+    private boolean checkSigningCertificateOnHoldConstraint(final Conclusion conclusion, final String certificateId, final boolean revocationStatus, final String revocationReason,
+                                                            final String revocationDatetime, final String revocationNextUpdate, String subContext) {
+
+        final Constraint constraint = constraintData.getSigningCertificateOnHoldConstraint(contextName, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_ISCOH);
+        final boolean onHold = !revocationStatus && revocationReason.equals(CRL_REASON_CERTIFICATE_HOLD);
+        constraint.setValue(String.valueOf(onHold));
+        constraint.setIndications(INDETERMINATE, TRY_LATER, BBB_XCV_ISCOH_ANS);
+        constraint.setAttribute(CERTIFICATE_ID, certificateId);
+        if (DSSUtils.isNotBlank(revocationDatetime)) {
+            constraint.setAttribute(REVOCATION_TIME, revocationDatetime);
+        }
+        if (DSSUtils.isNotBlank(revocationReason)) {
+            constraint.setAttribute(REVOCATION_NEXT_UPDATE, revocationNextUpdate);
+        }
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * This method checks if the TSL status of the signing certificate.
+     *
+     * @param conclusion        the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param certificateXmlDom @return
+     */
+    private boolean checkSigningCertificateTSLStatusConstraint(final Conclusion conclusion, String certificateId, final XmlDom certificateXmlDom) {
+
+        final String trustedSource = certificateXmlDom.getValue("./CertificateChain/ChainCertificate[last()]/Source/text()");
+        if (CertificateSourceType.TRUSTED_STORE.name().equals(trustedSource)) {
+            return true;
+        }
+
+        final Constraint constraint = constraintData.getSigningCertificateTSLStatusConstraint(contextName);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, CTS_WITSS);
+        final XmlDom trustedServiceProvider = certificateXmlDom.getElement("./TrustedServiceProvider");
+        final String status = trustedServiceProvider == null ? "" : trustedServiceProvider.getValue("./Status/text()");
+        boolean acceptableStatus = SERVICE_STATUS_UNDERSUPERVISION.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION.equals(status) || SERVICE_STATUS_ACCREDITED
+              .equals(status) || SERVICE_STATUS_UNDERSUPERVISION_119612.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION_119612
+              .equals(status) || SERVICE_STATUS_ACCREDITED_119612.equals(status);
+
+        if (acceptableStatus) {
+
+            /**
+             * NOTE 1: In step 1, initializing control-time with current date/time assumes that the trust anchor is still trusted at the
+             * current date/time. The algorithm can capture the very exotic case where the trust anchor is broken (or
+             * becomes untrusted for any other reason) at a known date by initializing control-time to this date/time.
+             */
+            if (status.isEmpty()) {
+
+                // Trusted service is unknown
+                // TODO: continue
+            } else {
+
+                final Date statusDate = trustedServiceProvider.getTimeValue("./StartDate/text()");
+                // TODO: continue
+            }
+        }
+        constraint.setValue(acceptableStatus);
+        constraint.setIndications(INDETERMINATE, TRY_LATER, CTS_WITSS_ANS);
+        constraint.setAttribute(CERTIFICATE_ID, certificateId);
+        constraint.setAttribute(TRUSTED_SERVICE_STATUS, status);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * This method checks if the intermediate certificate is revoked.
+     *
+     * e) If the certificate path validation returns a failure indication because an intermediate CA has been
+     * determined to be revoked, set the current status to INDETERMINATE/REVOKED_CA_NO_POE and go to step 2.
+     *
+     * @param conclusion         the conclusion to use to add the result of the check.
+     * @param certificateId
+     * @param revocationStatus
+     * @param revocationReason
+     * @param revocationDatetime @return false if the check failed and the process should stop, true otherwise.
+     * @param subContext
+     */
+    private boolean checkIntermediateCertificateRevokedConstraint(final Conclusion conclusion, final String certificateId, final boolean revocationStatus,
+                                                                  final String revocationReason, final String revocationDatetime, String subContext) {
+
+        final Constraint constraint = constraintData.getIntermediateCertificateRevokedConstraint(contextName);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_IICR, certificateId);
+        final boolean revoked = !revocationStatus;
+        constraint.setValue(String.valueOf(revoked));
+        constraint.setIndications(INDETERMINATE, REVOKED_CA_NO_POE, BBB_XCV_IICR_ANS);
+        constraint.setAttribute(CERTIFICATE_ID, certificateId);
+        if (DSSUtils.isNotBlank(revocationDatetime)) {
+            constraint.setAttribute(REVOCATION_TIME, revocationDatetime);
+        }
+        if (DSSUtils.isNotBlank(revocationReason)) {
+            constraint.setAttribute(REVOCATION_REASON, revocationReason);
+        }
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * 4) Apply the Chain Constraints to the chain. Certificate meta-data shall be taken into account when checking
+     * these constraints against the chain. If the chain does not match these constraints, set the current status to
+     * INVALID/CHAIN_CONSTRAINTS_FAILURE and go to step 2.
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     */
+    private boolean checkChainConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getChainConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_ACCM);
+        // TODO: (Bob: 2014 Mar 09) --> DSS does not check these constraints
+        constraint.setValue("TO BE IMPLEMENTED");
+        constraint.setIndications(INVALID, CHAIN_CONSTRAINTS_FAILURE, EMPTY);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Mandates the signer's certificate used in validating the signature to be a qualified certificate as defined
+     * in Directive 1999/93/EC [9]. This status can be derived from:
+     *
+     * @param conclusion           the conclusion to use to add the result of the check.
+     * @param qualifiedCertificate indicates if the signing certificate is qualified.
+     */
+    protected boolean checkSigningCertificateQualificationConstraint(final Conclusion conclusion, final boolean qualifiedCertificate) {
+
+        final Constraint constraint = constraintData.getSigningCertificateQualificationConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_CMDCIQC);
+        constraint.setValue(String.valueOf(qualifiedCertificate));
+        constraint.setIndications(INVALID, CHAIN_CONSTRAINTS_FAILURE, BBB_XCV_CMDCIQC_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Mandates the end user certificate used in validating the signature to be supported by a secure signature
+     * creation device (SSCD) as defined in Directive 1999/93/EC [9].
+     *
+     * @param conclusion      the conclusion to use to add the result of the check.
+     * @param supportedBySSCD indicates if the signing certificate is qualified.
+     */
+    protected boolean checkSigningCertificateSupportedBySSCDConstraint(final Conclusion conclusion, final boolean supportedBySSCD) {
+
+        final Constraint constraint = constraintData.getSigningCertificateSupportedBySSCDConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_CMDCISSCD);
+        constraint.setValue(String.valueOf(supportedBySSCD));
+        constraint.setIndications(INVALID, CHAIN_CONSTRAINTS_FAILURE, BBB_XCV_CMDCISSCD_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Mandates the signer's certificate used in validating the signature to be issued by a certificate authority
+     * issuing certificate as having been issued to a legal person.
+     *
+     * @param conclusion          the conclusion to use to add the result of the check.
+     * @param issuedToLegalPerson indicates if the signing certificate is qualified.
+     */
+    protected boolean checkSigningCertificateIssuedToLegalPersonConstraint(final Conclusion conclusion, final boolean issuedToLegalPerson) {
+
+        final Constraint constraint = constraintData.getSigningCertificateIssuedToLegalPersonConstraint();
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_XCV_CMDCIITLP);
+        constraint.setValue(String.valueOf(issuedToLegalPerson));
+        constraint.setIndications(INVALID, CHAIN_CONSTRAINTS_FAILURE, BBB_XCV_CMDCIITLP_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * Check of: main signature cryptographic verification
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @param context
+     * @param subContext @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkCertificateCryptographicConstraint(final Conclusion conclusion, final XmlDom contextXmlDom, String context, String subContext) {
+
+        final SignatureCryptographicConstraint constraint = constraintData.getSignatureCryptographicConstraint(context, subContext);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, ASCCM);
+        constraint.setCurrentTime(currentTime);
+        constraint.setEncryptionAlgorithm(getValue(contextXmlDom, XP_ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN));
+        constraint.setDigestAlgorithm(getValue(contextXmlDom, XP_DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN));
+        constraint.setKeyLength(getValue(contextXmlDom, XP_KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN));
+        constraint.setIndications(INDETERMINATE, CRYPTO_CONSTRAINTS_FAILURE_NO_POE, EMPTY);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
     }
 }

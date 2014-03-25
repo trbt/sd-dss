@@ -26,12 +26,10 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
-import eu.europa.ec.markt.dss.validation102853.ValidationResourceManager;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ltv.POEExtraction;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ltv.PastSignatureValidation;
@@ -41,11 +39,14 @@ import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
+import eu.europa.ec.markt.dss.validation102853.rules.MessageTag;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
+
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.*;
 
 /**
  * 9.3 Long Term Validation Process<br>
@@ -201,8 +202,7 @@ public class LongTermValidation implements Indication, SubIndication, NodeName, 
             }
             conclusionNode.setParent(signatureNode);
         }
-        final Document ltvDocument = ValidationResourceManager.xmlNodeIntoDom(longTermValidationData);
-        final XmlDom ltvDom = new XmlDom(ltvDocument);
+        final XmlDom ltvDom = longTermValidationData.toXmlDom();
         params.setLtvData(ltvDom);
         return ltvDom;
     }
@@ -253,7 +253,7 @@ public class LongTermValidation implements Indication, SubIndication, NodeName, 
          *
          */
 
-        XmlNode constraintNode = addConstraint(signatureNode, PSV_IATVC_LABEL, PSV_IATVS);
+        XmlNode constraintNode = addConstraint(signatureNode, PSV_IATVC);
 
         if (VALID.equals(adestSignatureIndication)) {
 
@@ -374,7 +374,7 @@ public class LongTermValidation implements Indication, SubIndication, NodeName, 
 
         final PastSignatureValidation pastSignatureValidation = new PastSignatureValidation();
 
-        final PastSignatureValidationConclusion psvConclusion = pastSignatureValidation.run(params, signature, adestSignatureConclusion);
+        final PastSignatureValidationConclusion psvConclusion = pastSignatureValidation.run(params, signature, adestSignatureConclusion, TIMESTAMP);
 
         signatureNode.addChild(psvConclusion.getValidationData());
         /**
@@ -382,7 +382,7 @@ public class LongTermValidation implements Indication, SubIndication, NodeName, 
          * associated explanations.<br>
          */
 
-        constraintNode = addConstraint(signatureNode, PSV_IPSVC_LABEL, PSV_IPSVC);
+        constraintNode = addConstraint(signatureNode, PSV_IPSVC);
 
         if (!VALID.equals(psvConclusion.getIndication())) {
 
@@ -430,18 +430,17 @@ public class LongTermValidation implements Indication, SubIndication, NodeName, 
                  * If the verification fails, remove the token from the set.
                  */
 
-                XmlNode constraintNode = addConstraint(processNode, ADEST_IMIVC_LABEL, ADEST_IMIVC);
+                XmlNode constraintNode = addConstraint(processNode, ADEST_IMIVC);
 
-                final boolean messageImprintDataIntact = timestamp.getBoolValue(MESSAGE_IMPRINT_DATA_INTACT);
+                final boolean messageImprintDataIntact = timestamp.getBoolValue(XP_MESSAGE_IMPRINT_DATA_INTACT);
                 if (!messageImprintDataIntact) {
 
                     constraintNode.addChild(STATUS, KO);
-                    constraintNode.addChild(INFO, String.format(ADEST_IMIVC_ANS_LABEL, timestampId));
-                    conclusionNode.addChild(INFO, String.format(ADEST_IMIVC_ANS_LABEL, timestampId));
+                    constraintNode.addChild(INFO, ADEST_IMIVC_ANS.getMessage());
+                    conclusionNode.addChild(INFO, ADEST_IMIVC_ANS.getMessage());
                     continue;
                 }
                 constraintNode.addChild(STATUS, OK);
-
 
                 final XmlDom timestampConclusion = signatureTimestampValidationData.getElement("./Timestamp[@Id='%s']/BasicBuildingBlocks/Conclusion", timestampId);
                 final String timestampIndication = timestampConclusion.getValue("./Indication/text()");
@@ -475,7 +474,7 @@ public class LongTermValidation implements Indication, SubIndication, NodeName, 
                      */
 
                     final PastSignatureValidation psvp = new PastSignatureValidation();
-                    final PastSignatureValidationConclusion psvConclusion = psvp.run(params, timestamp, timestampConclusion);
+                    final PastSignatureValidationConclusion psvConclusion = psvp.run(params, timestamp, timestampConclusion, TIMESTAMP);
 
                     processNode.addChild(psvConclusion.getValidationData());
 
@@ -534,12 +533,16 @@ public class LongTermValidation implements Indication, SubIndication, NodeName, 
     }
 
     /**
+     * This method adds the constraint
+     *
+     * @param parentNode
+     * @param messageTag
      * @return
      */
-    private XmlNode addConstraint(final XmlNode parentNode, final String label, final String nameId) {
+    private XmlNode addConstraint(final XmlNode parentNode, final MessageTag messageTag) {
 
         final XmlNode constraintNode = parentNode.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, label).setAttribute(NAME_ID, nameId);
+        constraintNode.addChild(NAME, messageTag.getMessage()).setAttribute(NAME_ID, messageTag.name());
         return constraintNode;
     }
 }

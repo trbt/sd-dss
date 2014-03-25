@@ -115,7 +115,7 @@ public class XAdESBuilder {
             final Element issuerSerialDom = DSSXMLUtils.addElement(documentDom, certDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IssuerSerial");
 
             final Element x509IssuerNameDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:X509IssuerName");
-            final String issuerX500PrincipalName = certificate.getIssuerX500Principal().getName();
+            final String issuerX500PrincipalName = DSSUtils.getIssuerX500PrincipalName(certificate);
             DSSXMLUtils.setTextNode(documentDom, x509IssuerNameDom, issuerX500PrincipalName);
 
             final Element x509SerialNumberDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:X509SerialNumber");

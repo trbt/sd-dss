@@ -33,7 +33,7 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 /**
  * A.2 Constraints on X.509 Certificate meta-data
  *
- * The QualifiedCertificate constraint is to be applied to the signer's cert before considering it as valid for
+ * The QualifiedCertificate constraint is to be applied to the signer's certificate before considering it as valid for
  * the intended use.
  *
  * @author bielecro
@@ -54,59 +54,59 @@ public class QualifiedCertificate implements NodeName, NodeValue, AttributeName,
     }
 
     /**
-     * The QualifiedCertificate constraint is to be applied to the main signature or timestamp signer's cert
+     * The QualifiedCertificate constraint is to be applied to the main signature or timestamp signer's certificate
      * before considering it as valid for the intended use.
      *
-     * @param isTimestamp indicates if this is a timestamp signing certificate or main signature signing certificate.
-     * @param cert        the certificate to be processed
+     * //@param isTimestamp indicates if this is a timestamp signing certificate or main signature signing certificate.
+     *
+     * @param cert the certificate to be processed
      * @return
      */
-    public Boolean run(final boolean isTimestamp, final XmlDom cert) {
+    public boolean run(final XmlDom cert) {
 
-        final String context = isTimestamp ? TIMESTAMP_SIGNING_CERTIFICATE : SIGNING_CERTIFICATE;
-        final boolean mustBeQualifiedCertificate = constraintData.mustBeQualifiedCertificate(context);
-        if (mustBeQualifiedCertificate) {
-
-            return process(cert);
-        }
-        return null;
+        return process(cert);
     }
 
     /**
      * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
      *
-     * @param cert The cert to be processed
+     * @param certificate The certificate to be processed
      * @return
      */
-    private boolean process(final XmlDom cert) {
+    private boolean process(final XmlDom certificate) {
+
+        if (certificate == null) {
+            return false;
+        }
 
         /**
-         * Mandates the signer's cert used in validating the signature to be a qualified cert as defined in
+         * Mandates the signer's certificate used in validating the signature to be a qualified certificate as defined in
          * Directive 1999/93/EC [9]. This status can be derived from:
          */
 
         /**
-         * • QcCompliance extension being set in the signer's cert in accordance with TS 101 862 [5];
+         * • QcCompliance extension being set in the signer's certificate in accordance with TS 101 862 [5];
          */
 
-        final boolean isQCC = cert.getBoolValue("./QCStatement/QCC/text()");
+        final boolean isQCC = certificate.getBoolValue("./QCStatement/QCC/text()");
 
         /**
-         * • QCP+ or QCP cert policy OID being indicated in the signer's cert policies extension (i.e.
+         * • QCP+ or QCP certificate policy OID being indicated in the signer's certificate policies extension (i.e.
          * 0.4.0.1456.1.1 or 0.4.0.1456.1.2);
          */
 
-        final boolean isQCP = cert.getBoolValue("./QCStatement/QCP/text()");
+        final boolean isQCP = certificate.getBoolValue("./QCStatement/QCP/text()");
 
-        final boolean isQCPPlus = cert.getBoolValue("./QCStatement/QCPPlus/text()");
+        final boolean isQCPPlus = certificate.getBoolValue("./QCStatement/QCPPlus/text()");
 
         /**
          * • The content of a Trusted service Status List;<br>
          * • The content of a Trusted List through information provided in the Sie field of the applicable service entry;
          */
 
-        final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(cert);
-        final boolean isSIE = qualifiers.contains(QC_WITH_SSCD) || qualifiers.contains(QC_NO_SSCD);
+        final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(certificate);
+        final boolean isSIE = qualifiers.contains(QC_WITH_SSCD) || qualifiers.contains(QC_NO_SSCD) || qualifiers.contains(QC_WITH_SSCD_119612) || qualifiers
+              .contains(QC_NO_SSCD_119612);
 
         /**
          * or • Static configuration that provides such information in a trusted manner.

@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.exceptions.SignatureException;
@@ -72,7 +71,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
     public byte[] digest(final InputStream pdfData, final SignatureParameters parameters, final DigestAlgorithm digestAlgorithm,
                          final Map.Entry<String, PdfDict>... extraDictionariesToAddBeforeSign) throws DSSException {
 
-        final byte[] signatureBytes = new byte[0];
+        final byte[] signatureBytes = DSSUtils.EMPTY_BYTE_ARRAY;
         File file = null;
         File signed = null;
         PDDocument doc = null;
@@ -169,7 +168,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
 
             saveDocumentIncrementally(parameters, signed, output, doc);
             final byte[] digestValue = digest.digest();
-            LOG.debug("Digest " + Hex.encodeHexString(digestValue));
+            LOG.debug("Digest " + DSSUtils.encodeHexString(digestValue));
             output.close();
             return digestValue;
         } catch (NoSuchAlgorithmException e) {
@@ -279,7 +278,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
                 signatureInfo = signatureAlreadyInListOrSelf(signaturesFound, signatureInfo);
 
                 // should store in memory this byte range with a list of signature found there
-                final String byteRange = ArrayUtils.toString(signature.getByteRange());
+                final String byteRange = Arrays.toString(signature.getByteRange());
                 Set<PdfSignatureOrDocTimestampInfo> innerSignaturesFound = byteRangeMap.get(byteRange);
                 if (innerSignaturesFound == null) {
                     // Recursive call to find inner signatures in the byte range covered by this signature. Deep first search.

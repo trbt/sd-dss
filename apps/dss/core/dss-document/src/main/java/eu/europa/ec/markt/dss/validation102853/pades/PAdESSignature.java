@@ -451,7 +451,7 @@ public class PAdESSignature extends DefaultAdvancedSignature {
         final CertificateToken signingCertificateToken = getSigningCertificateToken();
         if (signingCertificateToken == null) {
 
-            certificateBytes = new byte[0];
+            certificateBytes = DSSUtils.EMPTY_BYTE_ARRAY;
         } else {
 
             certificateBytes = signingCertificateToken.getEncoded();

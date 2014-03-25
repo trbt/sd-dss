@@ -31,7 +31,7 @@ import eu.europa.ec.markt.dss.validation102853.rules.RuleConstant;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 
 /**
- * This class checks if the signing cert is mandated to be supported by SSCD device.
+ * This class checks if the signing certificate is mandated to be supported by SSCD device.
  *
  * @author bielecro
  */
@@ -51,48 +51,46 @@ public class SSCD implements NodeName, NodeValue, AttributeName, AttributeValue,
     }
 
     /**
-     * The SSCD constraint is to be applied to the signer's cert of the main signature or timestamp before
+     * The SSCD constraint is to be applied to the signer's certificate of the main signature or timestamp before
      * considering it as valid for the intended use.
      *
-     * @param isTimestamp indicates if this is a timestamp signing cert or main signature signing cert.
-     * @param cert        the cert to be processed
+     * // @param isTimestamp indicates if this is a timestamp signing certificate or main signature signing certificate.
+     *
+     * @param cert the certificate to be processed
      * @return
      */
-    public Boolean run(final boolean isTimestamp, final XmlDom cert) {
+    public boolean run(final XmlDom cert) {
 
-        final String context = isTimestamp ? TIMESTAMP_SIGNING_CERTIFICATE : SIGNING_CERTIFICATE;
-        final boolean mustBeSSCDCertificate = constraintData.mustBeSSCDCertificate(context);
-        if (mustBeSSCDCertificate) {
-
-            return process(cert);
-        }
-        return null;
+        return process(cert);
     }
 
     /**
      * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
      *
-     * @param cert the cert to be processed
+     * @param certificate the certificate to be processed
      * @return
      */
-    private boolean process(final XmlDom cert) {
+    private boolean process(final XmlDom certificate) {
 
+        if (certificate == null) {
+            return false;
+        }
         /**
-         * Mandates the end user cert used in validating the signature to be supported by a secure signature
+         * Mandates the end user certificate used in validating the signature to be supported by a secure signature
          * creation device (SSCD) as defined in Directive 1999/93/EC [9].
          *
-         * This status is derived from: • QcSSCD extension being set in the signer's cert in accordance with ETSI
+         * This status is derived from: • QcSSCD extension being set in the signer's certificate in accordance with ETSI
          * TS 101 862 [5];
          */
 
-        final boolean qcSSCD = cert.getBoolValue("./QCStatement/QCSSCD/text()");
+        final boolean qcSSCD = certificate.getBoolValue("./QCStatement/QCSSCD/text()");
 
         /**
-         * • QCP+ cert policy OID being indicated in the signer's cert policies extension (i.e.
+         * • QCP+ certificate policy OID being indicated in the signer's certificate policies extension (i.e.
          * 0.4.0.1456.1.1);
          */
 
-        final boolean qcpPlus = cert.getBoolValue("./QCStatement/QCPPlus/text()");
+        final boolean qcpPlus = certificate.getBoolValue("./QCStatement/QCPPlus/text()");
 
         /**
          * • The content of a Trusted service Status List;<br>
@@ -100,10 +98,9 @@ public class SSCD implements NodeName, NodeValue, AttributeName, AttributeValue,
          * or
          */
 
-        final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(cert);
+        final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(certificate);
 
-        final boolean sie = qualifiers.contains(QC_WITH_SSCD) || qualifiers.contains(QCSSCD_STATUS_AS_IN_CERT) || qualifiers
-              .contains(QC_FOR_LEGAL_PERSON);
+        final boolean sie = qualifiers.contains(QC_WITH_SSCD) || qualifiers.contains(QCSSCD_STATUS_AS_IN_CERT) || qualifiers.contains(QC_FOR_LEGAL_PERSON);
 
         /**
          * • Static configuration that provides such information in a trusted manner.

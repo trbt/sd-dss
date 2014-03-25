@@ -27,7 +27,9 @@ import java.util.Map;
 
 import org.w3c.dom.Document;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.rules.RuleConstant;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
@@ -38,7 +40,10 @@ import eu.europa.ec.markt.dss.validation102853.RuleUtils;
  *
  * @author bielecro
  */
-public class ValidationPolicy extends XmlDom implements RuleConstant {
+public class ValidationPolicy extends XmlDom implements RuleConstant, AttributeName {
+
+    protected static final String TRUE = "true";
+    protected static final String FALSE = "false";
 
     private long maxRevocationFreshnessString;
 
@@ -47,12 +52,7 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
     private Long maxRevocationFreshness;
 
     private Long timestampDelayTime;
-
     private Map<String, Date> algoExpirationDate = new HashMap<String, Date>();
-
-    private List<String> knownPolicies;
-
-    private String certifiedRolesAttendance;
 
     public ValidationPolicy(Document document) {
 
@@ -64,7 +64,7 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
      */
     public boolean isRevocationFreshnessToBeChecked() {
 
-        return null != getElement("/ConstraintsParameters/RevocationFreshness/");
+        return null != getElement("/ConstraintsParameters/Revocation/RevocationFreshness/");
     }
 
     public String getFormatedMaxRevocationFreshness() {
@@ -87,11 +87,11 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
 
             maxRevocationFreshness = Long.MAX_VALUE;
 
-            final XmlDom revocationFreshness = getElement("/ConstraintsParameters/RevocationFreshness");
+            final XmlDom revocationFreshness = getElement("/ConstraintsParameters/Revocation/RevocationFreshness");
             if (revocationFreshness != null) {
 
-                maxRevocationFreshnessString = getLongValue("/ConstraintsParameters/RevocationFreshness/text()");
-                maxRevocationFreshnessUnit = getValue("/ConstraintsParameters/RevocationFreshness/@Unit");
+                maxRevocationFreshnessString = getLongValue("/ConstraintsParameters/Revocation/RevocationFreshness/text()");
+                maxRevocationFreshnessUnit = getValue("/ConstraintsParameters/Revocation/RevocationFreshness/@Unit");
                 maxRevocationFreshness = RuleUtils.convertDuration(maxRevocationFreshnessUnit, "MILLISECONDS", maxRevocationFreshnessString);
                 if (maxRevocationFreshness == 0) {
 
@@ -114,7 +114,7 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
         Date date = algoExpirationDate.get(algo);
         if (date == null) {
 
-            final XmlDom algoExpirationDateDom = getElement("/ConstraintsParameters/Cryptographic/AlgoExpirationDate");
+            final XmlDom algoExpirationDateDom = getElement("/ConstraintsParameters/Timestamp/Cryptographic/AlgoExpirationDate");
             if (algoExpirationDateDom == null) {
 
                 return null;
@@ -137,98 +137,130 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
     }
 
     /**
-     * Indicates if the encryption algorithm is acceptable.
+     * Indicates if the signature policy should be checked. If AcceptablePolicies element is absent within the constraint file then null is returned,
+     * otherwise the list of identifiers is initialised.
      *
-     * @param contextName
-     * @param algo
-     * @return
+     * @return {@code Constraint} if SigningTime element is present in the constraint file, null otherwise.
      */
-    public boolean isAcceptableEncryptionAlgo(final String contextName, final String algo) {
+    public SignaturePolicyConstraint getSignaturePolicyConstraint() {
 
-        final boolean found = exists("/ConstraintsParameters/Cryptographic/%s/AcceptableEncryptionAlgo[dss:Algo='%s']/Algo", contextName, algo);
-        return found;
-    }
+        final String level = getValue("/ConstraintsParameters/MainSignature/AcceptablePolicies/@Level");
+        if (DSSUtils.isNotBlank(level)) {
 
-    /**
-     * Indicates if the digest algorithm is acceptable.
-     *
-     * @param contextName
-     * @param algo
-     * @return
-     */
-    public boolean isAcceptableDigestAlgo(final String contextName, final String algo) {
+            final SignaturePolicyConstraint constraint = new SignaturePolicyConstraint(level);
 
-        final boolean found = exists("/ConstraintsParameters/Cryptographic/%s/AcceptableDigestAlgo[dss:Algo='%s']/Algo", contextName, algo);
-        return found;
-    }
-
-    /**
-     * Indicates if the encryption algorithm minimum public key size.
-     *
-     * @param contextName
-     * @param algo
-     * @return -1 is returned if the value is not found or faulty.
-     */
-    public long getMiniPublicKeySize(final String contextName, final String algo) {
-
-        long pkSize = -1;
-        try {
-
-            pkSize = getLongValue("/ConstraintsParameters/Cryptographic/%s/MiniPublicKeySize/Size[@Algo='%s']/text()", contextName, algo);
-        } catch (Exception e) {
-            // pkSize set to -1
+            final List<XmlDom> policyList = getElements("/ConstraintsParameters/MainSignature/AcceptablePolicies/Id");
+            final List<String> identifierList = XmlDom.convertToStringList(policyList);
+            constraint.setIdentifiers(identifierList);
+            constraint.setExpectedValue(identifierList.toString());
+            return constraint;
         }
-        return pkSize;
+        return null;
     }
 
     /**
-     * Indicates if the presence of the signing time is mandatory.
+     * Indicates if the signed property: signing-time should be checked. If SigningTime element is absent within the constraint file then null is returned.
      *
-     * @return
+     * @return {@code Constraint} if SigningTime element is present in the constraint file, null otherwise.
      */
-    public boolean shouldCheckIfSigningTimeIsPresent() {
+    public Constraint getSigningTimeConstraint() {
 
-        final boolean checkIfSigningTimeIsPresent = getBoolValue("/ConstraintsParameters/MandatedSignedQProperties/SigningTime/text()");
-        return checkIfSigningTimeIsPresent;
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/MandatedSignedQProperties/SigningTime";
+        return getBasicConstraint(XP_ROOT, true);
     }
 
     /**
-     * Indicates if the presence of the Commitment Type Indication is mandatory.
+     * Indicates if the signed property: content-hints should be checked. If ContentHints element is absent within the constraint file then null is returned.
      *
-     * @return
+     * @return {@code Constraint} if ContentHints element is present in the constraint file, null otherwise.
      */
-    public boolean shouldCheckIfCommitmentTypeIndicationIsPresent() {
+    public Constraint getContentHintsConstraint() {
 
-        final boolean checkIfCommitmentTypeIndicationIsPresent = getBoolValue("/ConstraintsParameters/MandatedSignedQProperties/CommitmentTypeIndication/Check/text()");
-        return checkIfCommitmentTypeIndicationIsPresent;
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/MandatedSignedQProperties/ContentHints";
+        return getBasicConstraint(XP_ROOT, true);
     }
 
     /**
-     * Indicates if the presence of the Signer Location is mandatory.
+     * Indicates if the signed property: content-identifier should be checked. If ContentIdentifier element is absent within the constraint file then null is returned.
      *
-     * @return
+     * @return {@code Constraint} if ContentIdentifier element is present in the constraint file, null otherwise.
      */
-    public boolean shouldCheckIfSignerLocationIsPresent() {
+    public Constraint getContentIdentifierConstraint() {
 
-        final boolean checkIfSignerLocationIsPresent = getBoolValue("/ConstraintsParameters/MandatedSignedQProperties/SignerLocation/text()");
-        return checkIfSignerLocationIsPresent;
-    }
-
-    public boolean shouldCheckIfContentTypeIsPresent() {
-
-        final boolean checkIfContentTypeIsPresent = getBoolValue("/ConstraintsParameters/MandatedSignedQProperties/ContentType/text()");
-        return checkIfContentTypeIsPresent;
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/MandatedSignedQProperties/ContentIdentifier";
+        return getBasicConstraint(XP_ROOT, true);
     }
 
     /**
-     * Indicates if the presence of the Signer Role is mandatory.
+     * Indicates if the signed property: commitment-type-indication should be checked. If CommitmentTypeIndication element is absent within the constraint file then null is
+     * returned, otherwise the list of identifiers is initialised.
      *
-     * @return
+     * @return {@code Constraint} if CommitmentTypeIndication element is present in the constraint file, null otherwise.
      */
-    public boolean shouldCheckIfClaimedRoleIsPresent() {
+    public Constraint getCommitmentTypeIndicationConstraint() {
 
-        final long count = getCountValue("count(/ConstraintsParameters/OnRoles/ClaimedRoles)");
-        return count > 0;
+        final String level = getValue("/ConstraintsParameters/MainSignature/MandatedSignedQProperties/CommitmentTypeIndication/@Level");
+        if (DSSUtils.isNotBlank(level)) {
+
+            final Constraint constraint = new Constraint(level);
+            final List<XmlDom> commitmentTypeIndications = getElements("/ConstraintsParameters/MainSignature/MandatedSignedQProperties/CommitmentTypeIndication/Identifier");
+            final List<String> identifierList = XmlDom.convertToStringList(commitmentTypeIndications);
+            constraint.setExpectedValue(identifierList.toString());
+            constraint.setIdentifiers(identifierList);
+            return constraint;
+        }
+        return null;
+    }
+
+    /**
+     * Indicates if the signed property: signer-location should be checked. If SignerLocation element is absent within the constraint file then null is returned.
+     *
+     * @return {@code Constraint} if SignerLocation element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSignerLocationConstraint() {
+
+        final String level = getValue("/ConstraintsParameters/MainSignature/MandatedSignedQProperties/SignerLocation/@Level");
+        if (DSSUtils.isNotBlank(level)) {
+
+            final Constraint constraint = new Constraint(level);
+            return constraint;
+        }
+        return null;
+    }
+
+    /**
+     * Indicates if the signed property: content-time-stamp should be checked. If ContentTimeStamp element is absent within the constraint file then null is returned.
+     *
+     * @return {@code Constraint} if ContentTimeStamp element is present in the constraint file, null otherwise.
+     */
+    public Constraint getContentTimeStampConstraint() {
+
+        final String level = getValue("/ConstraintsParameters/MainSignature/MandatedSignedQProperties/ContentTimeStamp/@Level");
+        if (DSSUtils.isNotBlank(level)) {
+
+            final Constraint constraint = new Constraint(level);
+            return constraint;
+        }
+        return null;
+    }
+
+    /**
+     * Indicates if the signed property: content-time-stamp should be checked. If ClaimedRoles element is absent within the constraint file then null is returned.
+     *
+     * @return {@code Constraint} if ClaimedRoles element is present in the constraint file, null otherwise.
+     */
+    public Constraint getClaimedRoleConstraint() {
+
+        final String level = getValue("/ConstraintsParameters/MainSignature/MandatedSignedQProperties/ContentTimeStamp/@Level");
+//        final long count = getCountValue("count(/ConstraintsParameters/OnRoles/ClaimedRoles)");
+//        return count > 0;
+        // TODO: (Bob: 2014 Mar 08)
+        if (DSSUtils.isNotBlank(level)) {
+
+            final Constraint constraint = new Constraint(level);
+            return constraint;
+        }
+        return null;
     }
 
     /**
@@ -238,8 +270,8 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
      */
     public List<String> getClaimedRoles() {
 
-        final List<XmlDom> list = getElements("/ConstraintsParameters/OnRoles/ClaimedRoles/Role");
-        final List<String> claimedRoles = RuleUtils.toStringList(list);
+        final List<XmlDom> list = getElements("/ConstraintsParameters/MainSignature/OnRoles/ClaimedRoles/Role");
+        final List<String> claimedRoles = XmlDom.convertToStringList(list);
         return claimedRoles;
     }
 
@@ -250,7 +282,7 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
      */
     public boolean shouldCheckIfCertifiedRoleIsPresent() {
 
-        final long count = getCountValue("count(/ConstraintsParameters/OnRoles/CertifiedRoles/Role)");
+        final long count = getCountValue("count(/ConstraintsParameters/MainSignature/MandatedSignedQProperties/CertifiedRoles/Role)");
         return count > 0;
     }
 
@@ -261,47 +293,9 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
      */
     public List<String> getCertifiedRoles() {
 
-        final List<XmlDom> list = getElements("/ConstraintsParameters/OnRoles/CertifiedRoles/Role");
-        final List<String> claimedRoles = RuleUtils.toStringList(list);
+        final List<XmlDom> list = getElements("/ConstraintsParameters/MainSignature/MandatedSignedQProperties/CertifiedRoles/Role");
+        final List<String> claimedRoles = XmlDom.convertToStringList(list);
         return claimedRoles;
-    }
-
-    /**
-     * Indicates if the signing certificate must be qualified.
-     *
-     * @param context
-     * @return
-     */
-    public boolean mustBeQualifiedCertificate(final String context) {
-
-        final boolean mustBe = getBoolValue("/ConstraintsParameters/%s/QualifiedCertificate/text()", context);
-        return mustBe;
-    }
-
-    /**
-     * Indicates if the end user certificate used in validating the signature is mandated to be supported by a secure
-     * signature creation device (SSCD) as defined in Directive 1999/93/EC [9].
-     *
-     * @param context
-     * @return
-     */
-    public boolean mustBeSSCDCertificate(final String context) {
-
-        final boolean mustBe = getBoolValue("/ConstraintsParameters/%s/SSCD/text()", context);
-        return mustBe;
-    }
-
-    /**
-     * Indicates if the signer's certificate used in validating the signature is mandated to be issued by a certificate
-     * authority issuing certificate as having been issued to a legal person.
-     *
-     * @param context
-     * @return
-     */
-    public boolean mustBeForLegalPersonCertificate(final String context) {
-
-        final boolean mustBe = getBoolValue("/ConstraintsParameters/%s/ForLegalPerson/text()", context);
-        return mustBe;
     }
 
     /**
@@ -327,44 +321,6 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
     }
 
     /**
-     * Indicates if any policy is acceptable.
-     *
-     * @return
-     */
-    public boolean isAnyPolicyAcceptable() {
-
-        return isPolicyAcceptable(ANY_POLICY);
-    }
-
-    /**
-     * Indicates if no policy is acceptable.
-     *
-     * @return
-     */
-    public boolean isNoPolicyAcceptable() {
-
-        final boolean noPolicyAcceptable = isPolicyAcceptable(NO_POLICY);
-        return noPolicyAcceptable;
-    }
-
-    /**
-     * Indicates if the given policy is acceptable.
-     *
-     * @param policyId
-     * @return
-     */
-    public boolean isPolicyAcceptable(final String policyId) {
-
-        if (knownPolicies == null) {
-
-            List<XmlDom> domList = getElements("/ConstraintsParameters/AcceptablePolicies/Id");
-            knownPolicies = convertToStringList(domList);
-        }
-        final boolean found = knownPolicies.contains(policyId);
-        return found;
-    }
-
-    /**
      * Returns the timestamp delay in milliseconds.
      *
      * @return
@@ -373,46 +329,385 @@ public class ValidationPolicy extends XmlDom implements RuleConstant {
 
         if (timestampDelayTime == null) {
 
-            final XmlDom timestampDelayPresent = getElement("/ConstraintsParameters/TimestampDelay");
+            final XmlDom timestampDelayPresent = getElement("/ConstraintsParameters/Timestamp/TimestampDelay");
             if (timestampDelayPresent == null) {
 
                 return null;
             }
-            final long timestampDelay = getLongValue("/ConstraintsParameters/TimestampDelay/text()");
-            final String timestampUnit = getValue("/ConstraintsParameters/TimestampDelay/@Unit");
+            final long timestampDelay = getLongValue("/ConstraintsParameters/Timestamp/TimestampDelay/text()");
+            final String timestampUnit = getValue("/ConstraintsParameters/Timestamp/TimestampDelay/@Unit");
             timestampDelayTime = RuleUtils.convertDuration(timestampUnit, "MILLISECONDS", timestampDelay);
         }
         return timestampDelayTime;
     }
 
-    public List<String> getCommitmentTypeIndications() {
-
-        final List<XmlDom> list = getElements("/ConstraintsParameters/MandatedSignedQProperties/CommitmentTypeIndication/Identifier");
-        final List<String> identifierList = RuleUtils.toStringList(list);
-        return identifierList;
-    }
-
-    public boolean shouldCheckIfContentHintsIsPresent() {
-
-        final boolean checkIfContentHintsIsPresent = getBoolValue("/ConstraintsParameters/MandatedSignedQProperties/ContentHints/text()");
-        return checkIfContentHintsIsPresent;
-    }
-
-    public boolean shouldCheckIfContentIdentifierIsPresent() {
-
-        final boolean checkIfContentHintsIsPresent = getBoolValue("/ConstraintsParameters/MandatedSignedQProperties/ContentIdentifier/text()");
-        return checkIfContentHintsIsPresent;
-    }
-
-    public boolean shouldCheckIfContentTimeStampIsPresent() {
-
-        final boolean checkIfContentTimeStampIsPresent = getBoolValue("/ConstraintsParameters/MandatedSignedQProperties/ContentTimeStamp/text()");
-        return checkIfContentTimeStampIsPresent;
-    }
-
     public String getCertifiedRolesAttendance() {
 
-        String attendance = getValue("ConstraintsParameters/OnRoles/ClaimedRoles/@Attendance");
+        String attendance = getValue("ConstraintsParameters/MainSignature/OnRoles/ClaimedRoles/@Attendance");
         return attendance;
     }
+
+    /**
+     * This method creates the {@code SignatureCryptographicConstraint} corresponding to the context parameter. If AcceptableEncryptionAlgo is not present in the constraint file
+     * the null is returned.
+     *
+     * @param context The context of the signature cryptographic constraints: MainSignature, Timestamp, Revocation
+     * @return {@code SignatureCryptographicConstraint} if AcceptableEncryptionAlgo for a given context element is present in the constraint file, null otherwise.
+     */
+    public SignatureCryptographicConstraint getSignatureCryptographicConstraint(final String context) {
+
+        final String rootXPathQuery = String.format("/ConstraintsParameters/%s/Cryptographic", context);
+        return getSignatureCryptographicConstraint_(rootXPathQuery, context, null);
+    }
+
+    /**
+     * This method creates the {@code SignatureCryptographicConstraint} corresponding to the context parameter. If AcceptableEncryptionAlgo is not present in the constraint file
+     * the null is returned.
+     *
+     * @param context    The context of the signature cryptographic constraints: MainSignature, Timestamp, Revocation
+     * @param subContext the sub context of the signature cryptographic constraints: EMPTY (signature itself), SigningCertificate, CACertificate
+     * @return {@code SignatureCryptographicConstraint} if AcceptableEncryptionAlgo for a given context element is present in the constraint file, null otherwise.
+     */
+    public SignatureCryptographicConstraint getSignatureCryptographicConstraint(final String context, final String subContext) {
+
+        final String rootXPathQuery = String.format("/ConstraintsParameters/%s/%s/Cryptographic", context, subContext);
+        return getSignatureCryptographicConstraint_(rootXPathQuery, context, subContext);
+    }
+
+    /**
+     * This method creates the {@code SignatureCryptographicConstraint} corresponding to the context parameter. If AcceptableEncryptionAlgo is not present in the constraint file
+     * the null is returned.
+     *
+     * @param rootXPathQuery The context of the signature cryptographic constraints is included within the XPath query.
+     * @param context        The context of the signature cryptographic constraints: MainSignature, Timestamp, Revocation
+     * @param subContext     the sub context of the signature cryptographic constraints: EMPTY (signature itself), SigningCertificate, CACertificate
+     * @return {@code SignatureCryptographicConstraint} if AcceptableEncryptionAlgo for a given context element is present in the constraint file, null otherwise.
+     */
+    private SignatureCryptographicConstraint getSignatureCryptographicConstraint_(final String rootXPathQuery, final String context, final String subContext) {
+
+        final String level = getValue(rootXPathQuery + "/@Level");
+        if (DSSUtils.isNotBlank(level)) {
+
+            final SignatureCryptographicConstraint constraint = new SignatureCryptographicConstraint(level, context, subContext);
+
+            final List<XmlDom> encryptionAlgoList = getElements(rootXPathQuery + "/AcceptableEncryptionAlgo/Algo");
+            final List<String> encryptionAlgoStringList = XmlDom.convertToStringList(encryptionAlgoList);
+            constraint.setEncryptionAlgorithms(encryptionAlgoStringList);
+
+            final List<XmlDom> digestAlgoList = getElements(rootXPathQuery + "/AcceptableDigestAlgo/Algo");
+            final List<String> digestAlgoStringList = XmlDom.convertToStringList(digestAlgoList);
+            constraint.setDigestAlgorithms(digestAlgoStringList);
+
+            final List<XmlDom> miniPublicKeySizeList = getElements(rootXPathQuery + "/MiniPublicKeySize/Algo");
+            final Map<String, String> miniPublicKeySizeStringMap = XmlDom.convertToStringMap(miniPublicKeySizeList, SIZE);
+            constraint.setMinimumPublicKeySizes(miniPublicKeySizeStringMap);
+
+            final List<XmlDom> algoExpirationDateList = getElements("/ConstraintsParameters/Cryptographic/AlgoExpirationDate/Algo");
+            final Map<String, Date> algoExpirationDateStringMap = XmlDom.convertToStringDateMap(algoExpirationDateList, DATE);
+            constraint.setAlgorithmExpirationDates(algoExpirationDateStringMap);
+
+            return constraint;
+        }
+        return null;
+    }
+
+    /**
+     * @param context
+     * @param subContext
+     * @return {@code Constraint} if Expiration for a given context element is present in the constraint file, null otherwise.
+     */
+    public CertificateExpirationConstraint getSigningCertificateExpirationConstraint(final String context, final String subContext) {
+
+        final String level = getValue(String.format("/ConstraintsParameters/%s/%s/Expiration/@Level", context, subContext));
+        if (DSSUtils.isNotBlank(level)) {
+
+            final CertificateExpirationConstraint constraint = new CertificateExpirationConstraint(level);
+            return constraint;
+        }
+        return null;
+    }
+
+    /**
+     * This constraint requests the presence of the trust anchor in the certificate chain.
+     *
+     * @param context
+     * @return {@code Constraint} if ProspectiveCertificateChain element for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getProspectiveCertificateChainConstraint(final String context) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/ProspectiveCertificateChain", context);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @param context
+     * @param subContext
+     * @return {@code Constraint} if Signature for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getCertificateSignatureConstraint(final String context, final String subContext) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/%s/Signature", context, subContext);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @param context
+     * @return {@code Constraint} if RevocationDataAvailable for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getRevocationDataAvailableConstraint(final String context, final String subContext) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/%s/RevocationDataAvailable", context, subContext);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @param context
+     * @return {@code Constraint} if RevocationDataIsTrusted for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getRevocationDataIsTrustedConstraint(final String context, final String subContext) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/%s/RevocationDataIsTrusted", context, subContext);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @param context
+     * @return {@code Constraint} if RevocationDataFreshness for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getRevocationDataFreshnessConstraint(final String context, final String subContext) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/%s/RevocationDataFreshness", context, subContext);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code Constraint} if Revoked for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateRevokedConstraint(final String context, final String subContext) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/%s/Revoked", context, subContext);
+        return getBasicConstraint(XP_ROOT, false);
+    }
+
+    /**
+     * @return {@code Constraint} if OnHold for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateOnHoldConstraint(final String context, final String subContext) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/%s/OnHold", context, subContext);
+        return getBasicConstraint(XP_ROOT, false);
+    }
+
+    /**
+     * @return {@code Constraint} if TSLStatus for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateTSLStatusConstraint(final String context) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/TSLStatus", context);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @param context of the certificate: main signature, timestamp, revocation data
+     * @return {@code Constraint} if Revoked for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getIntermediateCertificateRevokedConstraint(final String context) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/CACertificate/Revoked", context);
+        return getBasicConstraint(XP_ROOT, false);
+    }
+
+    /**
+     * @return {@code Constraint} if CertificateChain for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getChainConstraint() {
+
+        final String level = getValue("/ConstraintsParameters/MainSignature/CertificateChain/@Level");
+        if (DSSUtils.isNotBlank(level)) {
+
+            final Constraint constraint = new Constraint(level);
+            return constraint;
+        }
+        return null;
+    }
+
+    /**
+     * @return {@code Constraint} if Qualification for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateQualificationConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/SigningCertificate/Qualification";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * Indicates if the end user certificate used in validating the signature is mandated to be supported by a secure
+     * signature creation device (SSCD) as defined in Directive 1999/93/EC [9].
+     *
+     * @return {@code Constraint} if SupportedBySSCD for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateSupportedBySSCDConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/SigningCertificate/SupportedBySSCD";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code Constraint} if IssuedToLegalPerson for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateIssuedToLegalPersonConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/SigningCertificate/IssuedToLegalPerson";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code Constraint} if Recognition for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateRecognitionConstraint(final String context) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/Recognition", context);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code Constraint} if DigestValueMatch for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateDigestValueMatchConstraint(final String context) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/DigestValueMatch", context);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code Constraint} if IssuerSerialMatch for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSigningCertificateIssuerSerialMatchConstraint(final String context) {
+
+        final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/IssuerSerialMatch", context);
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code Constraint} if ReferenceDataExistence for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getReferenceDataExistenceConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/ReferenceDataExistence";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code ReferenceDataIntact} if ReferenceDataIntact for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getReferenceDataIntactConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/ReferenceDataIntact";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * @return {@code ReferenceDataIntact} if SignatureIntact for a given context element is present in the constraint file, null otherwise.
+     */
+    public Constraint getSignatureIntactConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/MainSignature/SignatureIntact";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * This method returns the "basic" constraint able to handle simple (empty/not empty), boolean value and identifiers list.
+     *
+     * @param XP_ROOT              is the root part of the XPath query use to retrieve the constraint description.
+     * @param defaultExpectedValue true or false
+     * @return
+     */
+    private Constraint getBasicConstraint(final String XP_ROOT, final boolean defaultExpectedValue) {
+
+        final String level = getValue(XP_ROOT + "/@Level");
+        if (DSSUtils.isNotBlank(level)) {
+
+            final Constraint constraint = new Constraint(level);
+            String expectedValue = getValue(XP_ROOT + "/text()");
+            if (DSSUtils.isBlank(expectedValue)) {
+                expectedValue = defaultExpectedValue ? TRUE : FALSE;
+            }
+            constraint.setExpectedValue(expectedValue);
+            return constraint;
+        }
+        return null;
+    }
+
+    public BasicValidationProcessValidConstraint getBasicValidationProcessConclusionConstraint() {
+
+        final BasicValidationProcessValidConstraint constraint = new BasicValidationProcessValidConstraint("FAIL");
+        constraint.setExpectedValue(TRUE);
+        return constraint;
+    }
+
+    public Constraint getMessageImprintDataFoundConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/Timestamp/MessageImprintDataFound";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    public Constraint getMessageImprintDataIntactConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/Timestamp/MessageImprintDataIntact";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * This constraint is always executed!
+     *
+     * @return
+     */
+    public TimestampValidationProcessValidConstraint getTimestampValidationProcessConstraint() {
+
+        final TimestampValidationProcessValidConstraint constraint = new TimestampValidationProcessValidConstraint("FAIL");
+        constraint.setExpectedValue(TRUE);
+        return constraint;
+    }
+
+    public Constraint getRevocationTimeConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/Timestamp/RevocationTimeAgainstBestSignatureTime";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    public Constraint getBestSignatureTimeBeforeIssuanceDateOfSigningCertificateConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/Timestamp/BestSignatureTimeBeforeIssuanceDateOfSigningCertificate";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    public Constraint getSigningCertificateValidityAtBestSignatureTimeConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/Timestamp/SigningCertificateValidityAtBestSignatureTime";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    public Constraint getAlgorithmReliableAtBestSignatureTimeConstraint() {
+
+        final String XP_ROOT = "/ConstraintsParameters/Timestamp/AlgorithmReliableAtBestSignatureTime";
+        return getBasicConstraint(XP_ROOT, true);
+    }
+
+    /**
+     * This constraint is has only two levels: FAIL, or NOTHING
+     *
+     * @return
+     */
+    public Constraint getTimestampDelaySigningTimePropertyConstraint() {
+
+        final Long timestampDelay = getTimestampDelayTime();
+        if (timestampDelay != null && timestampDelay > 0) {
+
+            final Constraint constraint = new Constraint("FAIL");
+            constraint.setExpectedValue(TRUE);
+            return constraint;
+        }
+        return null;
+    }
 }
+

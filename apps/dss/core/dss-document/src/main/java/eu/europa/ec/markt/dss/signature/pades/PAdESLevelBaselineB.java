@@ -23,13 +23,13 @@ package eu.europa.ec.markt.dss.signature.pades;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.cms.AttributeTable;
 import org.bouncycastle.asn1.cms.CMSAttributes;
 import org.bouncycastle.cms.CMSAttributeTableGenerator;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.cades.CAdESLevelBaselineB;
@@ -58,7 +58,7 @@ class PAdESLevelBaselineB {
         }
 
         if (signedAttributes.get(CMSAttributes.messageDigest) == null) {
-            LOG.debug( "Proposed Digest : {} ", new Object[]{Hex.encodeHexString(messageDigest)});
+            LOG.debug("Proposed Digest : {} ", new Object[]{DSSUtils.encodeHexString(messageDigest)});
             // byte[] messageDigest = (byte[]) params.get(CMSAttributeTableGenerator.DIGEST);
             signedAttributes = signedAttributes.add(CMSAttributes.messageDigest, new DEROctetString(messageDigest));
         }

@@ -26,11 +26,9 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
-import eu.europa.ec.markt.dss.validation102853.ValidationResourceManager;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
@@ -56,30 +54,30 @@ public class BasicValidation implements Indication, SubIndication, NodeName, Nod
 
     // Secondary inputs
     /**
-     * See {@link eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters#getBBBData()}
+     * See {@link eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters#getBasicBuildingBlocksReport()}
      *
      * @return
      */
-    private XmlDom bbbData;
+    private XmlDom basicBuildingBlocksReport;
 
     // The DSS framework doesn't handle the content-time-stamps. This is present here for the future implementation.
     private XmlDom contentTimestampsAdESTValidationData;
 
     private void prepareParameters(final XmlNode mainNode, final ProcessParameters params) {
 
-        this.bbbData = params.getBBBData(); // Basic Building Blocks
+        this.basicBuildingBlocksReport = params.getBasicBuildingBlocksReport();
         isInitialised(mainNode, params);
     }
 
     private void isInitialised(final XmlNode mainNode, final ProcessParameters params) {
 
-        if (bbbData == null) {
+        if (basicBuildingBlocksReport == null) {
 
             /**
              * The execution of the Basic Building Blocks validation process which creates the validation data.<br>
              */
             final BasicBuildingBlocks basicBuildingBlocks = new BasicBuildingBlocks();
-            bbbData = basicBuildingBlocks.run(mainNode, params);
+            basicBuildingBlocksReport = basicBuildingBlocks.run(mainNode, params);
         }
     }
 
@@ -115,7 +113,7 @@ public class BasicValidation implements Indication, SubIndication, NodeName, Nod
 
         final XmlNode basicValidationData = mainNode.addChild(BASIC_VALIDATION_DATA);
 
-        final List<XmlDom> signatures = bbbData.getElements("./Signature");
+        final List<XmlDom> signatures = basicBuildingBlocksReport.getElements("./Signature");
         for (final XmlDom signature : signatures) {
 
             final String signatureId = signature.getValue("./@Id");
@@ -129,25 +127,24 @@ public class BasicValidation implements Indication, SubIndication, NodeName, Nod
 
             if (valid) {
 
-                conclusionNode.addChild(INDICATION, VALID);
+                final XmlDom mainConclusion = signature.getElement("./Conclusion");
+                if (mainConclusion == null) {
+
+                    throw new DSSException(EXCEPTION_TWUEIVP);
+                }
+                conclusionNode.addChildrenOf(mainConclusion);
             }
         }
 
-        if (ProcessParameters.isLoggingEnabled()) {
-
-            System.out.println("");
-            System.out.println(basicValidationData.toString());
-        }
-        final Document bvDocument = ValidationResourceManager.xmlNodeIntoDom(basicValidationData);
-        final XmlDom bvDom = new XmlDom(bvDocument);
+        final XmlDom bvDom = basicValidationData.toXmlDom();
         params.setBvData(bvDom);
         return bvDom;
     }
 
     /**
-     * @param signature
-     * @param signatureId
-     * @param conclusionNode
+     * @param signature      depicts the basic building blocks detailed validation report for a signature.
+     * @param signatureId    signature identifier
+     * @param conclusionNode {@code XmlNode} which is used to store the conclusion
      * @return
      */
     private boolean process(final XmlDom signature, final String signatureId, final XmlNode conclusionNode) {
@@ -273,7 +270,7 @@ public class BasicValidation implements Indication, SubIndication, NodeName, Nod
                     if (!ALGORITHM_NOT_FOUND.equals(expirationDateString)) {
 
                         // TODO: to be adapted to "./Info[@Field='TimestampProductionTime']/text()"
-                        final Date bestSignatureTime = adestConclusion.getTimeValue("./Info[@Field='BestSignatureTime']/text()");
+                        final Date bestSignatureTime = adestConclusion.getTimeValue("./Info/@BestSignatureTime");
 
                         final Date expirationDate = RuleUtils.parseDate(RuleUtils.SDF_DATE, expirationDateString);
                         if (expirationDate.before(bestSignatureTime)) {
@@ -338,8 +335,8 @@ public class BasicValidation implements Indication, SubIndication, NodeName, Nod
                 final String adestIndication = adestConclusion.getValue("./Indication/text()");
                 if (VALID.equals(adestIndication)) {
 
-                    final Date revocationTime = xcvConclusion.getTimeValue("./Info[@Field='RevocationTime']/text()");
-                    final Date bestSignatureTime = adestConclusion.getTimeValue("./Info[@Field='BestSignatureTime']/text()");
+                    final Date revocationTime = xcvConclusion.getTimeValue("./Info/@RevocationTime");
+                    final Date bestSignatureTime = adestConclusion.getTimeValue("./Info/@BestSignatureTime");
 
                     if (bestSignatureTime.after(revocationTime)) {
 
@@ -370,8 +367,8 @@ public class BasicValidation implements Indication, SubIndication, NodeName, Nod
                 final String adestIndication = adestConclusionDom.getValue("./Indication/text()");
                 if (VALID.equals(adestIndication)) {
 
-                    final Date bestSignatureTime = adestConclusionDom.getTimeValue("./Info[@Field='BestSignatureTime']/text()");
-                    final Date notAfter = xcvConclusion.getTimeValue("./Info[@Field='NotAfter']/text()");
+                    final Date bestSignatureTime = adestConclusionDom.getTimeValue("./Info/@BestSignatureTime");
+                    final Date notAfter = xcvConclusion.getTimeValue("./Info/@NotAfter");
 
                     if (bestSignatureTime.after(notAfter)) {
 

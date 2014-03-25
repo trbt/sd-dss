@@ -27,7 +27,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1GeneralizedTime;
@@ -72,7 +71,7 @@ import eu.europa.ec.markt.dss.signature.MimeType;
  * id_aa_ets_sigPolicyId attribute as specified in ETSI TS 101 733 V1.8.1, clause 5.8.1.
  * <p/>
  *
- * @version $Revision: 3515 $ - $Date: 2014-02-26 07:19:34 +0100 (Wed, 26 Feb 2014) $
+ * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
  */
 public class CAdESLevelBaselineB {
 
@@ -350,7 +349,7 @@ public class CAdESLevelBaselineB {
         final byte[] encoded = DSSUtils.getEncoded(signingCertificate);
         final byte[] certHash = DSSUtils.digest(digestAlgorithm, encoded);
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Adding Certificate Hash {} with algorithm {}", Hex.encodeHexString(certHash), digestAlgorithm.getName());
+            LOG.debug("Adding Certificate Hash {} with algorithm {}", DSSUtils.encodeHexString(certHash), digestAlgorithm.getName());
         }
         final IssuerSerial issuerSerial = DSSUtils.getIssuerSerial(signingCertificate);
         if (digestAlgorithm == DigestAlgorithm.SHA1) {

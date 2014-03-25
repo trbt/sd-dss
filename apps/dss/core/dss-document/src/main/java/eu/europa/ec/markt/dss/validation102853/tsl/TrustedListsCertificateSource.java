@@ -178,6 +178,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
      */
     private ServiceInfo getServiceInfo(final AbstractTrustService trustedService, final TrustServiceProvider tsProvider, final boolean tlWellSigned) {
 
+        // System.out.println("--- > ServiceName: " + trustedService.getServiceName());
         final ServiceInfo serviceInfo = trustedService.createServiceInfo();
 
         serviceInfo.setServiceName(trustedService.getServiceName());

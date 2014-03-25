@@ -39,8 +39,8 @@ public class Cryptographic {
     @XmlElement(name = "AlgoExpirationDate")
     private AlgoExpirationDateList algoExpirationDateList;
 
-    @XmlElement(name = "SignatureToValidate")
-    private CertificateAlgorithms signatureToValidate;
+    @XmlElement(name = "MainSignature")
+    private CertificateAlgorithms MainSignature;
 
     @XmlElement(name = "SigningCertificate")
     private SigningCertificate signingCertificate;
@@ -65,12 +65,12 @@ public class Cryptographic {
         this.algoExpirationDateList = algoExpirationDateList;
     }
 
-    public CertificateAlgorithms getSignatureToValidate() {
-        return signatureToValidate;
+    public CertificateAlgorithms getMainSignature() {
+        return MainSignature;
     }
 
-    public void setSignatureToValidate(CertificateAlgorithms signatureToValidate) {
-        this.signatureToValidate = signatureToValidate;
+    public void setMainSignature(CertificateAlgorithms MainSignature) {
+        this.MainSignature = MainSignature;
     }
 
     public SigningCertificate getSigningCertificate() {
@@ -117,7 +117,7 @@ public class Cryptographic {
     public String toString() {
         return "Cryptographic{" +
               "algoExpirationDateList=" + algoExpirationDateList +
-              ", signatureToValidate=" + signatureToValidate +
+              ", MainSignature=" + MainSignature +
               ", signingCertificate=" + signingCertificate +
               ", caCertificate=" + caCertificate +
               ", timestampCertificate=" + timestampCertificate +

@@ -63,8 +63,6 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.signature.ProfileException;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 import eu.europa.ec.markt.dss.validation102853.asic.ASiCXMLDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.bean.CertifiedRole;
 import eu.europa.ec.markt.dss.validation102853.bean.CommitmentType;
@@ -72,6 +70,7 @@ import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerifi
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureProductionPlace;
 import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
 import eu.europa.ec.markt.dss.validation102853.cades.CMSDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 import eu.europa.ec.markt.dss.validation102853.condition.Condition;
 import eu.europa.ec.markt.dss.validation102853.condition.PolicyIdCondition;
 import eu.europa.ec.markt.dss.validation102853.condition.QcStatementCondition;
@@ -101,6 +100,7 @@ import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlTimestampType;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlTimestamps;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlTrustedServiceProviderType;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlUsedCertificates;
+import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 import eu.europa.ec.markt.dss.validation102853.pades.PDFDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.report.DetailedReport;
 import eu.europa.ec.markt.dss.validation102853.report.DiagnosticData;
@@ -755,9 +755,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
     }
 
     /**
-     * This method deals with the Qualified Certificate Statements. The retrieved information is transformed to the JAXB object.<br> Qualified Certificate Statements, the
-     * following Policies are checked:<br> - Qualified Certificates Policy "0.4.0.1456.1.1” (QCP);<br> - Qualified Certificates Policy + "0.4.0.1456.1.2" (QCP+);<br> - Qualified
-     * Certificates Compliance "0.4.0.1862.1.1";<br> - Qualified Certificates SCCD "0.4.0.1862.1.4";<br>
+     * This method deals with the Qualified Certificate Statements. The retrieved information is transformed to the JAXB object.<br>
+     * Qualified Certificate Statements, the following Policies are checked:<br>
+     * - Qualified Certificates Policy "0.4.0.1456.1.1” (QCP);<br>
+     * - Qualified Certificates Policy "0.4.0.1456.1.2" (QCP+);<br>
+     * - Qualified Certificates Compliance "0.4.0.1862.1.1";<br>
+     * - Qualified Certificates SCCD "0.4.0.1862.1.4";<br>
      *
      * @param certToken
      * @param xmlCert
@@ -947,26 +950,27 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
                 statusEndDate = new Date();
             }
             // The issuing time of the certificate should be into the validity period of the associated service
-            if (notBefore.after(statusStartDate) && notBefore.before(statusEndDate)) {
+            // TODO: (Bob: 2014 Mar 12) This check must be implemented within 102853
+            //if (notBefore.after(statusStartDate) && notBefore.before(statusEndDate)) {
 
-                xmlTSP.setStatus(serviceInfo.getStatus());
-                xmlTSP.setStartDate(DSSXMLUtils.createXMLGregorianCalendar(statusStartDate));
-                xmlTSP.setEndDate(DSSXMLUtils.createXMLGregorianCalendar(serviceInfo.getStatusEndDate()));
-                xmlTSP.setExpiredCertsRevocationInfo(DSSXMLUtils.createXMLGregorianCalendar(serviceInfo.getExpiredCertsRevocationInfo()));
+            xmlTSP.setStatus(serviceInfo.getStatus());
+            xmlTSP.setStartDate(DSSXMLUtils.createXMLGregorianCalendar(statusStartDate));
+            xmlTSP.setEndDate(DSSXMLUtils.createXMLGregorianCalendar(serviceInfo.getStatusEndDate()));
+            xmlTSP.setExpiredCertsRevocationInfo(DSSXMLUtils.createXMLGregorianCalendar(serviceInfo.getExpiredCertsRevocationInfo()));
 
-                // Check of the associated conditions to identify the qualifiers
-                final List<String> qualifiers = serviceInfo.getQualifiers(certToken.getCertificate());
-                if (!qualifiers.isEmpty()) {
+            // Check of the associated conditions to identify the qualifiers
+            final List<String> qualifiers = serviceInfo.getQualifiers(certToken.getCertificate());
+            if (!qualifiers.isEmpty()) {
 
-                    final XmlQualifiers xmlQualifiers = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlQualifiers();
-                    for (String qualifier : qualifiers) {
+                final XmlQualifiers xmlQualifiers = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlQualifiers();
+                for (String qualifier : qualifiers) {
 
-                        xmlQualifiers.getQualifier().add(qualifier);
-                    }
-                    xmlTSP.setQualifiers(xmlQualifiers);
+                    xmlQualifiers.getQualifier().add(qualifier);
                 }
-                break;
+                xmlTSP.setQualifiers(xmlQualifiers);
             }
+            break;
+            //}
         }
         xmlCert.setTrustedServiceProvider(xmlTSP);
     }
@@ -1051,7 +1055,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
         final XmlPolicy xmlPolicy = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlPolicy();
         xmlSignature.setPolicy(xmlPolicy);
 
-        final String policyId = signaturePolicy.getPolicyId();
+        final String policyId = signaturePolicy.getIdentifier();
         xmlPolicy.setId(policyId);
 
         final String policyUrl = signaturePolicy.getUrl();

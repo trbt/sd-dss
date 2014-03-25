@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
-import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
@@ -58,7 +57,7 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 /**
  * PAdES implementation of the DocumentSignatureService
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
  */
 
 public class PAdESService extends AbstractSignatureService {
@@ -123,7 +122,7 @@ public class PAdESService extends AbstractSignatureService {
         final byte[] messageDigest = pdfSignatureService.digest(document.openStream(), parameters, parameters.getDigestAlgorithm());
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Calculated digest on byte range " + Hex.encodeHexString(messageDigest));
+            LOG.debug("Calculated digest on byte range " + DSSUtils.encodeHexString(messageDigest));
         }
 
         SignerInfoGeneratorBuilder signerInfoGeneratorBuilder = cmsSignedDataGeneratorBuilder
@@ -154,7 +153,7 @@ public class PAdESService extends AbstractSignatureService {
             final byte[] messageDigest = pdfSignatureService.digest(document.openStream(), parameters, parameters.getDigestAlgorithm());
             if (LOG.isInfoEnabled()) {
 
-                LOG.info("Calculated digest on byte range +++++ " + Hex.encodeHexString(messageDigest) + " +++++");
+                LOG.info("Calculated digest on byte range +++++ " + DSSUtils.encodeHexString(messageDigest) + " +++++");
             }
 
             SignerInfoGeneratorBuilder signerInfoGeneratorBuilder = cmsSignedDataGeneratorBuilder

@@ -31,12 +31,12 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.TSLConstant;
+import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.CertificateQualification;
 import eu.europa.ec.markt.dss.validation102853.ProcessExecutor;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.SignatureQualification;
 import eu.europa.ec.markt.dss.validation102853.TLQualification;
-import eu.europa.ec.markt.dss.validation102853.ValidationResourceManager;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.InvolvedServiceInfo;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
@@ -48,7 +48,7 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
 /**
- * This class builds a SimpleReport XmlDom from the diagnostic data.
+ * This class builds a SimpleReport XmlDom from the diagnostic data and detailed validation report.
  * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
@@ -59,26 +59,28 @@ public class SimpleReportBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleReportBuilder.class);
 
-    public static final String LABEL_TINTWS = "### There is no timestamp within the signature.";
-    public static final String LABEL_TINVTWS = "### There is no valid timestamp within the signature.";
+    public static final String LABEL_TINTWS = "There is no timestamp within the signature.";
+    public static final String LABEL_TINVTWS = "There is no valid timestamp within the signature.";
 
     private final ValidationPolicy constraintData;
-    private final XmlDom diagnosticDataXmlDom;
+    private final DiagnosticData diagnosticData;
+
     private int totalSignatureCount = 0;
     private int validSignatureCount = 0;
 
-    public SimpleReportBuilder(ValidationPolicy constraintData, XmlDom diagnosticDataXmlDom) {
+    public SimpleReportBuilder(final ValidationPolicy constraintData, final DiagnosticData diagnosticData) {
+
         this.constraintData = constraintData;
-        this.diagnosticDataXmlDom = diagnosticDataXmlDom;
+        this.diagnosticData = diagnosticData;
     }
 
     /**
      * This method generates the validation simpleReport.
      *
-     * @param params
-     * @return
+     * @param params validation process parameters
+     * @return the object representing {@code SimpleReport}
      */
-    public SimpleReport build(ProcessParameters params) {
+    public SimpleReport build(final ProcessParameters params) {
 
         final XmlNode simpleReport = new XmlNode(NodeName.SIMPLE_REPORT);
         simpleReport.setNameSpace(XmlDom.NAMESPACE);
@@ -101,11 +103,12 @@ public class SimpleReportBuilder {
                 notifyException(simpleReport, e);
             }
         }
-        final Document reportDocument = ValidationResourceManager.xmlNodeIntoDom(simpleReport);
+        final Document reportDocument = simpleReport.toDocument();
         return new SimpleReport(reportDocument);
     }
 
-    private void addPolicyNode(XmlNode report) {
+    private void addPolicyNode(final XmlNode report) {
+
         final XmlNode policyNode = report.addChild(NodeName.POLICY);
         final String policyName = constraintData.getPolicyName();
         final String policyDescription = constraintData.getPolicyDescription();
@@ -113,18 +116,20 @@ public class SimpleReportBuilder {
         policyNode.addChild(NodeName.POLICY_DESCRIPTION, policyDescription);
     }
 
-    private void addValidationTime(ProcessParameters params, XmlNode report) {
+    private void addValidationTime(final ProcessParameters params, final XmlNode report) {
+
         final Date validationTime = params.getCurrentTime();
         report.addChild(NodeName.VALIDATION_TIME, RuleUtils.formatDate(validationTime));
     }
 
-    private void addDocumentName(XmlNode report) {
-        final String documentName = diagnosticDataXmlDom.getValue("/DiagnosticData/DocumentName/text()");
+    private void addDocumentName(final XmlNode report) {
+
+        final String documentName = diagnosticData.getValue("/DiagnosticData/DocumentName/text()");
         report.addChild(NodeName.DOCUMENT_NAME, documentName);
     }
 
-    private void addSignatures(ProcessParameters params, XmlNode simpleReport) throws Exception {
-        final List<XmlDom> signatures = diagnosticDataXmlDom.getElements("/DiagnosticData/Signature");
+    private void addSignatures(final ProcessParameters params, final XmlNode simpleReport) throws DSSException {
+        final List<XmlDom> signatures = diagnosticData.getElements("/DiagnosticData/Signature");
 
         validSignatureCount = 0;
         totalSignatureCount = 0;
@@ -135,17 +140,19 @@ public class SimpleReportBuilder {
     }
 
     private void addStatistics(XmlNode report) {
+
         report.addChild(NodeName.VALID_SIGNATURES_COUNT, Integer.toString(validSignatureCount));
         report.addChild(NodeName.SIGNATURES_COUNT, Integer.toString(totalSignatureCount));
     }
 
     /**
-     * @param params
+     * @param params              validation process parameters
      * @param simpleReport
      * @param diagnosticSignature the diagnosticSignature element in the diagnostic data
-     * @throws Exception
+     * @throws DSSException
      */
-    private void addSignature(ProcessParameters params, XmlNode simpleReport, XmlDom diagnosticSignature) throws Exception {
+    private void addSignature(final ProcessParameters params, final XmlNode simpleReport, final XmlDom diagnosticSignature) throws DSSException {
+
         totalSignatureCount++;
 
         final XmlNode signatureNode = simpleReport.addChild(NodeName.SIGNATURE);
@@ -163,7 +170,7 @@ public class SimpleReportBuilder {
             addSignedBy(signatureNode, signCert);
 
             XmlDom bvData = params.getBvData();
-            final XmlDom bvConclusion = bvData.getElement("/BasicValidationData/Signature[@Id='%s']/Conclusion", signatureId);
+            final XmlDom basicValidationConclusion = bvData.getElement("/BasicValidationData/Signature[@Id='%s']/Conclusion", signatureId);
             final XmlDom ltvDom = params.getLtvData();
             final XmlDom ltvConclusion = ltvDom.getElement("/LongTermValidationData/Signature[@Id='%s']/Conclusion", signatureId);
             final String ltvIndication = ltvConclusion.getValue("./Indication/text()");
@@ -175,33 +182,33 @@ public class SimpleReportBuilder {
             List<XmlDom> infoList = new ArrayList<XmlDom>();
             infoList.addAll(ltvInfoList);
 
-            final String bvIndication = bvConclusion.getValue("./Indication/text()");
-            final String bvSubIndication = bvConclusion.getValue("./SubIndication/text()");
-            // boolean bvOk = Indication.VALID.equals(bvIndication)
-            // || Indication.INDETERMINATE.equals(bvIndication)
-            // && (SubIndication.CRYPTO_CONSTRAINTS_FAILURE_NO_POE.equals(bvSubIndication) ||
-            // SubIndication.OUT_OF_BOUNDS_NO_POE.equals(bvSubIndication) || SubIndication.REVOKED_NO_POE
-            // .equals(bvSubIndication));
+            final List<XmlDom> basicValidationInfoList = basicValidationConclusion.getElements("./Info");
+            final List<XmlDom> basicValidationWarningList = basicValidationConclusion.getElements("./Warning");
+            final List<XmlDom> basicValidationErrorList = basicValidationConclusion.getElements("./Error");
+            // boolean bvOk = Indication.VALID.equals(basicValidationConclusionIndication)
+            // || Indication.INDETERMINATE.equals(basicValidationConclusionIndication)
+            // && (SubIndication.CRYPTO_CONSTRAINTS_FAILURE_NO_POE.equals(basicValidationConclusionSubIndication) ||
+            // SubIndication.OUT_OF_BOUNDS_NO_POE.equals(basicValidationConclusionSubIndication) || SubIndication.REVOKED_NO_POE
+            // .equals(basicValidationConclusionSubIndication));
 
             final boolean noTimestamp = Indication.INDETERMINATE.equals(ltvIndication) && SubIndication.NO_TIMESTAMP.equals(ltvSubIndication);
             final boolean noValidTimestamp = Indication.INDETERMINATE.equals(ltvIndication) && SubIndication.NO_VALID_TIMESTAMP.equals(ltvSubIndication);
             if (noTimestamp || noValidTimestamp) {
 
-                final List<XmlDom> bvInfoList = bvConclusion.getElements("./Info");
-                indication = bvIndication;
-                subIndication = bvSubIndication;
-                infoList = bvInfoList;
+                final String basicValidationConclusionIndication = basicValidationConclusion.getValue("./Indication/text()");
+                final String basicValidationConclusionSubIndication = basicValidationConclusion.getValue("./SubIndication/text()");
+                indication = basicValidationConclusionIndication;
+                subIndication = basicValidationConclusionSubIndication;
+                infoList = basicValidationInfoList;
                 if (noTimestamp) {
 
-                    final XmlNode xmlNode = new XmlNode(NodeName.INFO, LABEL_TINTWS);
-                    final Document xmlDocument = ValidationResourceManager.xmlNodeIntoDom(xmlNode);
-                    final XmlDom xmlDom = new XmlDom(xmlDocument);
+                    final XmlNode xmlNode = new XmlNode(NodeName.WARNING, LABEL_TINTWS);
+                    final XmlDom xmlDom = xmlNode.toXmlDom();
                     infoList.add(xmlDom);
                 } else {
 
-                    final XmlNode xmlNode = new XmlNode(NodeName.INFO, LABEL_TINVTWS);
-                    final Document xmlDocument = ValidationResourceManager.xmlNodeIntoDom(xmlNode);
-                    final XmlDom xmlDom = new XmlDom(xmlDocument);
+                    final XmlNode xmlNode = new XmlNode(NodeName.WARNING, LABEL_TINVTWS);
+                    final XmlDom xmlDom = xmlNode.toXmlDom();
                     infoList.add(xmlDom);
                     infoList.addAll(ltvInfoList);
                 }
@@ -214,43 +221,47 @@ public class SimpleReportBuilder {
 
                 signatureNode.addChild(NodeName.SUB_INDICATION, subIndication);
             }
-            if (bvConclusion != null) {
+            if (basicValidationConclusion != null) {
 
                 final List<XmlDom> errorMessages = diagnosticSignature.getElements("./ErrorMessage");
                 for (XmlDom errorDom : errorMessages) {
 
                     String errorMessage = errorDom.getText();
                     final XmlNode xmlNode = new XmlNode(NodeName.INFO, errorMessage);
-                    final Document xmlDocument = ValidationResourceManager.xmlNodeIntoDom(xmlNode);
-                    final XmlDom xmlDom = new XmlDom(xmlDocument);
+                    final XmlDom xmlDom = xmlNode.toXmlDom();
                     infoList.add(xmlDom);
                 }
             }
-            if (infoList != null) {
+            if (!Indication.VALID.equals(ltvIndication)) {
 
-                for (final XmlDom xmlDom : infoList) {
-
-                    signatureNode.addChild(xmlDom);
-                }
+                addBasicInfo(signatureNode, basicValidationErrorList);
+                addBasicInfo(signatureNode, basicValidationWarningList);
+                addBasicInfo(signatureNode, infoList);
             }
             addSignatureProfile(signatureNode, signCert);
-
         } catch (Exception e) {
 
             notifyException(signatureNode, e);
-            throw new Exception("WAS TREATED", e);
+            throw new DSSException("WAS TREATED", e);
         }
     }
 
-    private void addSigningTime(XmlDom diagnosticSignature, XmlNode signatureNode) {
+    private void addBasicInfo(XmlNode signatureNode, List<XmlDom> basicValidationErrorList) {
+        for (final XmlDom error : basicValidationErrorList) {
+
+            signatureNode.addChild(error);
+        }
+    }
+
+    private void addSigningTime(final XmlDom diagnosticSignature, final XmlNode signatureNode) {
         signatureNode.addChild(NodeName.SIGNING_TIME, diagnosticSignature.getValue("./DateTime/text()"));
     }
 
-    private void addSignatureFormat(XmlDom diagnosticSignature, XmlNode signatureNode) {
+    private void addSignatureFormat(final XmlDom diagnosticSignature, final XmlNode signatureNode) {
         signatureNode.setAttribute(NodeName.SIGNATURE_FORMAT, diagnosticSignature.getValue("./SignatureFormat/text()"));
     }
 
-    private void addSignedBy(XmlNode signatureNode, XmlDom signCert) {
+    private void addSignedBy(final XmlNode signatureNode, final XmlDom signCert) {
         String signedBy = "?";
         if (signCert != null) {
 

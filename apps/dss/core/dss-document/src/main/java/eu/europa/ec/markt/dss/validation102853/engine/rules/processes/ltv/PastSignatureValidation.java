@@ -23,12 +23,16 @@ package eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ltv;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
+import eu.europa.ec.markt.dss.validation102853.rules.MessageTag;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
@@ -36,6 +40,9 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
 import static eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.XPathSignature.getSigningCertificateId;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.PSV_IPCVC;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.PSV_IPCVC_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.PSV_ITPOSVAOBCT;
 
 /**
  * 9.2.4 Past signature validation process<br>
@@ -49,7 +56,12 @@ import static eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.XPath
  */
 public class PastSignatureValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PastSignatureValidation.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PastSignatureValidation.class);
+
+    /**
+     * // TODO: (Bob: 2014 Mar 12)
+     */
+    private String contextName;
 
     private POEExtraction poe;
 
@@ -87,9 +99,11 @@ public class PastSignatureValidation implements Indication, SubIndication, NodeN
      * @param params
      * @param signature                      Can be the document or the timestamp signature
      * @param currentTimeSignatureConclusion
+     * @param context
      */
-    public PastSignatureValidationConclusion run(final ProcessParameters params, final XmlDom signature, final XmlDom currentTimeSignatureConclusion) {
+    public PastSignatureValidationConclusion run(final ProcessParameters params, final XmlDom signature, final XmlDom currentTimeSignatureConclusion, final String context) {
 
+        this.contextName = context;
         prepareParameters(params);
         LOG.debug(this.getClass().getSimpleName() + ": start.");
 
@@ -128,26 +142,34 @@ public class PastSignatureValidation implements Indication, SubIndication, NodeN
 
         // --> run the past certificate validation
         final PastCertificateValidation pcv = new PastCertificateValidation();
-        final PastCertificateValidationConclusion pcvConclusion = pcv.run(params, signature);
+        final PastCertificateValidationConclusion pcvConclusion = pcv.run(params, signature, contextName);
 
         pastSignatureValidationData.addChild(pcvConclusion.getValidationData());
 
         final Date controlTime = pcvConclusion.getControlTime();
 
-        XmlNode constraintNode = addConstraint(PSV_IPCVC_LABEL, PSV_IPCVC);
+        XmlNode constraintNode = addConstraint(PSV_IPCVC);
 
         boolean ok = VALID.equals(pcvConclusion.getIndication());
         constraintNode.addChild(STATUS, ok ? OK : KO);
-        constraintNode.addChild(INFO, pcvConclusion.getIndication()).setAttribute(FIELD, INDICATION);
+
+        final XmlNode returnedPcvIndication;
+        if (ok) {
+            returnedPcvIndication = constraintNode.addChild(INFO);
+        } else {
+
+            returnedPcvIndication = constraintNode.addChild(ERROR, PSV_IPCVC_ANS);
+        }
+        returnedPcvIndication.setAttribute(INDICATION, pcvConclusion.getIndication());
         final String pcvSubIndication = pcvConclusion.getSubIndication();
         if (pcvSubIndication != null) {
 
-            constraintNode.addChild(INFO, pcvSubIndication).setAttribute(FIELD, SUB_INDICATION);
+            returnedPcvIndication.setAttribute(SUB_INDICATION, pcvSubIndication);
         }
         if (controlTime != null) {
 
             final String formatedControlTime = RuleUtils.formatDate(controlTime);
-            constraintNode.addChild(INFO, formatedControlTime).setAttribute(FIELD, CONTROL_TIME);
+            returnedPcvIndication.setAttribute(CONTROL_TIME, formatedControlTime);
         }
 
         /**
@@ -158,7 +180,7 @@ public class PastSignatureValidation implements Indication, SubIndication, NodeN
 
             conclusion.setIndication(currentTimeIndication);
             conclusion.setSubIndication(currentTimeSubIndication);
-            conclusion.addInfo(pcvConclusion);
+            conclusion.copyBasicInfo(returnedPcvIndication);//Info(pcvConclusion);
             return conclusion;
         }
 
@@ -166,7 +188,7 @@ public class PastSignatureValidation implements Indication, SubIndication, NodeN
          * 2) If there is a POE of the signature value at (or before) control-time do the following:<br>
          */
 
-        constraintNode = addConstraint(PSV_ITPOSVAOBCT_LABEL, PSV_ITPOSVAOBCT);
+        constraintNode = addConstraint(PSV_ITPOSVAOBCT);
 
         final Date bestSignatureTime = poe.getLowestSignaturePOE(signatureId, controlTime);
 
@@ -176,7 +198,7 @@ public class PastSignatureValidation implements Indication, SubIndication, NodeN
         if (ok) {
 
             final String formatedBestSignatureTime = RuleUtils.formatDate(bestSignatureTime);
-            constraintNode.addChild(INFO, formatedBestSignatureTime).setAttribute(FIELD, BEST_SIGNATURE_TIME);
+            constraintNode.addChild(INFO).setAttribute(BEST_SIGNATURE_TIME, formatedBestSignatureTime);
 
             /**
              * -- If current time indication/sub-indication is INDETERMINATE/REVOKED_NO_POE or INDETERMINATE/
@@ -280,14 +302,13 @@ public class PastSignatureValidation implements Indication, SubIndication, NodeN
     }
 
     /**
-     * @param label
-     * @param nameId
+     * @param messageTag
      * @return
      */
-    private XmlNode addConstraint(final String label, final String nameId) {
+    private XmlNode addConstraint(final MessageTag messageTag) {
 
         XmlNode constraintNode = pastSignatureValidationData.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, label).setAttribute(NAME_ID, nameId);
+        constraintNode.addChild(NAME, messageTag.getMessage()).setAttribute(NAME_ID, messageTag.name());
         return constraintNode;
     }
 }

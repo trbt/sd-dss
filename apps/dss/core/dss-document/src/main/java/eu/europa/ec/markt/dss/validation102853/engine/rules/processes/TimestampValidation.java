@@ -21,20 +21,21 @@
 package eu.europa.ec.markt.dss.validation102853.engine.rules.processes;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
-import eu.europa.ec.markt.dss.validation102853.ValidationResourceManager;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.CryptographicVerification;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.IdentificationOfTheSignersCertificate;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.SAVCryptographicConstraint;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.X509CertificateValidation;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.SignatureCryptographicConstraint;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
+import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
@@ -44,6 +45,9 @@ import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
+
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ASCCM;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.EMPTY;
 
 /**
  * 7 Validation Process for Time-Stamps<br>
@@ -56,20 +60,26 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
  *
  * @author bielecro
  */
-public class TimestampValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage {
+public class TimestampValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage, ValidationXPathQueryHolder {
 
     private static final Logger LOG = LoggerFactory.getLogger(TimestampValidation.class);
 
     private XmlDom diagnosticData;
-    private XmlDom policyData;
+    private ValidationPolicy constraintData;
+
+    /**
+     * See {@link ProcessParameters#getCurrentTime()}
+     */
+    private Date currentTime;
 
     private void prepareParameters(final ProcessParameters params) {
 
         this.diagnosticData = params.getDiagnosticData();
-        if (policyData != null) {
+        if (constraintData == null) {
 
-            this.policyData = params.getValidationPolicy();
+            this.constraintData = params.getValidationPolicy();
         }
+        this.currentTime = params.getCurrentTime();
         isInitialised();
     }
 
@@ -77,6 +87,12 @@ public class TimestampValidation implements Indication, SubIndication, NodeName,
 
         if (diagnosticData == null) {
             throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "diagnosticData"));
+        }
+        if (constraintData == null) {
+            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "validationPolicy"));
+        }
+        if (currentTime == null) {
+            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "currentTime"));
         }
     }
 
@@ -111,23 +127,24 @@ public class TimestampValidation implements Indication, SubIndication, NodeName,
             final List<XmlDom> timestamps = new ArrayList<XmlDom>();
 
             // Extraction of the content timestamps.
-            final List<XmlDom> contentTimestamps = signature.getElements("./Timestamps/Timestamp[@Type='%s']", TimestampType.CONTENT_TIMESTAMP);
+            final String xPath = "./Timestamps/Timestamp[@Type='%s']";
+            final List<XmlDom> contentTimestamps = signature.getElements(xPath, TimestampType.CONTENT_TIMESTAMP);
             timestamps.addAll(contentTimestamps);
 
             // Extraction of the signature timestamps.
-            final List<XmlDom> signatureTimestamps = signature.getElements("./Timestamps/Timestamp[@Type='%s']", TimestampType.SIGNATURE_TIMESTAMP);
+            final List<XmlDom> signatureTimestamps = signature.getElements(xPath, TimestampType.SIGNATURE_TIMESTAMP);
             timestamps.addAll(signatureTimestamps);
 
             // Extraction of the SigAndRefs timestamps.
-            final List<XmlDom> sigAndRefsTimestamps = signature.getElements("./Timestamps/Timestamp[@Type='%s']", TimestampType.VALIDATION_DATA_TIMESTAMP);
+            final List<XmlDom> sigAndRefsTimestamps = signature.getElements(xPath, TimestampType.VALIDATION_DATA_TIMESTAMP);
             timestamps.addAll(sigAndRefsTimestamps);
 
             // Extraction of the RefsOnly timestamps.
-            final List<XmlDom> refsOnlyTimestamps = signature.getElements("./Timestamps/Timestamp[@Type='%s']", TimestampType.VALIDATION_DATA_REFSONLY_TIMESTAMP);
+            final List<XmlDom> refsOnlyTimestamps = signature.getElements(xPath, TimestampType.VALIDATION_DATA_REFSONLY_TIMESTAMP);
             timestamps.addAll(refsOnlyTimestamps);
 
             // Extraction of the archive timestamps.
-            final List<XmlDom> archiveTimestamps = signature.getElements("./Timestamps/Timestamp[@Type='%s']", TimestampType.ARCHIVE_TIMESTAMP);
+            final List<XmlDom> archiveTimestamps = signature.getElements(xPath, TimestampType.ARCHIVE_TIMESTAMP);
             timestamps.addAll(archiveTimestamps);
 
             if (timestamps.isEmpty()) {
@@ -144,9 +161,11 @@ public class TimestampValidation implements Indication, SubIndication, NodeName,
 
             for (final XmlDom timestamp : timestamps) {
 
+                final Conclusion conclusion = new Conclusion();
+
                 // This defines the context of the execution of the following processes. The same sub-processes are used for
                 // signature and timestamp validation.
-                params.setContextName(TIMESTAMP_CERTIFICATE);
+                params.setContextName(TIMESTAMP);
                 params.setContextElement(timestamp);
 
                 final String timestampId = timestamp.getValue("./@Id");
@@ -164,11 +183,15 @@ public class TimestampValidation implements Indication, SubIndication, NodeName,
                  * 5.1. Identification of the signer's certificate (ISC)
                  */
                 final IdentificationOfTheSignersCertificate isc = new IdentificationOfTheSignersCertificate();
-                final boolean iscValid = isc.run(params, basicBuildingBlocksNode);
-                if (!iscValid) {
+                final Conclusion iscConclusion = isc.run(params, TIMESTAMP);
+                basicBuildingBlocksNode.addChild(iscConclusion.getValidationData());
+                if (!iscConclusion.isValid()) {
 
+                    basicBuildingBlocksNode.addChild(iscConclusion.toXmlNode());
                     continue;
                 }
+                conclusion.addInfo(iscConclusion);
+                conclusion.addWarnings(iscConclusion);
 
                 /**
                  * 5.2. Validation Context Initialisation (VCI)
@@ -183,43 +206,48 @@ public class TimestampValidation implements Indication, SubIndication, NodeName,
                  * 5.4 Cryptographic Verification (CV)
                  */
                 final CryptographicVerification cv = new CryptographicVerification();
-                final boolean cvValid = cv.run(params, basicBuildingBlocksNode);
-                if (!cvValid) {
+                final Conclusion cvConclusion = cv.run(params, basicBuildingBlocksNode);
+                if (!cvConclusion.isValid()) {
 
+                    basicBuildingBlocksNode.addChild(cvConclusion.toXmlNode());
                     continue;
                 }
+                conclusion.addInfo(cvConclusion);
+                conclusion.addWarnings(cvConclusion);
 
                 /**
                  * 5.5 Signature Acceptance Validation (SAV)
                  */
 
-                final boolean savValid = runSAV(params, basicBuildingBlocksNode);
-                if (!savValid) {
+                final Conclusion savConclusion = runSAV(timestamp, basicBuildingBlocksNode);
+                if (!savConclusion.isValid()) {
 
+                    basicBuildingBlocksNode.addChild(savConclusion.toXmlNode());
                     continue;
                 }
+                conclusion.addInfo(savConclusion);
+                conclusion.addWarnings(savConclusion);
 
                 /**
                  * 5.3 X.509 Certificate Validation (XCV)
                  */
                 final X509CertificateValidation xcv = new X509CertificateValidation();
-                final boolean xcvValid = xcv.run(params, basicBuildingBlocksNode);
-                if (!xcvValid) {
+                final Conclusion xcvConclusion = xcv.run(params, TIMESTAMP);
+                basicBuildingBlocksNode.addChild(xcvConclusion.getValidationData());
+                if (!xcvConclusion.isValid()) {
 
+                    basicBuildingBlocksNode.addChild(xcvConclusion.toXmlNode());
                     continue;
                 }
+                conclusion.addInfo(xcvConclusion);
+                conclusion.addWarnings(xcvConclusion);
 
-                final XmlNode conclusionNode = basicBuildingBlocksNode.addChild(CONCLUSION);
-                conclusionNode.addChild(INDICATION, VALID);
+                conclusion.setIndication(VALID);
+                final XmlNode conclusionXmlNode = conclusion.toXmlNode();
+                basicBuildingBlocksNode.addChild(conclusionXmlNode);
             }
         }
-        if (ProcessParameters.isLoggingEnabled()) {
-
-            System.out.println("");
-            System.out.println(timestampValidationDataNode.toString());
-        }
-        final Document tsDocument = ValidationResourceManager.xmlNodeIntoDom(timestampValidationDataNode);
-        final XmlDom tsDom = new XmlDom(tsDocument);
+        final XmlDom tsDom = timestampValidationDataNode.toXmlDom();
         params.setTsData(tsDom);
         return tsDom;
     }
@@ -228,31 +256,24 @@ public class TimestampValidation implements Indication, SubIndication, NodeName,
      * The SAV process for a timestamp is far simpler than that of the principal signature. This is why a specific method
      * is dedicated to its treatment.
      *
-     * @param params
-     * @param processNode
-     * @return
+     * @param timestampXmlDom
+     * @param processNode     the parent process {@code XmlNode} to use to include the validation information
+     * @return the {@code Conclusion} which indicates the result of the process
      */
-    private boolean runSAV(final ProcessParameters params, final XmlNode processNode) {
+    private Conclusion runSAV(final XmlDom timestampXmlDom, final XmlNode processNode) {
 
         /**
          * 5.5 Signature Acceptance Validation (SAV)
          */
 
         final XmlNode subProcessNode = processNode.addChild(SAV);
-        final XmlNode conclusionNode = new XmlNode(CONCLUSION);
 
-        final boolean valid = processSAV(params, subProcessNode, conclusionNode);
+        final Conclusion conclusion = processSAV(timestampXmlDom, subProcessNode);
 
-        if (valid) {
+        final XmlNode conclusionXmlNode = conclusion.toXmlNode();
+        subProcessNode.addChild(conclusionXmlNode);
+        return conclusion;
 
-            conclusionNode.addChild(INDICATION, VALID);
-            conclusionNode.setParent(subProcessNode);
-        } else {
-
-            subProcessNode.addChild(conclusionNode);
-            processNode.addChild(conclusionNode);
-        }
-        return valid;
     }
 
     /**
@@ -270,35 +291,50 @@ public class TimestampValidation implements Indication, SubIndication, NodeName,
      * INDETERMINATE/CRYPTO_CONSTRAINTS_FAILURE_NO_POE together with the list of algorithms and key sizes, if applicable,
      * that are concerned and the time for each of the algorithms up to which the resp. algorithm was considered secure.
      *
-     * @param params
-     * @param processNode
-     * @param conclusionNode
-     * @return
+     * @param timestampXmlDom
+     * @param subProcessNode
+     * @return the {@code Conclusion} which indicates the result of the process.
      */
-    private boolean processSAV(final ProcessParameters params, final XmlNode processNode, final XmlNode conclusionNode) {
+    private Conclusion processSAV(final XmlDom timestampXmlDom, final XmlNode subProcessNode) {
 
-        final XmlNode constraintNode = processNode.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, BBB_SAV_ASCCM_LABEL).setAttribute(NAME_ID, BBB_SAV_ASCCM);
+        final Conclusion conclusion = new Conclusion();
 
-        final SAVCryptographicConstraint cryptoConstraints = new SAVCryptographicConstraint();
-        // The context is already the same like the main process.
-        // SAVCryptoConstraintParameters cryptoParams = new SAVCryptoConstraintParameters(params);
-        // cryptoParams.setContextName(TIMESTAMP);
+        final SignatureCryptographicConstraint signatureConstraint = constraintData.getSignatureCryptographicConstraint(TIMESTAMP);
+        if (signatureConstraint != null) {
 
-        final XmlNode infoContainerNode = new XmlNode("Container");
-        final boolean cryptographicStatus = cryptoConstraints.run(params, infoContainerNode);
+            signatureConstraint.create(subProcessNode, ASCCM);
+            signatureConstraint.setCurrentTime(currentTime);
+            signatureConstraint.setEncryptionAlgorithm(timestampXmlDom.getValue(XP_ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN));
+            signatureConstraint.setDigestAlgorithm(timestampXmlDom.getValue(XP_DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN));
+            signatureConstraint.setKeyLength(timestampXmlDom.getValue(XP_KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN));
+            signatureConstraint.setIndications(INDETERMINATE, CRYPTO_CONSTRAINTS_FAILURE_NO_POE, EMPTY);
+            signatureConstraint.setConclusionReceiver(conclusion);
 
-        if (cryptographicStatus) {
+            if (!signatureConstraint.check()) {
 
-            constraintNode.addChild(STATUS, OK);
-        } else {
-
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(SUB_INDICATION, CRYPTO_CONSTRAINTS_FAILURE_NO_POE);
-            conclusionNode.addChild(INDICATION, INDETERMINATE);
-            conclusionNode.addChildrenOf(infoContainerNode);
-            return false;
+                return conclusion;
+            }
         }
-        return true;
+
+        final SignatureCryptographicConstraint signingCertificateConstraint = constraintData.getSignatureCryptographicConstraint(TIMESTAMP, SIGNING_CERTIFICATE);
+        if (signingCertificateConstraint != null) {
+
+            signingCertificateConstraint.create(subProcessNode, ASCCM);
+            signingCertificateConstraint.setCurrentTime(currentTime);
+            signingCertificateConstraint.setEncryptionAlgorithm(timestampXmlDom.getValue(XP_ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN));
+            signingCertificateConstraint.setDigestAlgorithm(timestampXmlDom.getValue(XP_DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN));
+            signingCertificateConstraint.setKeyLength(timestampXmlDom.getValue(XP_KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN));
+            signingCertificateConstraint.setIndications(INDETERMINATE, CRYPTO_CONSTRAINTS_FAILURE_NO_POE, EMPTY);
+            signingCertificateConstraint.setConclusionReceiver(conclusion);
+
+            if (!signingCertificateConstraint.check()) {
+
+                return conclusion;
+            }
+        }
+
+        // This validation process returns VALID
+        conclusion.setIndication(VALID);
+        return conclusion;
     }
 }

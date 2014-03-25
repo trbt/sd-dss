@@ -20,18 +20,49 @@
 
 package eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
+import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.Constraint;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_AIDNASNE;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_AIDNASNE_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ICDVV;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ICDVV_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCI;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCI_ANS;
+
+/**
+ * 5.1 Identification of the Signer's Certificate (ISC)
+ *
+ * 5.1.1 Description
+ * This process consists in identifying the signer's certificate that will be used to validate the signature.
+ * 5.1.2 Inputs
+ * Table 3: Inputs to the ISC process
+ * - Input                Requirement
+ * - Signature            Mandatory
+ * - Signer's Certificate Optional
+ * 5.1.3 Outputs
+ * • In case of success, i.e. the signer's certificate can be identified, the output shall be the signer's certificate.
+ * • In case of failure, i.e. the signer's certificate cannot be identified, the output shall be the indication INDETERMINATE and the sub indication NO_SIGNER_CERTIFICATE_FOUND.
+ * NOTE: If the signature is compliant with the CD 2011/130/EU, this process will never return INDETERMINATE, since the signer's certificate is present in the signature.
+ * <p>
+ * DISCLAIMER: Project owner DG-MARKT.
+ *
+ * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
+ * @version $Revision: 1016 $ - $Date: 2011-06-17 15:30:45 +0200 (Fri, 17 Jun 2011) $
+ */
 public class IdentificationOfTheSignersCertificate implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage {
 
     /**
@@ -39,9 +70,19 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
      */
 
     /**
+     * See {@link ProcessParameters#getValidationPolicy()}
+     */
+    private ValidationPolicy constraintData;
+
+    /**
      * See {@link ProcessParameters#getDiagnosticData()}
      */
     private XmlDom diagnosticData;
+
+    /**
+     * // TODO: (Bob: 2014 Mar 12)
+     */
+    private String contextName;
 
     /**
      * See {@link ProcessParameters#getContextElement()}
@@ -51,18 +92,21 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
     /**
      * This node is used to add the constraint nodes.
      */
-    private XmlNode subProcessNode;
+    private XmlNode validationDataXmlNode;
 
     private void prepareParameters(final ProcessParameters params) {
 
+        this.constraintData = params.getValidationPolicy();
         this.diagnosticData = params.getDiagnosticData();
         this.contextElement = params.getContextElement();
-
         isInitialised();
     }
 
     private void isInitialised() {
 
+        if (constraintData == null) {
+            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "validationPolicy"));
+        }
         if (diagnosticData == null) {
             throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "diagnosticData"));
         }
@@ -72,139 +116,158 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
     }
 
     /**
-     * @param params
-     * @param processNode
-     * @return
+     * This method prepares the execution of the ISC process.
+     *
+     * @param params validation process parameters
+     * @return the {@code Conclusion} which indicates the result of the process
      */
-    public boolean run(final ProcessParameters params, final XmlNode processNode) {
+    public Conclusion run(final ProcessParameters params, final String contextName) {
 
-        if (processNode == null) {
-
-            throw new DSSException(String.format(EXCEPTION_TCOPPNTBI, getClass().getSimpleName(), "processNode"));
-        }
+        this.contextName = contextName;
         prepareParameters(params);
 
         /**
          * 5.1 Identification of the signer's certificate (ISC)
          */
+        validationDataXmlNode = new XmlNode(ISC);
+        validationDataXmlNode.setNameSpace(XmlDom.NAMESPACE);
 
-        subProcessNode = processNode.addChild(ISC);
-        final XmlNode conclusionNode = new XmlNode(CONCLUSION);
+        final Conclusion conclusion = process(params);
 
-        final boolean valid = process(params, conclusionNode);
-
-        if (valid) {
-
-            // The signing certificate Id and the signing certificate were saved for further use.
-
-            conclusionNode.addChild(INDICATION, VALID);
-            conclusionNode.setParent(subProcessNode);
-        } else {
-
-            subProcessNode.addChild(conclusionNode);
-            processNode.addChild(conclusionNode);
-        }
-        return valid;
+        conclusion.setValidationData(validationDataXmlNode);
+        return conclusion;
     }
 
     /**
-     * @param params
-     * @param conclusionNode
-     * @return
+     * This method implements ISC process.
+     *
+     * 5.1.4 Processing
+     * The common way to unambiguously identify the signer's certificate is by using a property/attribute of the signature
+     * containing a reference to it, which includes the digest computed over the certificates encoded value. The certificate or a
+     * reference to the certificate can either be found in the signature or it can be obtained using external sources. The signer's
+     * certificate may also be provided by the DA. If the certificate cannot be retrieved, the indication INDETERMINATE will
+     * be the result.
+     * Clauses 5.1.4.1 to 5.1.4.3 provide specific processing details for each AdES signature type (i.e. XAdES, CAdES or
+     * PAdES), once the certificate has been retrieved.
+     *
+     * @param params validation process parameters
+     * @return the {@code Conclusion} which indicates the result of the process
      */
-    private boolean process(final ProcessParameters params, final XmlNode conclusionNode) {
+    private Conclusion process(final ProcessParameters params) {
 
-        /**
-         * 5.1.4 Processing
-         */
+        final Conclusion conclusion = new Conclusion();
 
-        /**
-         * The signing certificate Id and the signing certificate are reseted.
-         */
-        params.setSignCertId(null);
-        params.setSignCert(null);
+        // The signing certificate Id and the signing certificate are reset.
+        params.setSigningCertificateId(null);
+        params.setSigningCertificate(null);
 
-        XmlNode constraintNode = addConstraint(BBB_ICS_ISCI_LABEL, BBB_ICS_ISCI);
-
-        final String signCertId = contextElement.getValue("./SigningCertificate/@Id");
-        final XmlDom signCert = params.getCertificate(signCertId);
-
-        if (signCert != null) {
-
-            constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, signCertId).setAttribute(FIELD, SIGNING_CERTIFICATE);
-        } else {
-
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(INDICATION, INDETERMINATE);
-            conclusionNode.addChild(SUB_INDICATION, NO_SIGNER_CERTIFICATE_FOUND);
-            return false;
+        final String signingCertificateId = contextElement.getValue("./SigningCertificate/@Id");
+        final XmlDom signingCertificateXmlDom = params.getCertificate(signingCertificateId);
+        final boolean signingCertificateRecognised = signingCertificateXmlDom != null;
+        if (!checkRecognitionConstraint(conclusion, signingCertificateRecognised, signingCertificateId)) {
+            return conclusion;
         }
-
-        /**
-         * 5.1.4.1 XAdES processing / 5.1.4.2 CAdES processing / 5.1.4.3 PAdES processing<br>
-         *
-         * For XAdES:<br>
-         * The signing certificate shall be checked against all references present in the ds:SigningCertificate property,
-         * if present, since one of these references shall be a reference to the signing certificate [1]. The following
-         * steps shall be performed:
-         *
-         * 1) Take the first child of the property and check that the content of ds:DigestValue matches the result of
-         * digesting the signing certificate with the algorithm indicated in ds:DigestMethod. If they do not match, take
-         * the next child and repeat this step until a matching child element has been found or all children of the
-         * element have been checked. If they do match, continue with step 2. If the last element is reached without
-         * finding any match, the validation of this property shall be taken as failed and INVALID/FORMAT_FAILURE is
-         * returned.
-         */
-        constraintNode = addConstraint(BBB_ICS_ICDVV_LABEL, BBB_ICS_ICDVV);
-
-        final boolean digestValueMatch = contextElement.getBoolValue("./SigningCertificate/DigestValueMatch/text()");
-        if (!digestValueMatch) {
-
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(INDICATION, INVALID);
-            conclusionNode.addChild(SUB_INDICATION, FORMAT_FAILURE);
-            conclusionNode.addChild(INFO, "The signing certificate digest value does not match!");
-            return false;
-        }
-        constraintNode.addChild(STATUS, OK);
-
-        /**
-         * 2) If the ds:KeyInfo contains the ds:X509IssuerSerial element, check that the issuer and the serial number
-         * indicated in that element and IssuerSerial from SigningCertificate are the same. If they do not match, the
-         * validation of this property shall be taken as failed and INDETERMINATE is returned.
-         */
-        constraintNode = addConstraint(BBB_ICS_IIASNE_LABEL, BBB_ICS_IIASNE);
-
-        final boolean issuerSerialMatch = contextElement.getBoolValue("./SigningCertificate/IssuerSerialMatch/text()");
-        if (!issuerSerialMatch) {
-
-            constraintNode.addChild(STATUS, KO);
-            conclusionNode.addChild(INDICATION, INDETERMINATE);
-            conclusionNode.addChild(SUB_INDICATION, NO_SIGNER_CERTIFICATE_FOUND);
-            conclusionNode.addChild(INFO, BBB_ICS_INFO_IIASNE_LABEL);
-            return false;
-        }
-        constraintNode.addChild(STATUS, OK);
-
         /**
          * The signing certificate Id and the signing certificate are saved for further use.
          */
-        params.setSignCertId(signCertId);
-        params.setSignCert(signCert);
+        params.setSigningCertificateId(signingCertificateId);
+        params.setSigningCertificate(signingCertificateXmlDom);
 
-        return true;
+        if (!checkDigestValueMatchConstraint(conclusion)) {
+            return conclusion;
+        }
+
+        if (!checkIssuerSerialMatchConstraint(conclusion)) {
+            return conclusion;
+        }
+
+        // This validation process returns VALID
+        conclusion.setIndication(VALID);
+        return conclusion;
     }
 
     /**
-     * @param label
-     * @param nameId
-     * @return
+     * @param conclusion                   the conclusion to use to add the result of the check.
+     * @param signingCertificateRecognised indicates if the signing certificate was recognised.
+     * @param signingCertificateId
+     * @return false if the check failed and the process should stop, true otherwise.
      */
-    private XmlNode addConstraint(final String label, final String nameId) {
+    private boolean checkRecognitionConstraint(final Conclusion conclusion, final boolean signingCertificateRecognised, String signingCertificateId) {
 
-        final XmlNode constraintNode = subProcessNode.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, label).setAttribute(NAME_ID, nameId);
-        return constraintNode;
+        final Constraint constraint = constraintData.getSigningCertificateRecognitionConstraint(contextName);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_ICS_ISCI);
+        constraint.setValue(signingCertificateRecognised);
+        if (DSSUtils.isNotBlank(signingCertificateId) && !signingCertificateId.equals("0")) {
+            constraint.setAttribute(CERTIFICATE_ID, signingCertificateId);
+        }
+        constraint.setIndications(INDETERMINATE, NO_SIGNER_CERTIFICATE_FOUND, BBB_ICS_ISCI_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    /**
+     * 5.1.4.1 XAdES processing / 5.1.4.2 CAdES processing / 5.1.4.3 PAdES processing<br>
+     * <br/>
+     * For XAdES:<br/>
+     * The signing certificate shall be checked against all references present in the ds:SigningCertificate property,
+     * if present, since one of these references shall be a reference to the signing certificate [1]. The following
+     * steps shall be performed:<br/>
+     * <br/>
+     * 1) Take the first child of the property and check that the content of ds:DigestValue matches the result of
+     * digesting the signing certificate with the algorithm indicated in ds:DigestMethod. If they do not match, take
+     * the next child and repeat this step until a matching child element has been found or all children of the
+     * element have been checked. If they do match, continue with step 2. If the last element is reached without
+     * finding any match, the validation of this property shall be taken as failed and INVALID/FORMAT_FAILURE is
+     * returned.<br/>
+     * <br/>
+     * For CAdES:<br/>
+     * The signing certificate shall be checked against the references present in one of the following attributes:
+     * ESS-signing-certificate, ESS-signing-certificate-v2 or Other-signing-certificate, since one of these attributes shall
+     * contain a reference to the signing certificate. For doing this, the following tasks shall be performed:
+     * 1) Take the first element of the attribute and check that the content of the field containing the digest value
+     * matches the result of digesting the signing certificate with the algorithm implicitly or explicitly indicated in the
+     * reference attribute. If they match, continue with step 2. Otherwise the validation of this attribute shall be taken
+     * as failed and INVALID/FORMAT_FAILURE is returned.<br/>
+     * <br/>
+     * For PAdES:<br/>
+     * The signing certificate shall be checked against the references present in one of the following attributes:
+     * ESS-signing-certificate or ESS-signing-certificate-v2, since one of these attributes shall contain a reference to the
+     * signing certificate. For doing this, follow the same steps as for CAdES (see clause 5.1.4.2).
+     *
+     * @param conclusion the conclusion to use to add the result of the check.
+     * @return false if the check failed and the process should stop, true otherwise.
+     */
+    private boolean checkDigestValueMatchConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getSigningCertificateDigestValueMatchConstraint(contextName);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_ICS_ICDVV);
+        final boolean digestValueMatch = contextElement.getBoolValue("./SigningCertificate/DigestValueMatch/text()");
+        constraint.setValue(digestValueMatch);
+        constraint.setIndications(INVALID, FORMAT_FAILURE, BBB_ICS_ICDVV_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
+    }
+
+    private boolean checkIssuerSerialMatchConstraint(final Conclusion conclusion) {
+
+        final Constraint constraint = constraintData.getSigningCertificateIssuerSerialMatchConstraint(contextName);
+        if (constraint == null) {
+            return true;
+        }
+        constraint.create(validationDataXmlNode, BBB_ICS_AIDNASNE);
+        final boolean issuerSerialMatch = contextElement.getBoolValue("./SigningCertificate/IssuerSerialMatch/text()");
+        constraint.setValue(issuerSerialMatch);
+        constraint.setIndications(INDETERMINATE, NO_SIGNER_CERTIFICATE_FOUND, BBB_ICS_AIDNASNE_ANS);
+        constraint.setConclusionReceiver(conclusion);
+
+        return constraint.check();
     }
 }

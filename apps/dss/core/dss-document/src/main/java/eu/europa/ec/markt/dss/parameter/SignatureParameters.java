@@ -39,6 +39,7 @@ import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
+import eu.europa.ec.markt.dss.validation102853.SignatureForm;
 
 /**
  * Parameters for a Signature creation/extension
@@ -71,6 +72,11 @@ public class SignatureParameters {
     ProfileParameters context;
     private SignatureLevel signatureLevel;
     private SignaturePackaging signaturePackaging;
+
+    /**
+     * The default signature form to use within the ASiC containers.
+     */
+    private SignatureForm asicSignatureForm = SignatureForm.XAdES;
 
     /**
      * XAdES: The ds:SignatureMethod indicates the algorithms used to sign ds:SignedInfo.
@@ -119,6 +125,7 @@ public class SignatureParameters {
         }
         bLevelParams = new BLevelParameters(source.bLevelParams);
         asicComment = source.asicComment;
+        asicSignatureForm = source.asicSignatureForm;
 
         if (certificateChain != null) {
 
@@ -148,6 +155,19 @@ public class SignatureParameters {
 
     public void setAsicComment(final boolean asicComment) {
         this.asicComment = asicComment;
+    }
+
+    public SignatureForm getAsicSignatureForm() {
+        return asicSignatureForm;
+    }
+
+    /**
+     * Sets the signature form associated with an ASiC container. Only two forms are acceptable: XAdES and CAdES.
+     *
+     * @param asicSignatureForm signature form to associate with the ASiC container.
+     */
+    public void setAsicSignatureForm(final SignatureForm asicSignatureForm) {
+        this.asicSignatureForm = asicSignatureForm;
     }
 
     public DSSDocument getOriginalDocument() {

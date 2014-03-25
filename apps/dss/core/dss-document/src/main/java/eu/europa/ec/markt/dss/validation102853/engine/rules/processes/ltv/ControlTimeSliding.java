@@ -25,6 +25,7 @@ import java.util.List;
 
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ValidationXPathQueryHolder;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
+import eu.europa.ec.markt.dss.validation102853.rules.MessageTag;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
@@ -41,6 +42,7 @@ import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.Involv
 
 import static eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.XPathSignature.getCertificateId;
 import static eu.europa.ec.markt.dss.validation102853.toolbox.Reversed.reversed;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.*;
 
 /**
  * 9.2.2 Control-time sliding process<br>
@@ -115,11 +117,6 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
         conclusion.setControlTime(controlTime);
         conclusion.setValidationData(controlTimeSlidingData);
 
-        if (ProcessParameters.isLoggingEnabled()) {
-
-            System.out.println("");
-            System.out.println(controlTimeSlidingData.toString());
-        }
         return conclusion;
     }
 
@@ -144,7 +141,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
 
             final int certificateId = getCertificateId(chainCertificate);
             final XmlNode certificateNode = controlTimeSlidingData.addChild(CERTIFICATE, String.valueOf(certificateId));
-            certificateNode.setAttribute(FIELD, CERT_ID);
+            certificateNode.setAttribute(FIELD, CERTIFICATE_ID);
 
             final XmlDom certificate = params.getCertificate(certificateId);
 
@@ -160,11 +157,11 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
                  * (See NOTE 1) Concerning the trust anchor, it must be checked if it is still trusted at the current
                  * date/time. Other checks are not necessary.<br>
                  */
-                final XmlNode constraintNode = addConstraint(CTS_WITSS_LABEL, CTS_ITSUS);
+                final XmlNode constraintNode = addConstraint(CTS_WITSS);
 
                 final String status = InvolvedServiceInfo.getStatus(certificate);
                 constraintNode.addChild(STATUS, OK);
-                constraintNode.addChild(INFO, status).setAttribute(FIELD, TRUSTED_SERVICE_STATUS);
+                constraintNode.addChild(INFO).setAttribute(TRUSTED_SERVICE_STATUS, status);
 
                 final boolean underSupervision = InvolvedServiceInfo.isSERVICE_STATUS_UNDERSUPERVISION(status);
                 final boolean supervisionInCessation = InvolvedServiceInfo.isSERVICE_STATUS_SUPERVISIONINCESSATION(status);
@@ -197,7 +194,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
              * TODO: 20130704 by bielecro: To notify ETSI --> (see clause 6.3) is not the right clause.<br>
              */
 
-            XmlNode constraintNode = addConstraint(CTS_DRIE_LABEL, CTS_DRIE);
+            XmlNode constraintNode = addConstraint(CTS_DRIE);
 
             final boolean revocationExists = certificate.exists("./Revocation");
             if (!revocationExists) {
@@ -212,7 +209,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
             final String formatedRevocationIssuingTime = RuleUtils.formatDate(revocationIssuingTime);
 
             constraintNode.addChild(STATUS, OK);
-            constraintNode.addChild(INFO, formatedRevocationIssuingTime).setAttribute(FIELD, REVOCATION_ISSUING_TIME);
+            constraintNode.addChild(INFO).setAttribute(REVOCATION_ISSUING_TIME, formatedRevocationIssuingTime);
 
             final Date notAfterTime = certificate.getTimeValue("./NotAfter/text()");
             final Date notBeforeTime = certificate.getTimeValue("./NotBefore/text()");
@@ -222,7 +219,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
              * TODO: ...(for instance, using the CRL extension expiredCertOnCRL (OID: 2.5.29.60)) This check need to be
              * added to the revocation information retrieval.
              */
-            constraintNode = addConstraint(CTS_ICNEAIDORSI_LABEL, CTS_ICNEAIDORSI);
+            constraintNode = addConstraint(CTS_ICNEAIDORSI);
 
             if (revocationIssuingTime.before(notBeforeTime) || revocationIssuingTime.after(notAfterTime)) {
 
@@ -240,7 +237,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
              * information, terminate with INDETERMINATE/NO_POE:<br>
              */
 
-            constraintNode = addConstraint(CTS_IIDORSIBCT_LABEL, CTS_IIDORSIBCT);
+            constraintNode = addConstraint(CTS_IIDORSIBCT);
 
             if (!revocationIssuingTime.before(controlTime)) {
 
@@ -258,7 +255,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
              * information at (or before) control-time, go to step c). Otherwise, terminate with INDETERMINATE/NO_POE.
              */
 
-            constraintNode = addConstraint(CTS_DSOPCPOEOC_LABEL, CTS_DSOPCPOEOC);
+            constraintNode = addConstraint(CTS_DSOPCPOEOC);
 
             final boolean poeExists = poe.getCertificatePOE(certificateId, controlTime);
             if (!poeExists || revocationIssuingTime.compareTo(controlTime) > 0) {
@@ -274,7 +271,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
              * - c) Update the value of control-time as follows:<br>
              */
 
-            constraintNode = addConstraint(CTS_SCT_LABEL, CTS_SCT);
+            constraintNode = addConstraint(CTS_SCT);
             addControlTime(constraintNode);
 
             final boolean revoked = !certificate.getBoolValue("./Revocation/Status/text()");
@@ -289,7 +286,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
 
                 final String formatedRevocationDate = RuleUtils.formatDate(revocationDate);
                 constraintNode.addChild(INFO, CTS_CTSTRT_LABEL);
-                constraintNode.addChild(INFO, formatedRevocationDate).setAttribute(FIELD, REVOCATION_TIME);
+                constraintNode.addChild(INFO).setAttribute(REVOCATION_TIME, formatedRevocationDate);
             } else {
 
                 /**
@@ -302,8 +299,8 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
 
                     controlTime = revocationIssuingTime;
                     constraintNode.addChild(INFO, CTS_CTSTRIT_LABEL);
-                    constraintNode.addChild(INFO, CTS_RSIINCF_LABEL);
-                    constraintNode.addChild(INFO, formatedRevocationIssuingTime).setAttribute(FIELD, REVOCATION_ISSUING_TIME);
+                    final XmlNode xmlNode = constraintNode.addChild(INFO, BBB_XCV_IRIF_ANS);
+                    xmlNode.setAttribute(CERTIFICATE_ID, String.valueOf(certificateId)).setAttribute(REVOCATION_ISSUING_TIME, formatedRevocationIssuingTime);
                 }
 
                 /**
@@ -355,7 +352,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
          */
 
         conclusion.setIndication(VALID);
-        conclusion.addInfo(RuleUtils.formatDate(controlTime)).setAttribute(FIELD, CONTROL_TIME);
+        conclusion.addInfo().setAttribute(CONTROL_TIME, RuleUtils.formatDate(controlTime));
 
         return conclusion;
     }
@@ -367,24 +364,25 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
     private void addControlTime(XmlNode constraintNode) {
 
         String formatedControlTime = RuleUtils.formatDate(controlTime);
-        constraintNode.addChild(INFO, formatedControlTime).setAttribute(FIELD, CONTROL_TIME);
+        constraintNode.addChild(INFO).setAttribute(CONTROL_TIME, formatedControlTime);
     }
 
     /**
+     * @param messageTag
      * @return
      */
-    private XmlNode addConstraint(final String label, final String nameId) {
+    private XmlNode addConstraint(final MessageTag messageTag) {
 
         XmlNode constraintNode = controlTimeSlidingData.addChild(CONSTRAINT);
-        constraintNode.addChild(NAME, label).setAttribute(NAME_ID, nameId);
+        constraintNode.addChild(NAME, messageTag.getMessage()).setAttribute(NAME_ID, messageTag.name());
         return constraintNode;
     }
 
     private void checkEncryptionAlgoExpirationDate(final XmlDom token, final XmlNode infoContainerNode, final String message) {
 
-        String encryptionAlgo = token.getValue(ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN);
+        String encryptionAlgo = token.getValue(XP_ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN);
         encryptionAlgo = RuleUtils.canonicalizeEncryptionAlgo(encryptionAlgo);
-        final String encryptionKeyLength = token.getValue(KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN);
+        final String encryptionKeyLength = token.getValue(XP_KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN);
         final String algoWithKeyLength = encryptionAlgo + encryptionKeyLength;
 
         final Date algoExpirationDate = constraintData.getAlgorithmExpirationDate(algoWithKeyLength);
@@ -393,13 +391,13 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
             controlTime = algoExpirationDate;
             final String formatedCertAlgoExpirationDate = RuleUtils.formatDate(algoExpirationDate);
             infoContainerNode.addChild(INFO, message);
-            infoContainerNode.addChild(INFO, formatedCertAlgoExpirationDate).setAttribute(FIELD, ALGO_EXPIRATION_DATE);
+            infoContainerNode.addChild(INFO).setAttribute(ALGORITHM_EXPIRATION_DATE, formatedCertAlgoExpirationDate);
         }
     }
 
     private void checkDigestAlgoExpirationDate(final XmlDom token, final XmlNode infoContainerNode, final String message) {
 
-        String digestAlgo = token.getValue(DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN);
+        String digestAlgo = token.getValue(XP_DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN);
         digestAlgo = RuleUtils.canonicalizeSignatureAlgo(digestAlgo);
         final Date algoExpirationDate = constraintData.getAlgorithmExpirationDate(digestAlgo);
         if (algoExpirationDate != null && controlTime.after(algoExpirationDate)) {
@@ -407,7 +405,7 @@ public class ControlTimeSliding implements Indication, SubIndication, NodeName, 
             controlTime = algoExpirationDate;
             final String formatedCertAlgoExpirationDate = RuleUtils.formatDate(algoExpirationDate);
             infoContainerNode.addChild(INFO, message);
-            infoContainerNode.addChild(INFO, formatedCertAlgoExpirationDate).setAttribute(FIELD, ALGO_EXPIRATION_DATE);
+            infoContainerNode.addChild(INFO).setAttribute(ALGORITHM_EXPIRATION_DATE, formatedCertAlgoExpirationDate);
         }
     }
 }

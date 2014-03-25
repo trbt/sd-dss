@@ -24,23 +24,22 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation102853.ValidationResourceManager;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
-import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
-import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
-import eu.europa.ec.markt.dss.validation102853.rules.Indication;
-import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
-import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.CryptographicVerification;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.IdentificationOfTheSignersCertificate;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.SignatureAcceptanceValidation;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.ValidationContextInitialisation;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses.X509CertificateValidation;
+import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
+import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
+import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
+import eu.europa.ec.markt.dss.validation102853.rules.Indication;
+import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
+import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
+import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
 /**
  * This class creates the validation data (Basic Building Blocks) for all signatures.
@@ -78,8 +77,8 @@ public class BasicBuildingBlocks implements NodeName, NodeValue, AttributeName, 
     /**
      * This method lunches the construction process of basic building blocks.
      *
-     * @param params
-     * @return
+     * @param params validation process parameters
+     * @return {@code XmlDom} representing the detailed report of this process.
      */
     public XmlDom run(final XmlNode mainNode, final ProcessParameters params) {
 
@@ -93,6 +92,8 @@ public class BasicBuildingBlocks implements NodeName, NodeValue, AttributeName, 
         final List<XmlDom> signatures = diagnosticData.getElements("/DiagnosticData/Signature");
 
         for (final XmlDom signature : signatures) {
+
+            final Conclusion conclusion = new Conclusion();
 
             params.setSignatureContext(signature);
             /**
@@ -112,64 +113,76 @@ public class BasicBuildingBlocks implements NodeName, NodeValue, AttributeName, 
              * 5.1. Identification of the signer's certificate (ISC)
              */
             final IdentificationOfTheSignersCertificate isc = new IdentificationOfTheSignersCertificate();
-            final boolean iscValid = isc.run(params, signatureNode);
-            if (!iscValid) {
+            final Conclusion iscConclusion = isc.run(params, MAIN_SIGNATURE);
+            signatureNode.addChild(iscConclusion.getValidationData());
+            if (!iscConclusion.isValid()) {
 
+                signatureNode.addChild(iscConclusion.toXmlNode());
                 continue;
             }
+            conclusion.addInfo(iscConclusion);
+            conclusion.addWarnings(iscConclusion);
 
             /**
              * 5.2. Validation Context Initialisation (VCI)
              */
             final ValidationContextInitialisation vci = new ValidationContextInitialisation();
-            final boolean vciValid = vci.run(params, signatureNode);
-            if (!vciValid) {
+            final Conclusion vciConclusion = vci.run(params, signatureNode);
+            if (!vciConclusion.isValid()) {
 
+                signatureNode.addChild(vciConclusion.toXmlNode());
                 continue;
             }
+            conclusion.addInfo(vciConclusion);
+            conclusion.addWarnings(vciConclusion);
 
             /**
              * 5.4 Cryptographic Verification (CV)
              * --> We check the CV before XCV to not repeat the same check with LTV if XCV is not conclusive.
              */
             final CryptographicVerification cv = new CryptographicVerification();
-            final boolean cvValid = cv.run(params, signatureNode);
-            if (!cvValid) {
+            final Conclusion cvConclusion = cv.run(params, signatureNode);
+            if (!cvConclusion.isValid()) {
 
+                signatureNode.addChild(cvConclusion.toXmlNode());
                 continue;
             }
+            conclusion.addInfo(cvConclusion);
+            conclusion.addWarnings(cvConclusion);
 
             /**
              * 5.5 Signature Acceptance Validation (SAV)
              * --> We check the SAV before XCV to not repeat the same check with LTV if XCV is not conclusive.
              */
             final SignatureAcceptanceValidation sav = new SignatureAcceptanceValidation();
-            final boolean savValid = sav.run(params, signatureNode);
-            if (!savValid) {
+            final Conclusion savConclusion = sav.run(params, signatureNode);
+            if (!savConclusion.isValid()) {
 
+                signatureNode.addChild(savConclusion.toXmlNode());
                 continue;
             }
+            conclusion.addInfo(savConclusion);
+            conclusion.addWarnings(savConclusion);
 
             /**
              * 5.3 X.509 Certificate Validation (XCV)
              */
             final X509CertificateValidation xcv = new X509CertificateValidation();
-            final boolean xcvValid = xcv.run(params, signatureNode);
-            if (!xcvValid) {
+            final Conclusion xcvConclusion = xcv.run(params, MAIN_SIGNATURE);
+            signatureNode.addChild(xcvConclusion.getValidationData());
+            if (!xcvConclusion.isValid()) {
 
+                signatureNode.addChild(xcvConclusion.toXmlNode());
                 continue;
             }
+            conclusion.addInfo(xcvConclusion);
+            conclusion.addWarnings(xcvConclusion);
 
-            final XmlNode conclusionNode = signatureNode.addChild(CONCLUSION);
-            conclusionNode.addChild(INDICATION, VALID);
+            conclusion.setIndication(VALID);
+            final XmlNode conclusionXmlNode = conclusion.toXmlNode();
+            signatureNode.addChild(conclusionXmlNode);
         }
-        if (ProcessParameters.isLoggingEnabled()) {
-
-            System.out.println("");
-            System.out.println(basicBuildingBlocksNode);
-        }
-        final Document bbbDocument = ValidationResourceManager.xmlNodeIntoDom(basicBuildingBlocksNode);
-        final XmlDom bbbDom = new XmlDom(bbbDocument);
+        final XmlDom bbbDom = basicBuildingBlocksNode.toXmlDom();
         params.setBBBData(bbbDom);
         return bbbDom;
     }

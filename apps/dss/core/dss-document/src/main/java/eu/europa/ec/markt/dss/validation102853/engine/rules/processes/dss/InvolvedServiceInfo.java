@@ -20,6 +20,7 @@
 
 package eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -112,12 +113,16 @@ public class InvolvedServiceInfo implements TSLConstant {
     /**
      * This function returns the list of qualifiers for the given certificate.
      *
-     * @param cert The certificate
-     * @return
+     * @param certificate The certificate
+     * @return the {@code List} of qualifiers or an empty list if the certificate is null.
      */
-    public static List<String> getQualifiers(final XmlDom cert) {
+    public static List<String> getQualifiers(final XmlDom certificate) {
 
-        final List<XmlDom> qualifiersDomList = cert.getElements("./TrustedServiceProvider/Qualifiers/Qualifier");
+        if (certificate == null) {
+
+            return new ArrayList<String>();
+        }
+        final List<XmlDom> qualifiersDomList = certificate.getElements("./TrustedServiceProvider/Qualifiers/Qualifier");
         final List<String> qualifiers = XmlDom.convertToStringList(qualifiersDomList);
         return qualifiers;
 

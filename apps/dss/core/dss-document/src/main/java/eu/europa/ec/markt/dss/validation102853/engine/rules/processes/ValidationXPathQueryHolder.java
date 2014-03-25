@@ -11,15 +11,15 @@ package eu.europa.ec.markt.dss.validation102853.engine.rules.processes;
  */
 public interface ValidationXPathQueryHolder {
 
-    public static final String REFERENCE_DATA_FOUND = "./BasicSignature/ReferenceDataFound/text()";
-    public static final String REFERENCE_DATA_INTACT = "./BasicSignature/ReferenceDataIntact/text()";
-    public static final String SIGNATURE_INTACT = "./BasicSignature/SignatureIntact/text()";
-    public static final String SIGNATURE_VALID = "./BasicSignature/SignatureValid/text()";
+    public static final String XP_REFERENCE_DATA_FOUND = "./BasicSignature/ReferenceDataFound/text()";
+    public static final String XP_REFERENCE_DATA_INTACT = "./BasicSignature/ReferenceDataIntact/text()";
+    public static final String XP_SIGNATURE_INTACT = "./BasicSignature/SignatureIntact/text()";
+    public static final String XP_SIGNATURE_VALID = "./BasicSignature/SignatureValid/text()";
 
-    public static final String MESSAGE_IMPRINT_DATA_FOUND = "./MessageImprintDataFound/text()";
-    public static final String MESSAGE_IMPRINT_DATA_INTACT = "./MessageImprintDataIntact/text()";
+    public static final String XP_MESSAGE_IMPRINT_DATA_FOUND = "./MessageImprintDataFound/text()";
+    public static final String XP_MESSAGE_IMPRINT_DATA_INTACT = "./MessageImprintDataIntact/text()";
 
-    public static final String ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN = "./BasicSignature/EncryptionAlgoUsedToSignThisToken/text()";
-    public static final String DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN = "./BasicSignature/DigestAlgoUsedToSignThisToken/text()";
-    public static final String KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN = "./BasicSignature/KeyLengthUsedToSignThisToken/text()";
+    public static final String XP_ENCRYPTION_ALGO_USED_TO_SIGN_THIS_TOKEN = "./BasicSignature/EncryptionAlgoUsedToSignThisToken/text()";
+    public static final String XP_DIGEST_ALGO_USED_TO_SIGN_THIS_TOKEN = "./BasicSignature/DigestAlgoUsedToSignThisToken/text()";
+    public static final String XP_KEY_LENGTH_USED_TO_SIGN_THIS_TOKEN = "./BasicSignature/KeyLengthUsedToSignThisToken/text()";
 }

@@ -33,7 +33,6 @@ import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.DiagnosticData;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.ObjectFactory;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
 public class ValidationResourceManager {
 
@@ -76,34 +75,22 @@ public class ValidationResourceManager {
     }
 
     /**
-     * This method loads the data from the file into an {@link java.io.InputStream}.
+     * This method loads the data from the resource file into an {@link java.io.InputStream}.
      *
      * @param dataFileName
      * @return
      */
-    private static InputStream getResourceInputStream(final String dataFileName) {
+    public static InputStream getResourceInputStream(final String dataFileName) {
 
         try {
-
+            // final URL resource = ValidationResourceManager.class.getResource("/");
+            // System.out.println(resource.getPath());
             InputStream inputStream = ValidationResourceManager.class.getResourceAsStream(dataFileName);
             // DSSUtils.copy(inputStream, System.out);
             return inputStream;
         } catch (Exception e) {
             throw new DSSException(e);
         }
-    }
-
-    /**
-     * This method loads the data from the {@link XmlNode} into a {@link org.w3c.dom.Document}</code>.
-     *
-     * @param data
-     * @return
-     */
-    public static Document xmlNodeIntoDom(final XmlNode data) {
-
-        final InputStream inputStream = data.getInputStream();
-        final Document document = DSSXMLUtils.buildDOM(inputStream);
-        return document;
     }
 
     /**
@@ -120,6 +107,9 @@ public class ValidationResourceManager {
             return null;
         }
         final InputStream fileInputStream = getResourceInputStream(path);
+        if (fileInputStream == null) {
+            LOG.warn("path: '{}'", path);
+        }
         final Document document = load(fileInputStream);
         // DSSXMLUtils.printDocument(document, System.out);
         return document;
