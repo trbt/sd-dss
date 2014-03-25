@@ -7,13 +7,12 @@
 
     <groupId>eu.europa.ec.joinup.sd-dss</groupId>
     <artifactId>sd-dss</artifactId>
-    <version>4.0.2</version>
+    <version>4.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Digital Signature Services</name>
 
     <modules>
         <module>apps/dss</module>
-        <!--<module>apps/tlmanager</module>-->
     </modules>
 
     <developers>
@@ -214,21 +213,9 @@
     <dependencyManagement>
         <dependencies>
             <!-- Internal Dependencies -->
-<!--
             <dependency>
                 <groupId>eu.europa.ec.joinup.sd-dss</groupId>
-                <artifactId>tlmanager-app</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>eu.europa.ec.joinup.sd-dss</groupId>
-                <artifactId>tlmanager-package</artifactId>
-                <version>${project.version}</version>
-            </dependency>
--->
-            <dependency>
-                <groupId>eu.europa.ec.joinup.sd-dss</groupId>
-                <artifactId>dss-demo-applet-v2</artifactId>
+                <artifactId>dss-demo-applet</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -333,11 +320,6 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcmail-jdk15on</artifactId>
                 <version>${bouncycastle.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>1.5</version>
             </dependency>
             <dependency>
                 <groupId>commons-httpclient</groupId>
@@ -510,11 +492,13 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
                 <version>${mockito.version}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -590,7 +574,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>
