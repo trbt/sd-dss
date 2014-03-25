@@ -113,6 +113,36 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
         return new File(fileCacheDirectory, fileName);
     }
 
+    /**
+     * // TODO: (Bob: 2014 Mar 12)
+     *
+     * @return
+     */
+    public byte[] loadFileFromCache(final String url) {
+
+        final String fileName = ResourceLoader.getNormalizedFileName(url);
+        final File file = getCacheFile(fileName);
+        if (file.exists()) {
+
+            final byte[] bytes = DSSUtils.toByteArray(file);
+            return bytes;
+        }
+        return null;
+    }
+
+    /**
+     * // TODO: (Bob: 2014 Mar 12)
+     *
+     * @param url
+     * @param bytes
+     */
+    public void saveBytesInCache(final String url, final byte[] bytes) {
+
+        final String fileName = ResourceLoader.getNormalizedFileName(url);
+        final File out = getCacheFile(fileName);
+        DSSUtils.saveToFile(bytes, out);
+    }
+
     private byte[] getHttpGetResponse(final String url) throws DSSException {
 
         HttpGet httpGet = null;
@@ -132,7 +162,7 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
             } else {
 
                 LOG.info("get '{}': status: {}", url, statusCode);
-                return new byte[0];
+                return DSSUtils.EMPTY_BYTE_ARRAY;
             }
         } catch (IOException e) {
             throw new DSSException(e);

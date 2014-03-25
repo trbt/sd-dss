@@ -57,6 +57,7 @@ import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.https.CommonsHttpDataLoader;
+import eu.europa.ec.markt.dss.validation102853.https.FileCacheHttpDataLoader;
 import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 
 /**
@@ -64,7 +65,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
  * Note that for the HTTP kind of URLs you can provide dedicated data loader. If the data loader is not provided the standard load from URI is
  * provided. For FTP the standard load from URI is provided. For LDAP kind of URLs an internal implementation using apache-ldap-api is provided.
  *
- * @version $Revision: 3568 $ - $Date: 2014-03-06 17:32:15 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3588 $ - $Date: 2014-03-12 16:58:44 +0100 (Wed, 12 Mar 2014) $
  */
 
 public class OnlineCRLSource extends CommonCRLSource {
@@ -134,15 +135,15 @@ public class OnlineCRLSource extends CommonCRLSource {
         }
         X509CRL x509CRL = null;
         boolean http = crlUrl.startsWith("http://") || crlUrl.startsWith("https://");
-        if (dataLoader != null && http) {
+        if (http) {
 
             x509CRL = downloadCrlFromHTTP(crlUrl);
-        } else if (http || crlUrl.startsWith("ftp://")) {
+        } else if (crlUrl.startsWith("ftp://")) {
 
             x509CRL = downloadCRLFromURL(crlUrl);
         } else if (crlUrl.startsWith("ldap://")) {
 
-            x509CRL = downloadCRLFromLDAP_(crlUrl);
+            x509CRL = downloadCRLFromLDAP_(crlUrl,dataLoader);
         } else {
 
             LOG.warn("DSS framework only supports HTTP, HTTPS, FTP and LDAP CRL's url.");
@@ -179,8 +180,16 @@ public class OnlineCRLSource extends CommonCRLSource {
      * @throws DSSException
      */
 
-    private static X509CRL downloadCRLFromLDAP_(final String ldapURL) throws DSSException {
+    private static X509CRL downloadCRLFromLDAP_(final String ldapURL, final HTTPDataLoader dataLoader) throws DSSException {
 
+        if( dataLoader != null && dataLoader instanceof FileCacheHttpDataLoader) {
+
+            final byte[] cachedBytes = ((FileCacheHttpDataLoader) dataLoader).loadFileFromCache(ldapURL);
+            if( cachedBytes!= null) {
+
+                return DSSUtils.loadCRL(cachedBytes);
+            }
+        }
         final Hashtable<String, String> env = new Hashtable<String, String>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, ldapURL);
@@ -189,13 +198,16 @@ public class OnlineCRLSource extends CommonCRLSource {
             final DirContext ctx = new InitialDirContext(env);
             final Attributes attributes = ctx.getAttributes("");
             final javax.naming.directory.Attribute attribute = attributes.get("certificateRevocationList;binary");
-            final byte[] val = (byte[]) attribute.get();
-            if (val == null || val.length == 0) {
+            final byte[] ldapBytes = (byte[]) attribute.get();
+            if (ldapBytes == null || ldapBytes.length == 0) {
 
                 throw new DSSException("Can not download CRL from: " + ldapURL);
             }
-            final InputStream inStream = new ByteArrayInputStream(val);
-            return DSSUtils.loadCRL(inStream);
+            if( dataLoader != null && dataLoader instanceof FileCacheHttpDataLoader) {
+
+                ((FileCacheHttpDataLoader) dataLoader).saveBytesInCache(ldapURL, ldapBytes);
+            }
+            return DSSUtils.loadCRL(ldapBytes);
         } catch (Exception e) {
 
             LOG.warn(e.getMessage(), e);

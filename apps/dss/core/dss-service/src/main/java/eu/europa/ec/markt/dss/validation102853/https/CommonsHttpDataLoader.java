@@ -67,9 +67,9 @@ import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 
 /**
  * Implementation of HTTPDataLoader using HttpClient. More flexible for HTTPS without having to add the certificate to the JVM TrustStore.
- *  TODO: (Bob: 2013 Dec 03) Should take into account LDAP & FTP also. A new loader class should be created.
+ * TODO: (Bob: 2013 Dec 03) Should take into account LDAP & FTP also. A new loader class should be created.
  *
- * @version $Revision: 3567 $ - $Date: 2014-03-06 17:13:42 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
  */
 public class CommonsHttpDataLoader implements HTTPDataLoader {
 
@@ -366,13 +366,13 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
         if (!statusOk) {
 
             LOG.warn("No content available via url: " + url + " - will use nothing: " + url);
-            return new byte[0];
+            return DSSUtils.EMPTY_BYTE_ARRAY;
         }
 
         final HttpEntity responseEntity = httpResponse.getEntity();
         if (responseEntity == null) {
             LOG.warn("No message entity for this response - will use nothing: " + url);
-            return new byte[0];
+            return DSSUtils.EMPTY_BYTE_ARRAY;
         }
 
         final byte[] content = getContent(responseEntity);

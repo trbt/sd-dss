@@ -146,18 +146,16 @@ abstract class AbstractTrustService {
      */
     ServiceInfo createServiceInfo() {
 
-        ServiceInfo service = new ServiceInfo();
-        List<QualificationsType> qualificationList = getQualificationsType();
-        for (QualificationsType qualifications : qualificationList) {
+        final ServiceInfo service = new ServiceInfo();
+        final List<QualificationsType> qualificationList = getQualificationsType();
+        for (final QualificationsType qualifications : qualificationList) {
 
-            for (QualificationElementType qualificationElement : qualifications.getQualificationElement()) {
+            for (final QualificationElementType qualificationElement : qualifications.getQualificationElement()) {
 
                 parseQualificationElement(qualificationElement, service);
             }
         }
-
         service.setExpiredCertsRevocationInfo(expiredCertsRevocationInfo);
-
         return service;
     }
 
@@ -235,7 +233,6 @@ abstract class AbstractTrustService {
 
         final QualifiersType qualifierList = qualificationElement.getQualifiers();
         if (qualifierList == null || qualifierList.getQualifier().isEmpty()) {
-
             return;
         }
         try {
@@ -265,8 +262,9 @@ abstract class AbstractTrustService {
         final String assertValue = criteriaList.getAssert();
         if (assertValue == null) {
 
-            LOG.info("null");
+            LOG.info("CriteriaList assert=null!");
         }
+        // System.out.println("--- > assert: " + assertValue);
         final MatchingCriteriaIndicator matchingCriteriaIndicator = MatchingCriteriaIndicator.valueOf(assertValue);
 
         final CompositeCondition condition = new CriteriaListCondition(matchingCriteriaIndicator);
@@ -278,6 +276,7 @@ abstract class AbstractTrustService {
                 final IdentifierType identifier = objectIdentifier.getIdentifier();
                 if (identifier.getQualifier() == null) {
 
+                    // System.out.println("--- > id1: " + identifier.getValue());
                     compositeCondition.addChild(new PolicyIdCondition(identifier.getValue()));
                 } else {
 
@@ -286,6 +285,7 @@ abstract class AbstractTrustService {
 
                         id = id.substring(id.lastIndexOf(':') + 1);
                     }
+                    // System.out.println("--- > id2: " + id);
                     compositeCondition.addChild(new PolicyIdCondition(id));
                 }
             }
