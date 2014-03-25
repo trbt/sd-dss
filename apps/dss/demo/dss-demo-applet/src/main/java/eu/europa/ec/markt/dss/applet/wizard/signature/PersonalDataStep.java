@@ -20,8 +20,6 @@
 
 package eu.europa.ec.markt.dss.applet.wizard.signature;
 
-import org.apache.commons.codec.binary.Base64;
-
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.applet.main.Parameters;
 import eu.europa.ec.markt.dss.applet.model.SignatureModel;
@@ -108,7 +106,7 @@ public class PersonalDataStep extends WizardStep<SignatureModel, SignatureWizard
         }
 
         if (parameters.hasSignaturePolicyValue() && DSSUtils.isEmpty(model.getSignaturePolicyValue())) {
-            model.setSignaturePolicyValue(Base64.encodeBase64String(parameters.getSignaturePolicyValue()));
+            model.setSignaturePolicyValue(DSSUtils.base64Encode(parameters.getSignaturePolicyValue()));
         }
 
         // TODO: (Bob: 2014 Jan 19) To be adapted to baseline profile

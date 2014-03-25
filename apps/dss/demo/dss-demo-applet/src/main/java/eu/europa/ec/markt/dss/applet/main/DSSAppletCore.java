@@ -24,8 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import org.apache.commons.codec.binary.Base64;
-
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.applet.controller.ActivityController;
 import eu.europa.ec.markt.dss.applet.main.Parameters.AppletUsage;
@@ -189,7 +187,7 @@ public class DSSAppletCore extends AppletCore {
         parameters.setSignaturePolicyAlgo(signaturePolicyAlgoParam);
 
         final String signaturePolicyValueParam = parameterProvider.getParameter(PARAM_SIGNATURE_POLICY_HASH);
-        parameters.setSignaturePolicyValue(Base64.decodeBase64(signaturePolicyValueParam));
+        parameters.setSignaturePolicyValue(DSSUtils.base64Decode(signaturePolicyValueParam));
 
         // Default policy URL
         final String defaultPolicyUrl = parameterProvider.getParameter(PARAM_DEFAULT_POLICY_URL);

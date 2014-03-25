@@ -27,8 +27,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
-
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.applet.controller.ActivityController;
@@ -203,7 +201,7 @@ public class SignatureWizardController extends DSSWizardController<SignatureMode
         }
 
         if (model.isSignaturePolicyCheck()) {
-            final byte[] hashValue = Base64.decodeBase64(model.getSignaturePolicyValue());
+            final byte[] hashValue = DSSUtils.base64Decode(model.getSignaturePolicyValue());
             final Policy policy = parameters.bLevel().getSignaturePolicy();
             policy.setDigestValue(hashValue);
             policy.setId(model.getSignaturePolicyId());
