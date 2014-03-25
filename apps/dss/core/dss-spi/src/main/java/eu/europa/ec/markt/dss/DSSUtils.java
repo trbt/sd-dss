@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -59,23 +60,32 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.content.x509.XMLX509SKI;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERBMPString;
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERPrintableString;
+import org.bouncycastle.asn1.DERT61String;
+import org.bouncycastle.asn1.DERT61UTF8String;
 import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.DLSequence;
+import org.bouncycastle.asn1.DLSet;
 import org.bouncycastle.asn1.ocsp.BasicOCSPResponse;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AccessDescription;
@@ -106,8 +116,9 @@ import org.slf4j.LoggerFactory;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.utils.Base64;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
+import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
 
 public final class DSSUtils {
 
@@ -117,12 +128,33 @@ public final class DSSUtils {
     public static final String CERT_END = "-----END CERTIFICATE-----";
 
     /**
+     * Used to build output as Hex
+     */
+    private static final char[] DIGITS_LOWER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+    /**
+     * Used to build output as Hex
+     */
+    private static final char[] DIGITS_UPPER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+    /**
      * FROM: Apache
      * The index value when an element is not found in a list or array: {@code -1}.
      * This value is returned by methods in this class and can also be used in comparisons with values returned by
      * various method from {@link java.util.List}.
      */
     public static final int INDEX_NOT_FOUND = -1;
+
+    /**
+     * Chunk separator per RFC 2045 section 2.1.
+     *
+     * <p>
+     * N.B. The next major release may break compatibility and make this field private.
+     * </p>
+     *
+     * @see <a href="http://www.ietf.org/rfc/rfc2045.txt">RFC 2045 section 2.1</a>
+     */
+    static final byte[] CHUNK_SEPARATOR = {'\r', '\n'};
 
     /**
      * The empty String {@code ""}.
@@ -137,6 +169,7 @@ public final class DSSUtils {
     private static final int PAD_LIMIT = 8192;
 
     private static final CertificateFactory certificateFactory;
+    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
     private static MessageDigest sha1Digester;
 
@@ -203,7 +236,113 @@ public final class DSSUtils {
      */
     public static String toHex(final byte[] value) {
 
-        return (value != null) ? new String(Hex.encodeHex(value, false)) : null;
+        return (value != null) ? new String(encodeHex(value, false)) : null;
+    }
+
+    /**
+     * Converts an array of bytes into a String representing the hexadecimal values of each byte in order. The returned
+     * String will be double the length of the passed array, as it takes two characters to represent any given byte.
+     *
+     * @param data a byte[] to convert to Hex characters
+     * @return A String containing hexadecimal characters
+     * @since 1.4
+     */
+    public static String encodeHexString(byte[] data) {
+        return new String(encodeHex(data));
+    }
+
+    /**
+     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * given byte.
+     *
+     * @param data a byte[] to convert to Hex characters
+     * @return A char[] containing hexadecimal characters
+     */
+    public static char[] encodeHex(byte[] data) {
+        return encodeHex(data, true);
+    }
+
+    /**
+     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * given byte.
+     *
+     * @param data        a byte[] to convert to Hex characters
+     * @param toLowerCase <code>true</code> converts to lowercase, <code>false</code> to uppercase
+     * @return A char[] containing hexadecimal characters
+     * @since 1.4
+     */
+    public static char[] encodeHex(byte[] data, boolean toLowerCase) {
+        return encodeHex(data, toLowerCase ? DIGITS_LOWER : DIGITS_UPPER);
+    }
+
+    /**
+     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * given byte.
+     *
+     * @param data     a byte[] to convert to Hex characters
+     * @param toDigits the output alphabet
+     * @return A char[] containing hexadecimal characters
+     * @since 1.4
+     */
+    protected static char[] encodeHex(byte[] data, char[] toDigits) {
+        int l = data.length;
+        char[] out = new char[l << 1];
+        // two characters form the hex value.
+        for (int i = 0, j = 0; i < l; i++) {
+            out[j++] = toDigits[(0xF0 & data[i]) >>> 4];
+            out[j++] = toDigits[0x0F & data[i]];
+        }
+        return out;
+    }
+
+    /**
+     * Converts an array of characters representing hexadecimal values into an array of bytes of those same values. The
+     * returned array will be half the length of the passed array, as it takes two characters to represent any given
+     * byte. An exception is thrown if the passed char array has an odd number of elements.
+     *
+     * @param data An array of characters containing hexadecimal digits
+     * @return A byte array containing binary data decoded from the supplied char array.
+     * @throws DSSException Thrown if an odd number or illegal of characters is supplied
+     */
+    public static byte[] decodeHex(char[] data) throws DSSException {
+
+        int len = data.length;
+
+        if ((len & 0x01) != 0) {
+            throw new DSSException("Odd number of characters.");
+        }
+
+        byte[] out = new byte[len >> 1];
+
+        // two characters form the hex value.
+        for (int i = 0, j = 0; j < len; i++) {
+            int f = toDigit(data[j], j) << 4;
+            j++;
+            f = f | toDigit(data[j], j);
+            j++;
+            out[i] = (byte) (f & 0xFF);
+        }
+
+        return out;
+    }
+
+    /**
+     * Converts a hexadecimal character to an integer.
+     *
+     * @param ch    A character to convert to an integer digit
+     * @param index The index of the character in the source
+     * @return An integer
+     * @throws DSSException Thrown if ch is an illegal hex character
+     */
+    protected static int toDigit(char ch, int index) throws DSSException {
+        int digit = Character.digit(ch, 16);
+        if (digit == -1) {
+            throw new DSSException("Illegal hexadecimal character " + ch + " at index " + index);
+        }
+        return digit;
     }
 
     /**
@@ -539,7 +678,7 @@ public final class DSSUtils {
     public static boolean fileExists(final String path) {
 
         final String path_ = normalisePath(path);
-        final boolean exists = new File(path).exists();
+        final boolean exists = new File(path_).exists();
         return exists;
     }
 
@@ -640,6 +779,9 @@ public final class DSSUtils {
      */
     public static X509Certificate loadCertificate(final byte[] input) throws DSSException {
 
+        if (input == null) {
+            throw new DSSNullException(byte[].class, "X5009 certificate");
+        }
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(input);
         return loadCertificate(inputStream);
     }
@@ -896,7 +1038,7 @@ public final class DSSUtils {
     public static String getSHA1Digest(final String stringToDigest) {
 
         final byte[] digest = sha1Digester.digest(stringToDigest.getBytes());
-        return Hex.encodeHexString(digest);
+        return encodeHexString(digest);
     }
 
     /**
@@ -909,7 +1051,7 @@ public final class DSSUtils {
 
         final byte[] bytes = DSSUtils.toByteArray(inputStream);
         final byte[] digest = sha1Digester.digest(bytes);
-        return Hex.encodeHexString(digest);
+        return encodeHexString(digest);
     }
 
     /**
@@ -1246,6 +1388,21 @@ public final class DSSUtils {
     }
 
     /**
+     * @param string
+     * @param charset
+     * @return
+     */
+    public static InputStream toInputStream(final String string, final String charset) throws DSSException {
+
+        try {
+            final InputStream inputStream = new ByteArrayInputStream(string.getBytes(charset));
+            return inputStream;
+        } catch (UnsupportedEncodingException e) {
+            throw new DSSException(e);
+        }
+    }
+
+    /**
      * This method returns the byte array representing the contents of the file.
      *
      * @param file {@code File} to read.
@@ -1487,7 +1644,7 @@ public final class DSSUtils {
         final byte[] certificateBytes = byteBuffer.array();
 
         final byte[] digestValue = DSSUtils.digest(DigestAlgorithm.MD5, timeBytes, certificateBytes);
-        final String deterministicId = "id-" + DSSUtils.toHex(digestValue);
+        final String deterministicId = "id-" + toHex(digestValue);
         return deterministicId;
     }
 
@@ -2169,7 +2326,7 @@ public final class DSSUtils {
      * @param secondX500Principal
      * @return
      */
-    public static boolean equals(X500Principal firstX500Principal, X500Principal secondX500Principal) {
+    public static boolean equals(final X500Principal firstX500Principal, final X500Principal secondX500Principal) {
 
         if (firstX500Principal == null || secondX500Principal == null) {
             return false;
@@ -2177,20 +2334,70 @@ public final class DSSUtils {
         if (firstX500Principal.equals(secondX500Principal)) {
             return true;
         }
-        final String firstString = firstX500Principal.toString();
-        final String secondString = secondX500Principal.toString();
-        if (firstString.equals(secondString)) {
-            return true;
-        }
-        final String firstRfc2253Name = firstX500Principal.getName(X500Principal.RFC2253);
-        final String secondRfc2253Name = secondX500Principal.getName(X500Principal.RFC2253);
-        if (firstRfc2253Name.equals(secondRfc2253Name)) {
-            return true;
-        }
-        final String firstCanonicalName = firstX500Principal.getName(X500Principal.CANONICAL);
-        final String secondCanonicalName = secondX500Principal.getName(X500Principal.CANONICAL);
-        final boolean equals = firstCanonicalName.equals(secondCanonicalName);
-        return equals;
+        final HashMap<String, String> firstStringStringHashMap = get(firstX500Principal);
+        final HashMap<String, String> secondStringStringHashMap = get(secondX500Principal);
+        final boolean containsAll = firstStringStringHashMap.entrySet().containsAll(secondStringStringHashMap.entrySet());
+
+//        final String firstRfc2253Name = firstX500Principal.getName(X500Principal.RFC2253);
+//        final String secondRfc2253Name = secondX500Principal.getName(X500Principal.RFC2253);
+//        if (firstRfc2253Name.equals(secondRfc2253Name)) {
+//            return true;
+//        }
+//        final String firstCanonicalName = firstX500Principal.getName(X500Principal.CANONICAL);
+//        final String secondCanonicalName = secondX500Principal.getName(X500Principal.CANONICAL);
+//        final boolean equals = firstCanonicalName.equals(secondCanonicalName);
+        return containsAll;
+    }
+
+    public static X500Principal getX500Principal(String x509SubjectName) {
+
+        final X500Principal x500Principal = new X500Principal(x509SubjectName);
+        final String utf8String = getUtf8String(x500Principal);
+        final X500Principal normalizedX500Principal = new X500Principal(utf8String);
+        return normalizedX500Principal;
+    }
+
+    /**
+     * @param x509Certificate
+     * @return
+     */
+    public static X500Principal getSubjectX500Principal(final X509Certificate x509Certificate) {
+
+        final X500Principal x500Principal = x509Certificate.getSubjectX500Principal();
+        final String utf8Name = getUtf8String(x500Principal);
+        // System.out.println(">>> " + x500Principal.getName() + "-------" + utf8Name);
+        final X500Principal x500PrincipalNormalized = new X500Principal(utf8Name);
+        return x500PrincipalNormalized;
+    }
+
+    /**
+     * @param x509Certificate
+     * @return
+     */
+    public static String getSubjectX500PrincipalName(final X509Certificate x509Certificate) {
+
+        return getSubjectX500Principal(x509Certificate).getName();
+    }
+
+    /**
+     * @param x509Certificate
+     * @return
+     */
+    public static X500Principal getIssuerX500Principal(final X509Certificate x509Certificate) {
+
+        final X500Principal x500Principal = x509Certificate.getIssuerX500Principal();
+        final String utf8Name = getUtf8String(x500Principal);
+        final X500Principal x500PrincipalNormalized = new X500Principal(utf8Name);
+        return x500PrincipalNormalized;
+    }
+
+    /**
+     * @param x509Certificate
+     * @return
+     */
+    public static String getIssuerX500PrincipalName(final X509Certificate x509Certificate) {
+
+        return getIssuerX500Principal(x509Certificate).getName();
     }
 
     public static InputStream getResource(final String resourcePath) {
@@ -2232,17 +2439,166 @@ public final class DSSUtils {
     }
 
     /**
+     * Constructs a new <code>String</code> by decoding the specified array of bytes using the UTF-8 charset.
      *
-     *
-     * @param xmlDiagnosticData
-     * @return
+     * @param bytes The bytes to be decoded into characters
+     * @return A new <code>String</code> decoded from the specified array of bytes using the UTF-8 charset,
+     * or <code>null</code> if the input byte array was <code>null</code>.
+     * @throws IllegalStateException Thrown when a {@link UnsupportedEncodingException} is caught, which should never happen since the
+     *                               charset is required.
      */
-    public static String getUtf8String(final String xmlDiagnosticData) {
+    public static String getUtf8String(byte[] bytes) {
 
+        if (bytes == null) {
+            return null;
+        }
         try {
-            return new String(xmlDiagnosticData.getBytes(), "UTF-8");
+            return new String(bytes, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new DSSException(e);
         }
+    }
+
+    /**
+     * @param string
+     * @return
+     */
+    public static String getUtf8String(final String string) {
+
+        return getUtf8String(string.getBytes());
+    }
+
+    public static byte[] getUtf8Bytes(final String string) {
+
+        if (string == null) {
+            return null;
+        }
+        try {
+            final byte[] bytes = string.getBytes("UTF-8");
+            return bytes;
+        } catch (UnsupportedEncodingException e) {
+            throw new DSSException(e);
+        }
+    }
+
+    private static HashMap<String, String> get(final X500Principal x500Principal) {
+
+        HashMap<String, String> treeMap = new HashMap<String, String>();
+        final byte[] encoded = x500Principal.getEncoded();
+        final ASN1Sequence asn1Sequence = ASN1Sequence.getInstance(encoded);
+        final ASN1Encodable[] asn1Encodables = asn1Sequence.toArray();
+        for (final ASN1Encodable asn1Encodable : asn1Encodables) {
+
+            final DLSet dlSet = (DLSet) asn1Encodable;
+            for (int ii = 0; ii < dlSet.size(); ii++) {
+
+                final DLSequence dlSequence = (DLSequence) dlSet.getObjectAt(ii);
+                if (dlSequence.size() != 2) {
+
+                    throw new DSSException("The DLSequence must contains exactly 2 elements.");
+                }
+                final ASN1Encodable asn1EncodableAttributeType = dlSequence.getObjectAt(0);
+                final String stringAttributeType = getString(asn1EncodableAttributeType);
+                final ASN1Encodable asn1EncodableAttributeValue = dlSequence.getObjectAt(1);
+                final String stringAttributeValue = getString(asn1EncodableAttributeValue);
+                treeMap.put(stringAttributeType, stringAttributeValue);
+            }
+        }
+        return treeMap;
+    }
+
+    private static String getUtf8String(final X500Principal x500Principal) {
+
+        final byte[] encoded = x500Principal.getEncoded();
+        final ASN1Sequence asn1Sequence = ASN1Sequence.getInstance(encoded);
+        final ASN1Encodable[] asn1Encodables = asn1Sequence.toArray();
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (final ASN1Encodable asn1Encodable : asn1Encodables) {
+
+            final DLSet dlSet = (DLSet) asn1Encodable;
+            for (int ii = 0; ii < dlSet.size(); ii++) {
+
+                final DLSequence dlSequence = (DLSequence) dlSet.getObjectAt(ii);
+                if (dlSequence.size() != 2) {
+
+                    throw new DSSException("The DLSequence must contains exactly 2 elements.");
+                }
+                final ASN1Encodable attributeType = dlSequence.getObjectAt(0);
+                final ASN1Encodable attributeValue = dlSequence.getObjectAt(1);
+                String string = getString(attributeValue);
+                string = string.replace(",", "\\,");
+                // System.out.println(">>> " + attributeType.toString() + "=" + attributeValue.getClass().getSimpleName() + "[" + string + "]");
+                if (stringBuilder.length() != 0) {
+                    stringBuilder.append(',');
+                }
+                stringBuilder.append(attributeType).append('=').append(string);
+            }
+        }
+        //final X500Name x500Name = X500Name.getInstance(encoded);
+        return stringBuilder.toString();
+    }
+
+    private static String getString(ASN1Encodable attributeValue) {
+        String string;
+        if (attributeValue instanceof DERUTF8String) {
+
+            string = ((DERUTF8String) attributeValue).getString();
+        } else if (attributeValue instanceof DERPrintableString) {
+
+            string = ((DERPrintableString) attributeValue).getString();
+        } else if (attributeValue instanceof DERBMPString) {
+
+            string = ((DERBMPString) attributeValue).getString();
+        } else if (attributeValue instanceof DERT61String) {
+
+            string = ((DERT61String) attributeValue).getString();
+        } else if (attributeValue instanceof DERIA5String) {
+
+            string = ((DERIA5String) attributeValue).getString();
+        } else if (attributeValue instanceof ASN1ObjectIdentifier) {
+
+            string = ((ASN1ObjectIdentifier) attributeValue).getId();
+        } else if (attributeValue instanceof DERT61UTF8String) {
+
+            string = ((DERT61UTF8String) attributeValue).getString();
+        } else {
+            string = attributeValue.getClass().getSimpleName();
+            LOG.error("!!!*******!!! This encoding is unknown: " + string);
+        }
+        return string;
+    }
+
+    /**
+     * This method return the unique message id which can be used for translation purpose.
+     *
+     * @param message the {@code String} message on which the unique id is calculated.
+     * @return the unique id
+     */
+    public static String getMessageId(final String message) {
+
+        final String message_ = message./*replace('\'', '_').*/toLowerCase().replaceAll("[^a-z_]", " ");
+        StringBuilder nameId = new StringBuilder();
+        final StringTokenizer stringTokenizer = new StringTokenizer(message_);
+        while (stringTokenizer.hasMoreElements()) {
+
+            final String word = (String) stringTokenizer.nextElement();
+            nameId.append(word.charAt(0));
+        }
+        final String nameIdString = nameId.toString();
+        return nameIdString.toUpperCase();
+    }
+
+    /**
+     * This method allows to convert the stack trace to a string.
+     *
+     * @param exception from which the stack trace should be extracted
+     * @return the exception's stack trace under the {@code String} form.
+     */
+    public static String getStackTrace(final Exception exception) {
+
+        final StringWriter stringWriter = new StringWriter();
+        final PrintWriter printWriter = new PrintWriter(stringWriter);
+        exception.printStackTrace(printWriter);
+        return stringWriter.toString(); // stack trace as a string
     }
 }
