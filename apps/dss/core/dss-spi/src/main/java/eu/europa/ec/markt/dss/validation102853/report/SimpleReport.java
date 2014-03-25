@@ -93,24 +93,39 @@ public class SimpleReport extends XmlDom {
         return signatureIdList;
     }
 
-    public List<String> getInfo(final String signatureId) {
+    public List<Conclusion.BasicInfo> getInfo(final String signatureId) {
 
-        final List<String> infoList = new ArrayList<String>();
+        final List<Conclusion.BasicInfo> infoList = getBasicInfo(signatureId, "Info");
+        return infoList;
+    }
 
-        final List<XmlDom> infoElementList = getElements("/SimpleReport/Signature[@Id='%s']/Info", signatureId);
-        for (final XmlDom infoElement : infoElementList) {
+    public List<Conclusion.BasicInfo> getErrors(final String signatureId) {
 
-            String attributeText = "";
+        final List<Conclusion.BasicInfo> errorList = getBasicInfo(signatureId, "Error");
+        return errorList;
+    }
+
+    public List<Conclusion.BasicInfo> getWarnings(final String signatureId) {
+
+        final List<Conclusion.BasicInfo> errorList = getBasicInfo(signatureId, "Warning");
+        return errorList;
+    }
+
+    private List<Conclusion.BasicInfo> getBasicInfo(final String signatureId, final String basicInfoType) {
+
+        final List<XmlDom> elementList = getElements("/SimpleReport/Signature[@Id='%s']/" + basicInfoType, signatureId);
+        final List<Conclusion.BasicInfo> infoList = new ArrayList<Conclusion.BasicInfo>();
+        for (final XmlDom infoElement : elementList) {
+
+            Conclusion.BasicInfo basicInfo = new Conclusion.BasicInfo(basicInfoType);
+            basicInfo.setValue(infoElement.getText());
             final NamedNodeMap attributes = infoElement.getAttributes();
             for (int index = 0; index < attributes.getLength(); index++) {
 
                 final Node attribute = attributes.item(index);
-                final String attributeValue = attribute.getNodeValue();
-                attributeText += attributeValue + ": ";
+                basicInfo.setAttribute(attribute.getNodeName(), attribute.getNodeValue());
             }
-            String text = infoElement.getText();
-            text = attributeText + text;
-            infoList.add(text);
+            infoList.add(basicInfo);
         }
         return infoList;
     }

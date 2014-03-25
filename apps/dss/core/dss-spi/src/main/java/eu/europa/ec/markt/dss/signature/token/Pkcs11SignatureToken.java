@@ -193,7 +193,7 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
                         throw new DSSBadPasswordException(MSG.PKCS11_BAD_PASSWORD, e);
                     }
                 }
-                throw new KeyStoreException("Can't initialize Sun PKCS#11 security " + "provider. Reason: " + getCauseMessage(e), e);
+                throw new KeyStoreException("Can't initialize Sun PKCS#11 security provider. Reason: " + getCauseMessage(e), e);
             }
         }
         return _keyStore;

@@ -21,6 +21,7 @@ package eu.europa.ec.markt.dss.validation102853.xml;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,12 +29,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.validation102853.rules.MessageTag;
 
 public class XmlNode {
 
@@ -47,12 +51,12 @@ public class XmlNode {
 
     private XmlNode parentNode;
 
-    public XmlNode(String name) {
+    public XmlNode(final String name) {
 
         this(name, null);
     }
 
-    public XmlNode(String name, String value) {
+    public XmlNode(final String name, final String value) {
 
         int _pos = name.indexOf(' ');
         if (_pos != -1) {
@@ -63,23 +67,41 @@ public class XmlNode {
         this.value = value;
     }
 
-    public void addChild(XmlNode child) {
+    public XmlNode(final String name, final MessageTag messageTag, final Map<String, String> attributes) {
+
+        int _pos = name.indexOf(' ');
+        if (_pos != -1) {
+
+            throw new DSSException("The node name is not correct: " + name);
+        }
+        this.name = name;
+        if (messageTag != null && !messageTag.equals(MessageTag.EMPTY)) {
+
+            this.value = messageTag.getMessage();
+            this.attributes.put(MessageTag.NAME_ID, messageTag.name());
+        }
+        if (attributes != null) {
+            this.attributes.putAll(attributes);
+        }
+    }
+
+    public void addChild(final XmlNode child) {
 
       /* if (!children.contains(child)) */
         children.add(child);
     }
 
-    public void addChildrenOf(XmlNode parent) {
+    public void addChildrenOf(final XmlNode parent) {
 
-        for (XmlNode child : parent.children) {
+        for (final XmlNode child : parent.children) {
 
             children.add(child);
         }
     }
 
-    public void addChildren(final List<XmlDom> adestInfo) {
+    public void addChildren(final List<XmlDom> xmlDomList) {
 
-        for (final XmlDom xmlDom : adestInfo) {
+        for (final XmlDom xmlDom : xmlDomList) {
 
             addChild(xmlDom);
         }
@@ -106,8 +128,8 @@ public class XmlNode {
     }
 
     /**
-     * @param xmlNode the <code>XmlNode</code> to which the element is added
-     * @param element the <code>Node</code> to be copied
+     * @param xmlNode the {@code XmlNode} to which the element is added
+     * @param element the {@code Node} to be copied
      */
     private static void recursiveCopy(final XmlNode xmlNode, final Node element) {
 
@@ -143,24 +165,38 @@ public class XmlNode {
         _xmlNode.setParent(xmlNode);
     }
 
-    public XmlNode addChild(String childName) {
+    public XmlNode addChild(final String childName) {
 
-        XmlNode child = new XmlNode(childName);
+        final XmlNode child = new XmlNode(childName);
         children.add(child);
         child.parentNode = this;
         return child;
     }
 
-    public XmlNode addChild(String childName, String value) {
+    public XmlNode addChild(final String childName, final String value) {
 
-        XmlNode child = new XmlNode(childName, value);
+        final XmlNode child = new XmlNode(childName, value);
         children.add(child);
         return child;
     }
 
-    public XmlNode addFirstChild(String childName, String value) {
+    public XmlNode addChild(final String childName, final MessageTag messageTag) {
 
-        XmlNode child = new XmlNode(childName, value);
+        final XmlNode child = new XmlNode(childName, messageTag, null);
+        children.add(child);
+        return child;
+    }
+
+    public XmlNode addChild(final String childName, final MessageTag messageTag, final Map<String, String> attributes) {
+
+        final XmlNode child = new XmlNode(childName, messageTag, attributes);
+        children.add(child);
+        return child;
+    }
+
+    public XmlNode addFirstChild(final String childName, final String value) {
+
+        final XmlNode child = new XmlNode(childName, value);
         children.add(0, child);
         return child;
     }
@@ -169,7 +205,7 @@ public class XmlNode {
         return parentNode;
     }
 
-    public void setParent(XmlNode parentNode) {
+    public void setParent(final XmlNode parentNode) {
 
         this.parentNode = parentNode;
         if (parentNode != null) {
@@ -178,7 +214,20 @@ public class XmlNode {
         }
     }
 
-    public void setValue(String value) {
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * This method return the string value of the node.
+     *
+     * @return {@code String} content of the node
+     */
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(final String value) {
         this.value = value;
     }
 
@@ -186,27 +235,76 @@ public class XmlNode {
         return nameSpace;
     }
 
-    public void setNameSpace(String nameSpace) {
+    public void setNameSpace(final String nameSpace) {
         this.nameSpace = nameSpace;
     }
 
-    public void setAttribute(String name, String value) {
+    /**
+     * @return the {@code Map} of associated attributes.
+     */
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    /**
+     * This method allows to set the attribute and its value.
+     *
+     * @param name  the attribute name
+     * @param value the attribute value
+     * @return "this" which allows to call the method again.
+     */
+    public XmlNode setAttribute(final String name, final String value) {
 
         attributes.put(name, value);
+        return this;
+    }
+
+    /**
+     * The returned list is never null.
+     *
+     * @return a modifiable list of children {@code XmlNode}.
+     */
+    public List<XmlNode> getChildren() {
+        return children;
     }
 
     private String getAttributeString() {
-        StringBuilder attributeString = new StringBuilder();
-        Set<Map.Entry<String, String>> entries = attributes.entrySet();
-        for (Entry<String, String> entry : entries) {
+
+        final StringBuilder attributeString = new StringBuilder();
+        final Set<Map.Entry<String, String>> entries = attributes.entrySet();
+        for (final Entry<String, String> entry : entries) {
             attributeString.append(" ").append(entry.getKey()).append("='").append(entry.getValue()).append("'");
         }
         return attributeString.toString();
     }
 
+    /**
+     * This method returns {@link org.w3c.dom.Document} based on the current {@link XmlNode}.
+     *
+     * @return
+     */
+    public Document toDocument() {
+
+        final InputStream inputStream = getInputStream();
+        final Document document = DSSXMLUtils.buildDOM(inputStream);
+        return document;
+    }
+
+    /**
+     * This method returns {@code XmlDom} representation of the current {@code XmlNode}.
+     *
+     * @return the {@code XmlDom} representation of the current {@code XmlNode}.
+     */
+    public XmlDom toXmlDom() {
+
+        final Document document = toDocument();
+        final XmlDom xmlDom = new XmlDom(document);
+        return xmlDom;
+    }
+
     private void writeNodes(final XmlNode node, final StringBuilder xml, final StringBuilder indent, String nameSpace) {
 
-        for (XmlNode node_ : node.children) {
+        for (final XmlNode node_ : node.children) {
 
             xml.append(indent).append('<').append(node_.name);
             if (!node_.attributes.isEmpty()) {
@@ -243,23 +341,28 @@ public class XmlNode {
     }
 
     /**
-     * @return
+     * @return the {@code InputStream} representing the content of the node.
      */
     public InputStream getInputStream() {
 
-        StringBuilder indent = new StringBuilder();
-        StringBuilder xml = new StringBuilder();
-        XmlNode masterNode = new XmlNode("__Master__");
-        XmlNode savedParentNode = getParent();
-        if (savedParentNode != null) {
+        try {
+            final StringBuilder indent = new StringBuilder();
+            final StringBuilder xml = new StringBuilder();
+            final XmlNode masterNode = new XmlNode("__Master__");
+            final XmlNode savedParentNode = getParent();
+            if (savedParentNode != null) {
 
-            setNameSpace(savedParentNode.getNameSpace());
+                setNameSpace(savedParentNode.getNameSpace());
+            }
+            setParent(masterNode);
+            writeNodes(masterNode, xml, indent, "");
+            parentNode = savedParentNode;
+            final byte[] bytes = xml.toString().getBytes("UTF-8");
+            final InputStream in = new ByteArrayInputStream(bytes);
+            return in;
+        } catch (UnsupportedEncodingException e) {
+            throw new DSSException("Error during the conversion of the XmlNode to the InputStream :", e);
         }
-        setParent(masterNode);
-        writeNodes(masterNode, xml, indent, "");
-        parentNode = savedParentNode;
-        InputStream in = new ByteArrayInputStream(xml.toString().getBytes());
-        return in;
     }
 
     @Override
@@ -267,10 +370,10 @@ public class XmlNode {
 
         try {
 
-            StringBuilder indent = new StringBuilder();
-            StringBuilder xml = new StringBuilder();
-            XmlNode masterNode = new XmlNode("__Master__", null);
-            XmlNode savedParentNode = getParent();
+            final StringBuilder indent = new StringBuilder();
+            final StringBuilder xml = new StringBuilder();
+            final XmlNode masterNode = new XmlNode("__Master__", null);
+            final XmlNode savedParentNode = getParent();
             setParent(masterNode);
             writeNodes(masterNode, xml, indent, "");
             parentNode = savedParentNode;

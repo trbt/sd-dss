@@ -27,10 +27,21 @@ import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
+import eu.europa.ec.markt.dss.validation102853.rules.MessageTag;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 
 /**
- * TODO
+ * This class represents the detailed report built during the validation process. It contains information on each executed constraint. It is composed among other of the
+ * following building blocks:<br/>
+ * - Identification of the Signer's Certificate (ISC)<br/>
+ * - Validation Context Initialization (VCI)<br/>
+ * - X.509 Certificate Validation (XCV)<br/>
+ * - Cryptographic Verification (CV)<br/>
+ * - Signature Acceptance Validation (SAV)<br/>
+ * - Basic Validation Process<br/>
+ * - Validation Process for Time-Stamps<br/>
+ * - Validation Process for AdES-T<br/>
+ * - Validation of LTV forms<br/>
  *
  * <p>
  * DISCLAIMER: Project owner DG-MARKT.
@@ -199,5 +210,17 @@ public class DetailedReport extends XmlDom {
 
         final String notice = getValue("/ValidationData/BasicBuildingBlocks/Signature[@Id='%s']/VCI/Constraint/Notice/text()", signatureId);
         return notice;
+    }
+
+    /**
+     * This method returns the status of the constraint with the given tag.
+     *
+     * @param tag the tag of the constraint to find.
+     * @return the status of the constraint
+     */
+    public String getConstraintStatus(final MessageTag tag) {
+
+        final String status = getValue("//Name[@NameId='%s']/../Status/text()", tag.name());
+        return status;
     }
 }

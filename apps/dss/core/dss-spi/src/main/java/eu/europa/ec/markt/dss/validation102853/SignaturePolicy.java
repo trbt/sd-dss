@@ -25,11 +25,22 @@ import eu.europa.ec.markt.dss.DigestAlgorithm;
 /**
  * Represents the value of a SignaturePolicy
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3577 $ - $Date: 2014-03-11 12:23:07 +0100 (Tue, 11 Mar 2014) $
  */
 public class SignaturePolicy {
 
-    private String policyId;
+    /**
+     * The validation process accepts no policy. No particular treatment is done.
+     */
+    public static final String NO_POLICY = "NO_POLICY";
+
+    /**
+     * The validation process accepts any policy. The used policy is only showed, no particular treatment is done.
+     */
+
+    public static final String IMPLICIT_POLICY = "IMPLICIT_POLICY";
+
+    private String identifier;
     private DigestAlgorithm digestAlgorithm;
     private String digestValue;
 
@@ -42,26 +53,26 @@ public class SignaturePolicy {
     private String notice;
 
     /**
-     * The default constructor for SignaturePolicy.
-     *
-     * @param signaturePolicyId
-     */
-    public SignaturePolicy(final String signaturePolicyId) {
-        this.policyId = signaturePolicyId;
-    }
-
-    /**
-     * The default constructor for SignaturePolicy.
+     * The default constructor for SignaturePolicy. It represents the implied policy.
      */
     public SignaturePolicy() {
-        this.policyId = "";
+        this.identifier = IMPLICIT_POLICY;
     }
 
     /**
-     * @return the policyId
+     * The default constructor for SignaturePolicy.
+     *
+     * @param identifier
      */
-    public String getPolicyId() {
-        return policyId;
+    public SignaturePolicy(final String identifier) {
+        this.identifier = identifier;
+    }
+
+    /**
+     * @return the identifier
+     */
+    public String getIdentifier() {
+        return identifier;
     }
 
     public DigestAlgorithm getDigestAlgorithm() {
@@ -98,13 +109,13 @@ public class SignaturePolicy {
 
     @Override
     public String toString() {
-        if (policyId == null) {
-            return "NO_POLICY";
-        } else if (policyId.equals("")) {
-            return "IMPLICIT";
-        } else {
-            return policyId;
-        }
-    }
 
+        return "SignaturePolicy{" +
+              "identifier='" + identifier + '\'' +
+              ", digestAlgorithm=" + digestAlgorithm +
+              ", digestValue='" + digestValue + '\'' +
+              ", url='" + url + '\'' +
+              ", notice='" + notice + '\'' +
+              '}';
+    }
 }

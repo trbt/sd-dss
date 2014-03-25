@@ -25,7 +25,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.esf.OcspResponsesID;
 import org.bouncycastle.asn1.esf.OtherHash;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
@@ -37,7 +36,7 @@ import eu.europa.ec.markt.dss.DigestAlgorithm;
 /**
  * Reference an OCSPResponse
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
  */
 
 public class OCSPRef {
@@ -88,7 +87,8 @@ public class OCSPRef {
                 digest.update(DSSRevocationUtils.fromBasicToResp(ocspResp).getEncoded());
             }
             byte[] computedValue = digest.digest();
-            if (LOG.isInfoEnabled()) LOG.info("Compare " + Hex.encodeHexString(digestValue) + " to computed value " + Hex.encodeHexString(computedValue) + " of BasicOCSPResp produced at " + ocspResp
+            if (LOG.isInfoEnabled()) LOG.info("Compare " + DSSUtils.encodeHexString(digestValue) + " to computed value " + DSSUtils.encodeHexString(computedValue) + " of " +
+                  "BasicOCSPResp produced at " + ocspResp
                   .getProducedAt());
 
             return Arrays.equals(digestValue, computedValue);

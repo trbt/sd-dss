@@ -27,12 +27,7 @@ public interface RuleConstant extends TSLConstant {
     /**
      * The validation process accepts any policy. The used policy is only showed, no particular treatment is done.
      */
-    public static final String ANY_POLICY = "*";
-
-    /**
-     * The validation process accepts no policy. No particular treatment is done.
-     */
-    public static final String NO_POLICY = "";
+    public static final String ANY_POLICY = "ANY_POLICY";
 
     /**
      * This is the value returned by BouncyCastle when the certificate is revoked and on hold.

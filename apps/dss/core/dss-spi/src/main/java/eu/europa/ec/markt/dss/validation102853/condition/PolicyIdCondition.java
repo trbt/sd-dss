@@ -80,7 +80,7 @@ public class PolicyIdCondition extends Condition {
          * Certificate policies identifier: 2.5.29.32 (IETF RFC 3280)<br>
          * Gets all certificate's policies
          */
-        List<String> policyIdentifiers = DSSUtils.getPolicyIdentifiers(cert);
+        final List<String> policyIdentifiers = DSSUtils.getPolicyIdentifiers(cert);
         return policyIdentifiers.contains(policyOid);
     }
 

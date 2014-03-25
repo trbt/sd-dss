@@ -35,12 +35,15 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.NamespaceContextMap;
 import eu.europa.ec.markt.dss.exception.DSSException;
@@ -53,6 +56,8 @@ import eu.europa.ec.markt.dss.validation102853.RuleUtils;
  * @author bielecro
  */
 public class XmlDom {
+
+    private static final Logger LOG = LoggerFactory.getLogger(XmlDom.class);
 
     public static final String NAMESPACE = "http://dss.markt.ec.europa.eu/validation/diagnostic";
 
@@ -190,11 +195,20 @@ public class XmlDom {
             // Already formated.
             return formatedXPath;
         }
-        StringTokenizer tokenizer = new StringTokenizer(formatedXPath, "/");
+        String formatedXPath_ = formatedXPath;
+        CharSequence from = "//";
+        CharSequence to = "{#double}/";
+        boolean special = formatedXPath_.indexOf("//") != -1;
+        if (special) {
+            formatedXPath_ = formatedXPath_.replace(from, to);
+        }
+        StringTokenizer tokenizer = new StringTokenizer(formatedXPath_, "/");
 
         StringBuilder stringBuilder = new StringBuilder();
 
-        while (tokenizer.hasMoreTokens()) {
+        while (tokenizer.hasMoreTokens())
+
+        {
 
             String token = tokenizer.nextToken();
 
@@ -203,15 +217,21 @@ public class XmlDom {
             final boolean isDoubleDot = "..".equals(token);
             final boolean isAt = token.startsWith("@");
             final boolean isText = token.equals("text()");
-            final String slash = isDot || isCount ? "" : "/";
-            String prefix = isDot || isCount || isDoubleDot || isAt || isText ? "" : "dss:";
+            final boolean isDoubleSlash = token.equals("{#double}");
+            final String slash = isDot || isCount || isDoubleSlash ? "" : "/";
+            String prefix = isDot || isCount || isDoubleDot || isAt || isText || isDoubleSlash ? "" : "dss:";
 
             stringBuilder.append(slash).append(prefix).append(token);
         }
+
         // System.out.println("");
         // System.out.println("--> " + formatedXPath);
         // System.out.println("--> " + stringBuilder.toString());
-        return stringBuilder.toString();
+        String normalizedXPath = stringBuilder.toString();
+        if (special) {
+            normalizedXPath = normalizedXPath.replace(to, from);
+        }
+        return normalizedXPath;
     }
 
     public String getValue(final String xPath, final Object... params) {
@@ -346,20 +366,77 @@ public class XmlDom {
     }
 
     /**
-     * Converts the list of <code>XmlDom</code> to list of <code>String</code>. The children of the node are not taken
+     * Converts the list of {@code XmlDom} to {@code List} of {@code String}. The children of the node are not taken
      * into account.
      *
-     * @param xmlDomList
-     * @return
+     * @param xmlDomList the list of {@code XmlDom} to convert
+     * @return converted {@code List} of {@code String}.
      */
     public static List<String> convertToStringList(final List<XmlDom> xmlDomList) {
 
-        List<String> stringList = new ArrayList<String>();
-        for (XmlDom xmlDom : xmlDomList) {
+        final List<String> stringList = new ArrayList<String>();
+        for (final XmlDom xmlDom : xmlDomList) {
 
             stringList.add(xmlDom.getText());
         }
         return stringList;
+    }
+
+    /**
+     * Converts the list of {@code XmlDom} to {@code Map} of {@code String}, {@code String}. The children of the node are not taken
+     * into account.
+     *
+     * @param xmlDomList    the list of {@code XmlDom} to convert
+     * @param attributeName the name of the attribute to use as value
+     * @return converted {@code Map} of {@code String}, {@code String} corresponding to the element content and the attribute value.
+     */
+    public static Map<String, String> convertToStringMap(final List<XmlDom> xmlDomList, final String attributeName) {
+
+        final Map<String, String> stringMap = new HashMap<String, String>();
+        for (final XmlDom xmlDom : xmlDomList) {
+
+            final String key = xmlDom.getText();
+            final String value = xmlDom.getAttribute(attributeName);
+            stringMap.put(key, value);
+        }
+        return stringMap;
+    }
+
+    /**
+     * Converts the list of {@code XmlDom} to {@code Map} of {@code String}, {@code Date}. The children of the node are not taken
+     * into account. If a problem is encountered during the conversion the pair key, value is ignored and a warning is logged.
+     *
+     * @param xmlDomList    the list of {@code XmlDom} to convert
+     * @param attributeName the name of the attribute to use as value
+     * @return converted {@code Map} of {@code String}, {@code Date} corresponding to the element content and the attribute value.
+     */
+    public static Map<String, Date> convertToStringDateMap(final List<XmlDom> xmlDomList, final String attributeName) {
+
+        final Map<String, Date> stringMap = new HashMap<String, Date>();
+        for (final XmlDom xmlDom : xmlDomList) {
+
+            final String key = xmlDom.getText();
+            final String dateString = xmlDom.getAttribute(attributeName);
+            String format = xmlDom.getAttribute("Format");
+            if (DSSUtils.isBlank(format)) {
+                format = "yyyy-MM-dd";
+            }
+            if (DSSUtils.isBlank(dateString)) {
+
+                LOG.warn(String.format("The date is not defined for key '%s'!", key));
+                continue;
+            }
+            final Date date;
+            try {
+                date = RuleUtils.parseDate(format, dateString);
+            } catch (DSSException e) {
+
+                LOG.warn("The date conversion is not possible.", e);
+                continue;
+            }
+            stringMap.put(key, date);
+        }
+        return stringMap;
     }
 
     public byte[] toByteArray() {
@@ -370,7 +447,7 @@ public class XmlDom {
             DSSXMLUtils.printDocument(rootElement, byteArrayOutputStream);
             return byteArrayOutputStream.toByteArray();
         }
-        return new byte[0];
+        return DSSUtils.EMPTY_BYTE_ARRAY;
     }
 
     @Override

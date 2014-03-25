@@ -91,8 +91,13 @@ public class ServiceInfo implements Serializable {
     private boolean tlWellSigned;
 
     /**
-     * <tsl:TrustServiceProvider><tsl:TSPServices><tsl:TSPService><tsl:ServiceInformation><tsl:ServiceInformationExtensions><tsl:Extension
-     * Critical="false"><tsl:ExpiredCertsRevocationInfo>
+     * <tsl:TrustServiceProvider>
+     * - <tsl:TSPServices>
+     * - - <tsl:TSPService>
+     * - - - <tsl:ServiceInformation>
+     * - - - - <tsl:ServiceInformationExtensions>
+     * - - - - - <tsl:Extension Critical="false">
+     * - - - - - - <tsl:ExpiredCertsRevocationInfo>
      */
     private Date expiredCertsRevocationInfo;
 

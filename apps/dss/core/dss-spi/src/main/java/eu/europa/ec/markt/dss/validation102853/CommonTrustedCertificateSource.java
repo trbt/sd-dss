@@ -61,7 +61,9 @@ public class CommonTrustedCertificateSource extends CommonCertificateSource impl
         final CertificateToken certToken = certPool.getInstance(certificate, getCertificateSourceType(), serviceInfo);
         // print certificate
         // System.out.println(certToken);
-        // System.out.println(certToken.getSubjectX500Principal().getName(X500Principal.CANONICAL));
+        // This allows to check the conversion of X500 principal
+        // System.out.println("> " + DSSUtils.getSubjectX500Principal(certToken.getCertificate()).getName());
+        // System.out.println("> " + DSSUtils.getIssuerX500Principal(certToken.getCertificate()).getName());
         return certToken;
     }
 

@@ -741,7 +741,7 @@ public class CertificateToken extends Token {
     public boolean hasCRLSignKeyUsage() {
 
         final boolean[] keyUsage = cert.getKeyUsage();
-        final boolean crlSignKeyUsage = keyUsage != null || keyUsage[6];
+        final boolean crlSignKeyUsage = keyUsage != null || (keyUsage != null && keyUsage[6]);
         return crlSignKeyUsage;
     }
 

@@ -29,7 +29,6 @@ import java.util.List;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.cms.AttributeTable;
 import org.bouncycastle.asn1.x509.Certificate;
@@ -203,9 +202,9 @@ public class TimestampToken extends Token {
             if (!messageImprintIntact) {
 
                 // Produces very big output
-                LOG.error("Extracted data from the document: {}", Hex.encodeHexString(data));
-                LOG.error("Computed digest ({}) on the extracted data from the document : {}", new Object[]{digestAlgorithm, Hex.encodeHexString(computedDigest)});
-                LOG.error("Digest present in TimestampToken: {}", Hex.encodeHexString(timestampDigest));
+                LOG.error("Extracted data from the document: {}", DSSUtils.encodeHexString(data));
+                LOG.error("Computed digest ({}) on the extracted data from the document : {}", new Object[]{digestAlgorithm, DSSUtils.encodeHexString(computedDigest)});
+                LOG.error("Digest present in TimestampToken: {}", DSSUtils.encodeHexString(timestampDigest));
                 LOG.error("Digest in TimestampToken matches digest of extracted data from document: {}", messageImprintIntact);
             }
         } catch (DSSException e) {
@@ -258,7 +257,8 @@ public class TimestampToken extends Token {
     }
 
     /**
-     * This method is used to set the timestamped references. The reference is the digest value of the certificate or of the revocation data. The same references can be timestamped
+     * This method is used to set the timestamped references. The reference is the digest value of the certificate or of the revocation data. The same references can be
+     * timestamped
      * by different timestamps.
      *
      * @param timestampedReferences

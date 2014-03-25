@@ -67,21 +67,21 @@ public class CriteriaListCondition extends CompositeCondition {
 
         switch (matchingCriteriaIndicator) {
             case all:
-                for (Condition condition : children) {
+                for (final Condition condition : children) {
                     if (!condition.check(cert)) {
                         return false;
                     }
                 }
                 return true;
             case atLeastOne:
-                for (Condition condition : children) {
+                for (final Condition condition : children) {
                     if (condition.check(cert)) {
                         return true;
                     }
                 }
                 return false;
             case none:
-                for (Condition condition : children) {
+                for (final Condition condition : children) {
                     if (condition.check(cert)) {
                         return false;
                     }

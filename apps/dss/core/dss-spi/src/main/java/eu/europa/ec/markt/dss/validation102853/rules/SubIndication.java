@@ -46,6 +46,8 @@ public interface SubIndication {
     public static final String REVOKED = "REVOKED";
     public static final String EXPIRED = "EXPIRED";
     public static final String NO_POE = "NO_POE";
+
+    public static final String CLAIMED_SIGNING_TIME_ABSENT = "CLAIMED_SIGNING_TIME_ABSENT";
     // public static final String = "";
     // public static final String = "";
     // public static final String = "";

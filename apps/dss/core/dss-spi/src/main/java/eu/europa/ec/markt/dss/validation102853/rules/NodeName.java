@@ -23,12 +23,9 @@ package eu.europa.ec.markt.dss.validation102853.rules;
 public interface NodeName {
 
     public static final String STATUS = "Status";
-    public static final String SIGNING_CERTIFICATE = "SigningCertificate";
-    public static final String TIMESTAMP_SIGNING_CERTIFICATE = "TimestampSigningCertificate"; // constraint
-    public static final String CA_CERTIFICATE = "CACertificate";
-    public static final String CRL_CERTIFICATE = "CRLCertificate";
-    public static final String OCSP_CERTIFICATE = "OCSPCertificate";
-    public static final String SIGNATURE_TO_VALIDATE = "SignatureToValidate";
+    public static final String SIGNING_CERTIFICATE = "SigningCertificate"; // constraint
+    public static final String CA_CERTIFICATE = "CACertificate"; //constraint
+    public static final String MAIN_SIGNATURE = "MainSignature"; // constraint
     public static final String INDICATION = "Indication";
     public static final String SUB_INDICATION = "SubIndication";
 
@@ -53,18 +50,19 @@ public interface NodeName {
     public static final String XCV = "XCV";
     public static final String CV = "CV";
     public static final String SAV = "SAV";
+    public static final String IDENTIFIER = "Identifier";
     public static final String POLICY = "Policy";
     public static final String POLICY_NAME = "PolicyName";
     public static final String POLICY_DESCRIPTION = "PolicyDescription";
     public static final String NOTICE = "Notice";
     public static final String INFO = "Info";
+    public static final String WARNING = "Warning";
+    public static final String ERROR = "Error";
     public static final String CONSTRAINT = "Constraint";
     public static final String SIGNING_TIME = "SigningTime";
-    public static final String TIMESTAMP = "Timestamp";
-    public static final String TIMESTAMP_CERTIFICATE = "TimestampCertificate";
+    public static final String TIMESTAMP = "Timestamp"; // node, constraint
     public static final String SIGNED_SIGNATURE = "SignedSignature";
     public static final String CONTENT_HINTS = "ContentHints";
-
 
     public static final String SIMPLE_REPORT = "SimpleReport";
     public static final String VALIDATION_TIME = "ValidationTime";

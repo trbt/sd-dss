@@ -1,5 +1,7 @@
 package eu.europa.ec.markt.dss.exception;
 
+import eu.europa.ec.markt.dss.DSSUtils;
+
 /**
  * This class is used when a null object is detected.
  *
@@ -30,11 +32,11 @@ public class DSSNullException extends DSSException {
      */
     public DSSNullException(final Class<?> javaClass, final String name) {
 
-        super("Parameter with name: " + name + ":" + javaClass.getName() + " cannot be null.");
+        super("Parameter with name: " + name + "[" + javaClass.getName() + "] cannot be null.");
     }
 
-    public DSSNullException(final Class<?> parameter, final String name, final String message) {
+    public DSSNullException(final Class<?> javaClass, final String name, final String message) {
 
-        super("Parameter with name: " + name + ":" + parameter.getName() + " cannot be null. " + message);
+        super("Parameter:" + (DSSUtils.isNotBlank(name) ? (" " + name) : "") + "[" + javaClass.getName() + "] cannot be null. " + message);
     }
 }

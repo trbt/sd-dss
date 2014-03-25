@@ -32,7 +32,7 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 
 /**
- * TODO
+ * This class represents all static data extracted by the process analysing the signature. They are independent from the validation policy to be applied.
  *
  * <p> DISCLAIMER: Project owner DG-MARKT.
  *

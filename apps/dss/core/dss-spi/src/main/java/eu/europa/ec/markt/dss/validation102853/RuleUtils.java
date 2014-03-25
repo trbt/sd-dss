@@ -22,7 +22,6 @@ package eu.europa.ec.markt.dss.validation102853;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -126,10 +125,11 @@ public final class RuleUtils {
     /**
      * Parses the given string date-time. The date-time must be defined using the default pattern: {@link #SDF}
      *
-     * @param dateString
-     * @return
+     * @param dateString formated date
+     * @return computed {@code Date}
+     * @throws DSSException if the conversion is not possible the {@code DSSException} is thrown.
      */
-    public static Date parseDate(final String dateString) {
+    public static Date parseDate(final String dateString) throws DSSException {
 
         try {
 
@@ -137,6 +137,23 @@ public final class RuleUtils {
             return date;
         } catch (ParseException e) {
             throw new DSSException(e);
+        }
+    }
+
+    /**
+     * Parses the given string date-time. The date-time must be defined using the default pattern: {@link #SDF}
+     *
+     * @param dateString formated date
+     * @return computed {@code Date} or null if the operation is not possible
+     */
+    public static Date parseSecureDate(final String dateString) {
+
+        try {
+
+            final Date date = SDF.parse(dateString);
+            return date;
+        } catch (ParseException e) {
+            return null;
         }
     }
 
@@ -161,11 +178,12 @@ public final class RuleUtils {
     /**
      * Converts the given string representation of the date using the format pattern.
      *
-     * @param format
-     * @param dateString
-     * @return
+     * @param format     the format to use
+     * @param dateString the date string representation
+     * @return the {@code Date}
+     * @throws DSSException if the conversion is not possible the {@code DSSException} is thrown.
      */
-    public static Date parseDate(final String format, final String dateString) {
+    public static Date parseDate(final String format, final String dateString) throws DSSException {
 
         try {
 
@@ -198,9 +216,11 @@ public final class RuleUtils {
     }
 
     /**
-     * @param id
-     * @param idList
-     * @return
+     * This method checks if the given string is present in the list of {@code String}(s).
+     *
+     * @param id     {@code String} to check
+     * @param idList the list of {@code String}(s)
+     * @return tru if the {@code id} is present in the {@code idList}, false otherwise
      */
     public static boolean contains1(final String id, final List<String> idList) {
 
@@ -252,16 +272,6 @@ public final class RuleUtils {
         final boolean contains = Arrays.asList(values).contains(value);
         return contains;
 
-    }
-
-    public static List<String> toStringList(final List<XmlDom> list) {
-
-        final List<String> stringList = new ArrayList<String>();
-        for (final XmlDom xmlDom : list) {
-
-            stringList.add(xmlDom.getText());
-        }
-        return stringList;
     }
 
     public static String toString(List<String> strings) {
