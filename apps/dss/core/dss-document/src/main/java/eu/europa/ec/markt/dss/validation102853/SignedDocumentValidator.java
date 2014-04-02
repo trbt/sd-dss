@@ -100,7 +100,7 @@ import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlTimestampType;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlTimestamps;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlTrustedServiceProviderType;
 import eu.europa.ec.markt.dss.validation102853.data.diagnostic.XmlUsedCertificates;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.pades.PDFDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.report.DetailedReport;
 import eu.europa.ec.markt.dss.validation102853.report.DiagnosticData;
@@ -211,7 +211,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
             input.reset();
             if (read < 5) {
 
-                throw new DSSException("Not a signed document");
+                throw new DSSException("The signature is not found.");
             }
             String preambleString = new String(preamble);
             byte[] xmlPreamble = new byte[]{'<', '?', 'x', 'm', 'l'};
@@ -1087,7 +1087,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
             if (policyDocument == null) {
 
-                final HTTPDataLoader dataLoader = certVerifier.getDataLoader();
+                final DataLoader dataLoader = certVerifier.getDataLoader();
                 policyBytes = dataLoader.get(policyUrl);
             } else {
 

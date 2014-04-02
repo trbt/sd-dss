@@ -39,7 +39,7 @@ import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
 import eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo;
 
@@ -61,7 +61,7 @@ public class SignatureValidationContext implements ValidationContext {
     /**
      * The data loader used to access AIA certificate source.
      */
-    private HTTPDataLoader httpDataLoader;
+    private DataLoader dataLoader;
 
     /**
      * The certificate pool which encapsulates all certificates used during the validation process and extracted from all used sources
@@ -129,7 +129,7 @@ public class SignatureValidationContext implements ValidationContext {
 
         this.crlSource = certVerifier.getCrlSource();
         this.ocspSource = certVerifier.getOcspSource();
-        this.httpDataLoader = certVerifier.getDataLoader();
+        this.dataLoader = certVerifier.getDataLoader();
 
         this.signCRLSource = signature.getCRLSource();
         this.signOCSPSource = signature.getOCSPSource();
@@ -167,7 +167,7 @@ public class SignatureValidationContext implements ValidationContext {
 
         this.crlSource = certificateVerifier.getCrlSource();
         this.ocspSource = certificateVerifier.getOcspSource();
-        this.httpDataLoader = certificateVerifier.getDataLoader();
+        this.dataLoader = certificateVerifier.getDataLoader();
         this.validationCertPool = SignedDocumentValidator.createValidationPool(certificateVerifier);
         if (LOG.isInfoEnabled()) {
 
@@ -258,7 +258,7 @@ public class SignatureValidationContext implements ValidationContext {
         try {
 
             LOG.info("Retrieving {} certificate's issuer using AIA.", token.getAbbreviation());
-            issuerCert = DSSUtils.loadIssuerCertificate(token.getCertificate(), httpDataLoader);
+            issuerCert = DSSUtils.loadIssuerCertificate(token.getCertificate(), dataLoader);
             if (issuerCert != null) {
 
                 final CertificateToken issuerCertToken = validationCertPool.getInstance(issuerCert, CertificateSourceType.AIA);

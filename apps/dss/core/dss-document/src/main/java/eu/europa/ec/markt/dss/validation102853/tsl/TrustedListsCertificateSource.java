@@ -52,7 +52,7 @@ import eu.europa.ec.markt.dss.exception.DSSNullReturnedException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CommonTrustedCertificateSource;
@@ -78,7 +78,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
     protected String lotlUrl;
 
-    protected transient HTTPDataLoader dataLoader;
+    protected transient DataLoader dataLoader;
 
     private Map<String, String> diagnosticInfo = new HashMap<String, String>();
 
@@ -529,7 +529,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
     /**
      * @param dataLoader the dataLoader to set
      */
-    public void setDataLoader(HTTPDataLoader dataLoader) {
+    public void setDataLoader(DataLoader dataLoader) {
 
         this.dataLoader = dataLoader;
     }

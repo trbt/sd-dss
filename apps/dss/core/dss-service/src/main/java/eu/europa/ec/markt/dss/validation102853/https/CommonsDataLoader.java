@@ -26,9 +26,21 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 
+import javax.naming.Context;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
+import org.apache.directory.api.ldap.model.entry.Attribute;
+import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.url.LdapUrl;
+import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -63,17 +75,18 @@ import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSCannotFetchDataException;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.manager.ProxyPreferenceManager;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 
 /**
- * Implementation of HTTPDataLoader using HttpClient. More flexible for HTTPS without having to add the certificate to the JVM TrustStore.
- * TODO: (Bob: 2013 Dec 03) Should take into account LDAP & FTP also. A new loader class should be created.
+ * Implementation of DataLoader for any protocol.<p/>
+ * HTTP & HTTPS: using HttpClient which is more flexible for HTTPS without having to add the certificate to the JVM TrustStore. It takes into account a proxy management through
+ * {@code ProxyPreferenceManager}. The authentication is also supported.<p/>
  *
  * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
  */
-public class CommonsHttpDataLoader implements HTTPDataLoader {
+public class CommonsDataLoader implements DataLoader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommonsHttpDataLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CommonsDataLoader.class);
 
     public static final int TIMEOUT_CONNECTION = 6000;
 
@@ -92,35 +105,34 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
     private int timeoutConnection = TIMEOUT_CONNECTION;
     private int timeoutSocket = TIMEOUT_SOCKET;
 
-    private final Map<HttpHost, UsernamePasswordCredentials> authMap = new HashMap<HttpHost, UsernamePasswordCredentials>();
+    private final Map<HttpHost, UsernamePasswordCredentials> authenticationMap = new HashMap<HttpHost, UsernamePasswordCredentials>();
 
     private HttpClient httpClient;
 
     /**
-     * The default constructor for CommonsHttpDataLoader.
+     * The default constructor for CommonsDataLoader.
      */
-    public CommonsHttpDataLoader() {
+    public CommonsDataLoader() {
         this(null);
     }
 
     /**
-     * The default constructor for CommonsHttpDataLoader.
+     * The  constructor for CommonsDataLoader with defined content-type.
      *
      * @param contentType The content type of each request
      */
-    public CommonsHttpDataLoader(final String contentType) {
+    public CommonsDataLoader(final String contentType) {
         this.contentType = contentType;
     }
 
     private HttpClientConnectionManager getConnectionManager() throws DSSException {
-        LOG.debug("HTTPS TrustStore undefined, using default");
 
+        LOG.debug("HTTPS TrustStore undefined, using default");
         RegistryBuilder<ConnectionSocketFactory> socketFactoryRegistryBuilder = RegistryBuilder.create();
         socketFactoryRegistryBuilder = setConnectionManagerSchemeHttp(socketFactoryRegistryBuilder);
         socketFactoryRegistryBuilder = setConnectionManagerSchemeHttps(socketFactoryRegistryBuilder);
 
-        HttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistryBuilder.build());
-
+        final HttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistryBuilder.build());
         return connectionManager;
     }
 
@@ -138,7 +150,7 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
         }
     }
 
-    protected synchronized HttpClient getHttpClient(String url) throws DSSException {
+    protected synchronized HttpClient getHttpClient(final String url) throws DSSException {
 
         if (httpClient != null) {
 
@@ -185,9 +197,11 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
      * @return
      * @throws java.net.MalformedURLException
      */
-    private HttpClientBuilder configCredentials(HttpClientBuilder httpClientBuilder, String url) throws DSSException {
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        for (final Map.Entry<HttpHost, UsernamePasswordCredentials> entry : authMap.entrySet()) {
+    private HttpClientBuilder configCredentials(HttpClientBuilder httpClientBuilder, final String url) throws DSSException {
+
+        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        for (final Map.Entry<HttpHost, UsernamePasswordCredentials> entry : authenticationMap.entrySet()) {
+
             final HttpHost httpHost = entry.getKey();
             final UsernamePasswordCredentials usernamePasswordCredentials = entry.getValue();
             credsProvider.setCredentials(new AuthScope(httpHost.getHostName(), httpHost.getPort()), usernamePasswordCredentials);
@@ -215,8 +229,8 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
             }
             final String protocol = new URL(url).getProtocol();
 
-            final boolean proxyHTTPS = protocol.equalsIgnoreCase("https") && proxyPreferenceManager.isHttpsEnabled();
-            final boolean proxyHTTP = protocol.equalsIgnoreCase("http") && proxyPreferenceManager.isHttpEnabled();
+            final boolean proxyHTTPS = protocol.equalsIgnoreCase(HTTPS) && proxyPreferenceManager.isHttpsEnabled();
+            final boolean proxyHTTP = protocol.equalsIgnoreCase(HTTP) && proxyPreferenceManager.isHttpEnabled();
 
             if (!proxyHTTPS && !proxyHTTP) {
                 return httpClientBuilder;
@@ -255,7 +269,7 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
             LOG.debug("proxy host/port: " + proxyHost + ":" + proxyPort);
             // TODO SSL peer shut down incorrectly when protocol is https
             // HttpHost proxy = new HttpHost(proxyHost, proxyPort, protocol);
-            HttpHost proxy = new HttpHost(proxyHost, proxyPort, "http");
+            HttpHost proxy = new HttpHost(proxyHost, proxyPort, HTTP);
             return httpClientBuilder.setProxy(proxy);
         } catch (MalformedURLException e) {
             throw new DSSException(e);
@@ -263,7 +277,114 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
     }
 
     @Override
-    public byte[] get(final String url) throws DSSCannotFetchDataException {
+    public byte[] get(final String urlString) throws DSSCannotFetchDataException {
+
+        if (urlString.startsWith(HTTP)) {
+            return httpGet(urlString);
+        } else if (urlString.startsWith(FTP)) {
+            return ftpGet(urlString);
+        } else if (urlString.startsWith(LDAP)) {
+            return ldapGet(urlString);
+        } else {
+            LOG.warn("DSS framework only supports HTTP, HTTPS, FTP and LDAP CRL's urlString.");
+        }
+
+        return httpGet(urlString);
+    }
+
+    /**
+     * Obtains a CRL from a specified LDAP URL (Another method)
+     *
+     * @param ldapURL The LDAP URL String
+     * @return A CRL obtained from this LDAP URL if successful, otherwise NULL (if no CRL was resent) or an exception will be thrown.
+     * @throws DSSException
+     */
+    public static byte[] ldapGet2(final String ldapURL) throws DSSException {
+
+        try {
+
+            //final String ldapUrlStr = URLDecoder.decode(ldapURL, "UTF-8");
+            final LdapUrl ldapUrl = new LdapUrl(ldapURL);
+            final int port = ldapUrl.getPort() > 0 ? ldapUrl.getPort() : 389;
+            final LdapConnection con = new LdapNetworkConnection(ldapUrl.getHost(), port);
+            con.connect();
+            final Entry entry = con.lookup(ldapUrl.getDn(), ldapUrl.getAttributes().toArray(new String[ldapUrl.getAttributes().size()]));
+            final Collection<Attribute> attributes = entry.getAttributes();
+            byte[] bytes = null;
+            for (Attribute attr : attributes) {
+
+                bytes = attr.getBytes();
+                break;
+            }
+            con.close();
+            return bytes;
+        } catch (Exception e) {
+
+            LOG.warn(e.toString(), e);
+        }
+        return null;
+    }
+
+    /**
+     * This method retrieves data using LDAP protocol.
+     * - CRL from given LDAP url, e.g. ldap://ldap.infonotary.com/dc=identity-ca,dc=infonotary,dc=com
+     *
+     * @param urlString
+     * @return
+     */
+    private byte[] ldapGet(final String urlString) {
+
+        final Hashtable<String, String> env = new Hashtable<String, String>();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+        env.put(Context.PROVIDER_URL, urlString);
+        try {
+
+            final DirContext ctx = new InitialDirContext(env);
+            final Attributes attributes = ctx.getAttributes("");
+            final javax.naming.directory.Attribute attribute = attributes.get("certificateRevocationList;binary");
+            final byte[] ldapBytes = (byte[]) attribute.get();
+            if (ldapBytes == null || ldapBytes.length == 0) {
+
+                throw new DSSException("Cannot download CRL from: " + urlString);
+            }
+            return ldapBytes;
+        } catch (Exception e) {
+
+            LOG.warn(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
+     * This method retrieves data using FTP protocol .
+     *
+     * @param urlString
+     * @return
+     */
+    protected byte[] ftpGet(final String urlString) {
+
+        InputStream inputStream = null;
+        try {
+
+            final URL url = new URL(urlString);
+            inputStream = url.openStream();
+            return DSSUtils.toByteArray(inputStream);
+        } catch (Exception e) {
+
+            LOG.warn(e.getMessage());
+        } finally {
+            DSSUtils.closeQuietly(inputStream);
+        }
+        return null;
+    }
+
+    /**
+     * This method retrieves data using HTTP or HTTPS protocol and 'get' method.
+     *
+     * @param url
+     * @return
+     */
+    protected byte[] httpGet(String url) {
 
         HttpGet httpRequest = null;
         HttpResponse httpResponse = null;
@@ -302,12 +423,10 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
             final URI uri = URI.create(url.trim());
             httpRequest = new HttpPost(uri);
 
-            // The length for the InputStreamEntity is needed, because some receivers (on the other side) need this
-            // information.
+            // The length for the InputStreamEntity is needed, because some receivers (on the other side) need this information.
             // To determine the length, we cannot read the content-stream up to the end and re-use it afterwards.
             // This is because, it may not be possible to reset the stream (= go to position 0).
-            // So, the solution is to cache temporarily the complete content data (as we do not expect much here) in a
-            // byte-array.
+            // So, the solution is to cache temporarily the complete content data (as we do not expect much here) in a byte-array.
             final ByteArrayInputStream bis = new ByteArrayInputStream(content);
 
             final HttpEntity requestEntity = new InputStreamEntity(bis, content.length);
@@ -330,7 +449,7 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
         }
     }
 
-    protected HttpResponse getHttpResponse(HttpUriRequest httpRequest, String url) throws DSSException {
+    protected HttpResponse getHttpResponse(final HttpUriRequest httpRequest, final String url) throws DSSException {
 
         final HttpClient client = getHttpClient(url);
 
@@ -358,7 +477,7 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
         }
     }
 
-    protected byte[] readHttpResponse(String url, HttpResponse httpResponse) throws DSSException {
+    protected byte[] readHttpResponse(final String url, final HttpResponse httpResponse) throws DSSException {
 
         final int statusCode = httpResponse.getStatusLine().getStatusCode();
         final boolean statusOk = statusCode == HttpStatus.SC_OK;
@@ -462,13 +581,13 @@ public class CommonsHttpDataLoader implements HTTPDataLoader {
      * @param scheme
      * @param login
      * @param password
-     * @return this for fluent addAuth
+     * @return this for fluent addAuthentication
      */
-    public CommonsHttpDataLoader addAuth(String host, int port, String scheme, String login, String password) {
+    public CommonsDataLoader addAuthentication(final String host, final int port, final String scheme, final String login, final String password) {
 
         final HttpHost httpHost = new HttpHost(host, port, scheme);
         final UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(login, password);
-        authMap.put(httpHost, credentials);
+        authenticationMap.put(httpHost, credentials);
         httpClient = null;
         return this;
     }

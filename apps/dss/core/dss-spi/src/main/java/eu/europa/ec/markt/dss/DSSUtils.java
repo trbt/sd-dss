@@ -118,7 +118,7 @@ import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.utils.Base64;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 
 public final class DSSUtils {
 
@@ -808,7 +808,7 @@ public final class DSSUtils {
      * @param loader the loader to use
      * @return
      */
-    public static X509Certificate loadIssuerCertificate(final X509Certificate cert, final HTTPDataLoader loader) {
+    public static X509Certificate loadIssuerCertificate(final X509Certificate cert, final DataLoader loader) {
 
         final String url = getAccessLocation(cert, X509ObjectIdentifiers.id_ad_caIssuers);
         if (url == null) {
@@ -817,7 +817,7 @@ public final class DSSUtils {
         }
         LOG.debug("Loading certificate from {}", url);
         if (loader == null) {
-            throw new DSSNullException(HTTPDataLoader.class);
+            throw new DSSNullException(DataLoader.class);
         }
         byte[] bytes = loader.get(url);
         if (bytes == null || bytes.length <= 0) {
@@ -880,9 +880,10 @@ public final class DSSUtils {
             final DEROctetString oct = (DEROctetString) (asn1InputStream.readObject());
             asn1InputStream.close();
             final ASN1InputStream asn1InputStream2 = new ASN1InputStream(oct.getOctets());
-            final AuthorityInformationAccess authorityInformationAccess = AuthorityInformationAccess.getInstance((ASN1Sequence) asn1InputStream2.readObject());
+            final AuthorityInformationAccess authorityInformationAccess = AuthorityInformationAccess.getInstance(asn1InputStream2.readObject());
             asn1InputStream2.close();
 
+            String accessLocation = null;
             final AccessDescription[] accessDescriptions = authorityInformationAccess.getAccessDescriptions();
             for (final AccessDescription accessDescription : accessDescriptions) {
 
@@ -898,10 +899,14 @@ public final class DSSUtils {
                     continue;
                 }
                 final DERIA5String str = (DERIA5String) ((DERTaggedObject) gn.toASN1Primitive()).getObject();
-                final String accessLocation = str.getString();
-                // LOG.debug("access location: " + accessLocation);
-                return accessLocation;
+                accessLocation = str.getString();
+                // The HTTP protocol is preferred.
+                if (accessLocation.startsWith(DataLoader.HTTP)) {
+                    // LOG.debug("access location: " + accessLocation);
+                    break;
+                }
             }
+            return accessLocation;
         } catch (final IOException e) {
 
             // we do nothing

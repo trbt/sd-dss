@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
-import eu.europa.ec.markt.dss.validation102853.https.CommonsHttpDataLoader;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.https.CommonsDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
 import eu.europa.ec.markt.dss.validation102853.ocsp.OnlineOCSPSource;
 import eu.europa.ec.markt.dss.validation102853.crl.OnlineCRLSource;
@@ -34,7 +34,7 @@ import eu.europa.ec.markt.dss.validation102853.crl.OnlineCRLSource;
  * This class provides the different sources used to verify the status of a certificate using the trust model. There are four different types of sources to be defined:<br /> -
  * Trusted certificates source;<br /> - Adjunct certificates source (not trusted);<br /> - OCSP source;<br /> - CRL source.<br />
  *
- * The {@code HTTPDataLoader} should be provided to give access to the certificates through AIA.
+ * The {@code DataLoader} should be provided to give access to the certificates through AIA.
  *
  * @version $Revision: 1754 $ - $Date: 2013-03-14 20:27:56 +0100 (Thu, 14 Mar 2013) $
  */
@@ -66,11 +66,11 @@ public class CommonCertificateVerifier implements CertificateVerifier {
     /**
      * The data loader used to access AIA certificate source.
      */
-    private HTTPDataLoader dataLoader;
+    private DataLoader dataLoader;
 
     /**
      * This method returns a new instance of the {@code CommonCertificateVerifier} including the {@code OnlineCRLSource}, {@code OnlineOCSPSource} and {@code
-     * CommonsHttpDataLoader}.
+     * CommonsDataLoader}.
      *
      * The {@link #trustedCertSource} and {@link #adjunctCertSource} still must be set.
      *
@@ -87,23 +87,23 @@ public class CommonCertificateVerifier implements CertificateVerifier {
     }
 
     /**
-     * The default constructor. The {@code HTTPDataLoader} is created to allow the retrieval of certificates through AIA.
+     * The default constructor. The {@code DataLoader} is created to allow the retrieval of certificates through AIA.
      */
     public CommonCertificateVerifier() {
 
         LOG.info("+ New CommonCertificateVerifier created.");
-        dataLoader = new CommonsHttpDataLoader();
+        dataLoader = new CommonsDataLoader();
     }
 
     /**
-     * This constructor allows to create {@code CommonCertificateVerifier} without {@code HTTPDataLoader}. It means that only a profile -B signatures can be created.
+     * This constructor allows to create {@code CommonCertificateVerifier} without {@code DataLoader}. It means that only a profile -B signatures can be created.
      *
-     * @param simpleCreationOnly if true the {@code CommonCertificateVerifier} will not contain {@code HTTPDataLoader}.
+     * @param simpleCreationOnly if true the {@code CommonCertificateVerifier} will not contain {@code DataLoader}.
      */
     public CommonCertificateVerifier(final boolean simpleCreationOnly) {
 
         if (!simpleCreationOnly) {
-            dataLoader = new CommonsHttpDataLoader();
+            dataLoader = new CommonsDataLoader();
         }
     }
 
@@ -115,7 +115,7 @@ public class CommonCertificateVerifier implements CertificateVerifier {
      * @param ocspSource        contains the reference to the {@code CRLSource}.
      * @param dataLoader        contains the reference to a data loader used to access AIA certificate source.
      */
-    public CommonCertificateVerifier(final TrustedCertificateSource trustedCertSource, final CRLSource crlSource, final OCSPSource ocspSource, final HTTPDataLoader dataLoader) {
+    public CommonCertificateVerifier(final TrustedCertificateSource trustedCertSource, final CRLSource crlSource, final OCSPSource ocspSource, final DataLoader dataLoader) {
 
         LOG.info("+ New CommonCertificateVerifier created with parameters.");
         this.trustedCertSource = trustedCertSource;
@@ -123,7 +123,7 @@ public class CommonCertificateVerifier implements CertificateVerifier {
         this.ocspSource = ocspSource;
         this.dataLoader = dataLoader;
         if (dataLoader == null) {
-            LOG.warn("HTTPDataLoader is null. It's required to access AIA certificate source");
+            LOG.warn("DataLoader is null. It's required to access AIA certificate source");
         }
     }
 
@@ -206,12 +206,12 @@ public class CommonCertificateVerifier implements CertificateVerifier {
     }
 
     @Override
-    public HTTPDataLoader getDataLoader() {
+    public DataLoader getDataLoader() {
         return dataLoader;
     }
 
     @Override
-    public void setDataLoader(final HTTPDataLoader dataLoader) {
+    public void setDataLoader(final DataLoader dataLoader) {
         this.dataLoader = dataLoader;
     }
 

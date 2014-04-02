@@ -21,7 +21,7 @@
 package eu.europa.ec.markt.dss.validation102853;
 
 import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
 
 /**
@@ -93,12 +93,12 @@ public interface CertificateVerifier {
      *
      * @return
      */
-    public HTTPDataLoader getDataLoader();
+    public DataLoader getDataLoader();
 
     /**
      * The data loader used to access AIA certificate source. If this property is not set the default {@code CommonsHttpDataLoader} is created.
      *
      * @param dataLoader
      */
-    public void setDataLoader(HTTPDataLoader dataLoader);
+    public void setDataLoader(DataLoader dataLoader);
 }

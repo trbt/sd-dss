@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 
 /**
  * Class encompassing a RFC 3161 TSA, accessed through HTTP(S) to a given URI
@@ -53,7 +53,7 @@ public class OnlineTSPSource implements TSPSource {
 
     private ASN1ObjectIdentifier policyOid;
 
-    private HTTPDataLoader httpDataLoader;
+    private DataLoader dataLoader;
 
     /**
      * The default constructor for OnlineTSPSource.
@@ -94,12 +94,12 @@ public class OnlineTSPSource implements TSPSource {
 
     }
 
-    public HTTPDataLoader getHttpDataLoader() {
-        return httpDataLoader;
+    public DataLoader getDataLoader() {
+        return dataLoader;
     }
 
-    public void setHttpDataLoader(final HTTPDataLoader httpDataLoader) {
-        this.httpDataLoader = httpDataLoader;
+    public void setDataLoader(final DataLoader dataLoader) {
+        this.dataLoader = dataLoader;
     }
 
     @Override
@@ -124,9 +124,9 @@ public class OnlineTSPSource implements TSPSource {
 
             // Call the communications layer
             byte[] respBytes;
-            if (httpDataLoader != null) {
+            if (dataLoader != null) {
 
-                respBytes = httpDataLoader.post(tspServer, requestBytes);
+                respBytes = dataLoader.post(tspServer, requestBytes);
                 //if ("base64".equalsIgnoreCase(encoding)) {
                 //respBytes = DSSUtils.base64Decode(respBytes);
                 //}

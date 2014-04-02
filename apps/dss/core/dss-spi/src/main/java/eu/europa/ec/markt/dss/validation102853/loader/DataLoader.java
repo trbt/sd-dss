@@ -25,12 +25,17 @@ import java.io.Serializable;
 import eu.europa.ec.markt.dss.exception.DSSCannotFetchDataException;
 
 /**
- * Component that permit to retrieve and post data using HTTP.
+ * Component that allows to retrieve the data using any protocol: HTTP, HTTPS, FTP, LDAP.
  *
  * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
  */
 
-public interface HTTPDataLoader extends Serializable {
+public interface DataLoader extends Serializable {
+
+    public static final String HTTP = "http";
+    public static final String HTTPS = "https";
+    public static final String LDAP = "ldap";
+    public static final String FTP = "ftp";
 
     /**
      * Execute a HTTP GET operation

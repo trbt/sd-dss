@@ -24,31 +24,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of HTTPDataLoader using HttpClient. More flexible for HTTPS without having to add the certificate to the JVM TrustStore.
+ * Implementation of DataLoader using HttpClient. More flexible for HTTPS without having to add the certificate to the JVM TrustStore.
  *
  * @version $Revision: 3567 $ - $Date: 2014-03-06 17:13:42 +0100 (Thu, 06 Mar 2014) $
  */
-public class OCSPHttpDataLoader extends CommonsHttpDataLoader {
+public class OCSPDataLoader extends CommonsDataLoader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OCSPHttpDataLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OCSPDataLoader.class);
 
     public static final String OCSP_CONTENT_TYPE = "application/ocsp-request";
 
     /**
-     * The default constructor for CommonsHttpDataLoader.
+     * The default constructor for CommonsDataLoader.
      */
-    public OCSPHttpDataLoader() {
+    public OCSPDataLoader() {
         super(OCSP_CONTENT_TYPE);
     }
 
     /**
-     * In case of OCSPHttpDataLoader the contentType is fixed to: Content-Type "application/ocsp-request"
+     * In case of OCSPDataLoader the contentType is fixed to: Content-Type "application/ocsp-request"
      *
      * @param contentType
      */
     @Override
     public void setContentType(final String contentType) {
 
-        // do nothing: in case of OCSPHttpDataLoader the contentType is fixed.
+        // do nothing: in case of OCSPDataLoader the contentType is fixed.
     }
 }

@@ -15,22 +15,22 @@
         <property name="proxyDao" ref="proxyFile"/>
     </bean>
 
-    <bean id="httpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.CommonsHttpDataLoader">
+    <bean id="dataLoader" class="eu.europa.ec.markt.dss.validation102853.https.CommonsDataLoader">
         <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
     </bean>
 
-    <bean id="ocspHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.OCSPHttpDataLoader">
+    <bean id="ocspHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.OCSPDataLoader">
         <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
     </bean>
 
-    <bean id="fileCacheHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.FileCacheHttpDataLoader">
+    <bean id="fileCacheHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.FileCacheDataLoader">
         <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
         <!-- Per default uses "java.io.tmpdir" property -->
         <!--<property name="fileCacheDirectory" value="/temp"/>-->
     </bean>
 
     <bean id="cacheCrlSource" class="eu.europa.ec.markt.dss.validation102853.crl.OnlineCRLSource">
-        <property name="dataLoader" ref="httpDataLoader"/>
+        <property name="dataLoader" ref="dataLoader"/>
     </bean>
 
     <bean id="crlSource"

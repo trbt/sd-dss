@@ -52,7 +52,7 @@
         <property name="trustedCertSource" ref="trustedListSource"/>
         <property name="ocspSource" ref="ocspSource"/>
         <property name="crlSource" ref="crlSource"/>
-        <property name="dataLoader" ref="httpDataLoader"/>
+        <property name="dataLoader" ref="dataLoader"/>
     </bean>
 
 </beans>

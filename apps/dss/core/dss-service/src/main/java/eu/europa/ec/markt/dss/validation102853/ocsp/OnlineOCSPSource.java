@@ -47,8 +47,8 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation102853.https.OCSPHttpDataLoader;
-import eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.https.OCSPDataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 
 /**
  * Online OCSP repository. This implementation will contact the OCSP Responder to retrieve the OCSP response.
@@ -60,7 +60,7 @@ public class OnlineOCSPSource implements OCSPSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(OnlineOCSPSource.class);
 
-    private HTTPDataLoader httpDataLoader;
+    private DataLoader dataLoader;
 
     static {
 
@@ -70,42 +70,30 @@ public class OnlineOCSPSource implements OCSPSource {
     }
 
     /**
-     * Create an OCSP source The default constructor for OnlineOCSPSource. The default {@code OCSPHttpDataLoader} is set. It is possible to change it with {@code
-     * #setHttpDataLoader}.
+     * Create an OCSP source The default constructor for OnlineOCSPSource. The default {@code OCSPDataLoader} is set. It is possible to change it with {@code
+     * #setDataLoader}.
      */
     public OnlineOCSPSource() {
 
-        httpDataLoader = new OCSPHttpDataLoader();
+        dataLoader = new OCSPDataLoader();
     }
 
     /**
-     * Set the HTTPDataLoader to use for querying the OCSP server.
+     * Set the DataLoader to use for querying the OCSP server.
      *
-     * @param httpDataLoader
-     * @deprecated Use the {@link #setDataLoader(eu.europa.ec.markt.dss.validation102853.loader.HTTPDataLoader)} instead
+     * @param dataLoader
      */
-    @Deprecated
-    public void setHttpDataLoader(final HTTPDataLoader httpDataLoader) {
+    public void setDataLoader(final DataLoader dataLoader) {
 
-        this.httpDataLoader = httpDataLoader;
-    }
-
-    /**
-     * Set the HTTPDataLoader to use for querying the OCSP server.
-     *
-     * @param httpDataLoader
-     */
-    public void setDataLoader(final HTTPDataLoader httpDataLoader) {
-
-        this.httpDataLoader = httpDataLoader;
+        this.dataLoader = dataLoader;
     }
 
     @Override
     public BasicOCSPResp getOCSPResponse(final X509Certificate cert, final X509Certificate issuerCert) {
 
-        if (httpDataLoader == null) {
+        if (dataLoader == null) {
 
-            throw new DSSException("The HTTPDataLoader must be set. Use setHttpDataLoader method first.");
+            throw new DSSException("The DataLoader must be set. Use setDataLoader method first.");
         }
         try {
 
@@ -119,7 +107,7 @@ public class OnlineOCSPSource implements OCSPSource {
             }
             final byte[] content = buildOCSPRequest(cert, issuerCert);
 
-            final byte[] ocspRespBytes = httpDataLoader.post(ocspUri, content);
+            final byte[] ocspRespBytes = dataLoader.post(ocspUri, content);
 
             //            System.out.println();
             //            System.out.println(DSSUtils.toHex(ocspRespBytes));

@@ -21,16 +21,12 @@ package eu.europa.ec.markt.dss.validation102853.https;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.util.EntityUtils;
@@ -43,9 +39,9 @@ import eu.europa.ec.markt.dss.ResourceLoader;
 import eu.europa.ec.markt.dss.exception.DSSCannotFetchDataException;
 import eu.europa.ec.markt.dss.exception.DSSException;
 
-public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
+public class FileCacheDataLoader extends CommonsDataLoader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FileCacheHttpDataLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FileCacheDataLoader.class);
 
     private File fileCacheDirectory = new File(System.getProperty("java.io.tmpdir"));
 
@@ -72,39 +68,44 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
     }
 
     @Override
-    public byte[] get(final String url) throws DSSCannotFetchDataException {
+    public byte[] get(final String urlString) throws DSSCannotFetchDataException {
 
         if (toBeLoaded != null) {
 
-            if (!toBeLoaded.contains(url)) {
+            if (!toBeLoaded.contains(urlString)) {
 
                 return null;
             }
         }
-        final String fileName = ResourceLoader.getNormalizedFileName(url);
+        final String fileName = ResourceLoader.getNormalizedFileName(urlString);
         final File file = getCacheFile(fileName);
         if (file.exists()) {
 
             final byte[] bytes = DSSUtils.toByteArray(file);
             return bytes;
         }
-        final byte[] returnedBytes;
-        final String normalizedUrl = url.trim().toLowerCase();
-        if (!normalizedUrl.startsWith("http")) {
+        final byte[] bytes;
+        if (!isNetworkProtocol(urlString)) {
 
-            final String resourcePath = resourceLoader.getAbsoluteResourceFolder(url.trim());
+            final String resourcePath = resourceLoader.getAbsoluteResourceFolder(urlString.trim());
             final File fileResource = new File(resourcePath);
-            returnedBytes = DSSUtils.toByteArray(fileResource);
+            bytes = DSSUtils.toByteArray(fileResource);
         } else {
 
-            returnedBytes = getHttpGetResponse(url);
+            bytes = super.get(urlString);
         }
-        if (returnedBytes.length != 0) {
+        if (bytes != null && bytes.length != 0) {
 
             final File out = getCacheFile(fileName);
-            DSSUtils.saveToFile(returnedBytes, out);
+            DSSUtils.saveToFile(bytes, out);
         }
-        return returnedBytes;
+        return bytes;
+    }
+
+    protected boolean isNetworkProtocol(final String urlString) {
+
+        final String normalizedUrl = urlString.trim().toLowerCase();
+        return normalizedUrl.startsWith(HTTP) || normalizedUrl.startsWith(LDAP) || normalizedUrl.startsWith(FTP);
     }
 
     private File getCacheFile(final String fileName) {
@@ -118,9 +119,9 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
      *
      * @return
      */
-    public byte[] loadFileFromCache(final String url) {
+    public byte[] loadFileFromCache(final String urlString) {
 
-        final String fileName = ResourceLoader.getNormalizedFileName(url);
+        final String fileName = ResourceLoader.getNormalizedFileName(urlString);
         final File file = getCacheFile(fileName);
         if (file.exists()) {
 
@@ -133,53 +134,53 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
     /**
      * // TODO: (Bob: 2014 Mar 12)
      *
-     * @param url
+     * @param urlString
      * @param bytes
      */
-    public void saveBytesInCache(final String url, final byte[] bytes) {
+    public void saveBytesInCache(final String urlString, final byte[] bytes) {
 
-        final String fileName = ResourceLoader.getNormalizedFileName(url);
+        final String fileName = ResourceLoader.getNormalizedFileName(urlString);
         final File out = getCacheFile(fileName);
         DSSUtils.saveToFile(bytes, out);
     }
 
-    private byte[] getHttpGetResponse(final String url) throws DSSException {
-
-        HttpGet httpGet = null;
-        HttpEntity entity = null;
-        try {
-
-            final HttpClient httpClient = getHttpClient(url);
-            final URI uri = URI.create(url.trim());
-            httpGet = new HttpGet(uri);
-            final HttpResponse httpResponse = httpClient.execute(httpGet);
-            final int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode == HttpStatus.SC_OK) {
-
-                entity = httpResponse.getEntity();
-                final byte[] content = getContent(entity);
-                return content;
-            } else {
-
-                LOG.info("get '{}': status: {}", url, statusCode);
-                return DSSUtils.EMPTY_BYTE_ARRAY;
-            }
-        } catch (IOException e) {
-            throw new DSSException(e);
-        } finally {
-            if (httpGet != null) {
-                httpGet.releaseConnection();
-            }
-            if (entity != null) {
-                EntityUtils.consumeQuietly(entity);
-            }
-        }
-    }
+//    private byte[] getHttpGetResponse(final String url) throws DSSException {
+//
+//        HttpGet httpGet = null;
+//        HttpEntity entity = null;
+//        try {
+//
+//            final HttpClient httpClient = getHttpClient(url);
+//            final URI uri = URI.create(url.trim());
+//            httpGet = new HttpGet(uri);
+//            final HttpResponse httpResponse = httpClient.execute(httpGet);
+//            final int statusCode = httpResponse.getStatusLine().getStatusCode();
+//            if (statusCode == HttpStatus.SC_OK) {
+//
+//                entity = httpResponse.getEntity();
+//                final byte[] content = getContent(entity);
+//                return content;
+//            } else {
+//
+//                LOG.info("get '{}': status: {}", url, statusCode);
+//                return DSSUtils.EMPTY_BYTE_ARRAY;
+//            }
+//        } catch (IOException e) {
+//            throw new DSSException(e);
+//        } finally {
+//            if (httpGet != null) {
+//                httpGet.releaseConnection();
+//            }
+//            if (entity != null) {
+//                EntityUtils.consumeQuietly(entity);
+//            }
+//        }
+//    }
 
     @Override
-    public byte[] post(final String url, final byte[] content) throws DSSException {
+    public byte[] post(final String urlString, final byte[] content) throws DSSException {
 
-        final String fileName = ResourceLoader.getNormalizedFileName(url);
+        final String fileName = ResourceLoader.getNormalizedFileName(urlString);
 
         // The length for the InputStreamEntity is needed, because some receivers (on the other side) need this
         // information.
@@ -201,10 +202,9 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
         }
 
         final byte[] returnedBytes;
-        final String normalizedUrl = url.trim().toLowerCase();
-        if (!normalizedUrl.startsWith("http")) {
+        if (!isNetworkProtocol(urlString)) {
 
-            final String resourcePath = resourceLoader.getAbsoluteResourceFolder(url.trim());
+            final String resourcePath = resourceLoader.getAbsoluteResourceFolder(urlString.trim());
             final File fileResource = new File(resourcePath);
             returnedBytes = DSSUtils.toByteArray(fileResource);
             return returnedBytes;
@@ -214,7 +214,7 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
         HttpResponse httpResponse = null;
         try {
 
-            final URI uri = URI.create(url.trim());
+            final URI uri = URI.create(urlString.trim());
             httpRequest = new HttpPost(uri);
 
             final ByteArrayInputStream bis = new ByteArrayInputStream(content);
@@ -225,9 +225,9 @@ public class FileCacheHttpDataLoader extends CommonsHttpDataLoader {
                 httpRequest.setHeader(CONTENT_TYPE, contentType);
             }
 
-            httpResponse = super.getHttpResponse(httpRequest, url);
+            httpResponse = super.getHttpResponse(httpRequest, urlString);
 
-            returnedBytes = readHttpResponse(url, httpResponse);
+            returnedBytes = readHttpResponse(urlString, httpResponse);
             if (returnedBytes.length != 0) {
 
                 final File cacheFile = getCacheFile(cacheFileName);
