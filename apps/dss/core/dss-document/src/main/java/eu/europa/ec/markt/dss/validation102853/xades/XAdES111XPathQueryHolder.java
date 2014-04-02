@@ -15,6 +15,7 @@ public class XAdES111XPathQueryHolder extends XPathQueryHolder {
     public XAdES111XPathQueryHolder() {
 
         XPATH_QUALIFYING_PROPERTIES = XPATH_OBJECT + "/xades111:QualifyingProperties";
+        XPATH__QUALIFYING_PROPERTIES = "./xades111:QualifyingProperties";
 
         XPATH_SIGNED_PROPERTIES = XPATH_QUALIFYING_PROPERTIES + "/xades111:SignedProperties";
         XPATH_SIGNED_SIGNATURE_PROPERTIES = XPATH_SIGNED_PROPERTIES + "/xades111:SignedSignatureProperties";

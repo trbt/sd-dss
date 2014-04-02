@@ -1625,7 +1625,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
                 for (int ii = 0; ii < objects.getLength(); ii++) {
 
                     Node node = objects.item(ii);
-                    Node qualifyingProperties = DSSXMLUtils.getElement(node, xPathQueryHolder.XPATH_QUALIFYING_PROPERTIES);
+                    Node qualifyingProperties = DSSXMLUtils.getElement(node, xPathQueryHolder.XPATH__QUALIFYING_PROPERTIES);
                     if (qualifyingProperties != null) {
 
                         continue;

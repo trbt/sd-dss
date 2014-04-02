@@ -55,6 +55,7 @@ public class XPathQueryHolder {
 
     public final static String XPATH_OBJECT = "./ds:Object";
     public String XPATH_QUALIFYING_PROPERTIES = XPATH_OBJECT + "/xades:QualifyingProperties";
+    public String XPATH__QUALIFYING_PROPERTIES = "./xades:QualifyingProperties";
     /**
      * This query is used to determinate {@code XPathQueryHolder} tu use if function of the namespace of QualifyingProperties.
      * public final String XPATH_QUALIFYING_PROPERTIES_NAMESPACE = "namespace-uri(./ds:Signature/ds:Object/*[local-name()='QualifyingProperties'])";
