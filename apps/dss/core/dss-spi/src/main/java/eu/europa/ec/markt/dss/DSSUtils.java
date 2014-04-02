@@ -1087,9 +1087,9 @@ public final class DSSUtils {
         return replaced;
     }
 
-    public static String replaceStrStr(final String absolutePath, final String oldPattern, final String newPattern) {
+    public static String replaceStrStr(final String string, final String oldPattern, final String newPattern) {
 
-        final StringBuffer stringBuffer = replaceStrStr(new StringBuffer(absolutePath), oldPattern, newPattern);
+        final StringBuffer stringBuffer = replaceStrStr(new StringBuffer(string), oldPattern, newPattern);
         return stringBuffer.toString();
     }
 
@@ -2605,5 +2605,40 @@ public final class DSSUtils {
         final PrintWriter printWriter = new PrintWriter(stringWriter);
         exception.printStackTrace(printWriter);
         return stringWriter.toString(); // stack trace as a string
+    }
+
+    /**
+     * Returns an estimate of the number of bytes that can be read (or
+     * skipped over) from this input stream without blocking by the next
+     * invocation of a method for this input stream. The next invocation
+     * might be the same thread or another thread.  A single read or skip of this
+     * many bytes will not block, but may read or skip fewer bytes.
+     *
+     * <p> Note that while some implementations of {@code InputStream} will return
+     * the total number of bytes in the stream, many will not.  It is
+     * never correct to use the return value of this method to allocate
+     * a buffer intended to hold all data in this stream.
+     *
+     * <p> A subclass' implementation of this method may choose to throw an
+     * {@link IOException} if this input stream has been closed by
+     * invoking the {@link InputStream#close()} method.
+     *
+     * <p> The {@code available} method for class {@code InputStream} always
+     * returns {@code 0}.
+     *
+     * <p> This method should be overridden by subclasses.
+     *
+     * @return an estimate of the number of bytes that can be read (or skipped
+     * over) from this input stream without blocking or {@code 0} when
+     * it reaches the end of the input stream.
+     * @throws DSSException if IOException occurs (if an I/O error occurs)
+     */
+    public static int available(final InputStream is) throws DSSException {
+
+        try {
+            return is.available();
+        } catch (IOException e) {
+            throw new DSSException(e);
+        }
     }
 }
