@@ -50,7 +50,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
  * Note that for the HTTP kind of URLs you can provide dedicated data loader. If the data loader is not provided the standard load from URI is
  * provided. For FTP the standard load from URI is provided. For LDAP kind of URLs an internal implementation using apache-ldap-api is provided.
  *
- * @version $Revision: 3588 $ - $Date: 2014-03-12 16:58:44 +0100 (Wed, 12 Mar 2014) $
+ * @version $Revision: 3693 $ - $Date: 2014-04-01 10:03:05 +0200 (Tue, 01 Apr 2014) $
  */
 
 public class OnlineCRLSource extends CommonCRLSource {
@@ -141,8 +141,11 @@ public class OnlineCRLSource extends CommonCRLSource {
             try {
 
                 final byte[] bytes = dataLoader.get(downloadUrl);
-                final X509CRL crl = DSSUtils.loadCRL(bytes);
-                return crl;
+                if (bytes != null && bytes.length > 0) {
+
+                    final X509CRL crl = DSSUtils.loadCRL(bytes);
+                    return crl;
+                }
             } catch (DSSException e) {
                 LOG.warn(e.getMessage());
             }
