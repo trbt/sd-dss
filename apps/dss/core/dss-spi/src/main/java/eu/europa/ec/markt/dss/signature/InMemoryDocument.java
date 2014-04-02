@@ -33,7 +33,7 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * In memory representation of a document
  *
- * @version $Revision: 3478 $ - $Date: 2014-02-19 10:45:39 +0100 (Wed, 19 Feb 2014) $
+ * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
  */
 
 public class InMemoryDocument implements DSSDocument {
@@ -137,11 +137,11 @@ public class InMemoryDocument implements DSSDocument {
         return bytes;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
-    public void setMimeType(MimeType mimeType) {
+    public void setMimeType(final MimeType mimeType) {
         this.mimeType = mimeType;
     }
 

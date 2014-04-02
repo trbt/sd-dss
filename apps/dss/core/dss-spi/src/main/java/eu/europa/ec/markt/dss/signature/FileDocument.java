@@ -34,12 +34,14 @@ import eu.europa.ec.markt.dss.exception.DSSNullException;
 /**
  * Document implementation stored on file-system.
  *
- * @version $Revision: 3478 $ - $Date: 2014-02-19 10:45:39 +0100 (Wed, 19 Feb 2014) $
+ * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
  */
 
 public class FileDocument implements DSSDocument {
 
     private final File file;
+
+    private MimeType mimeType;
 
     /**
      * Create a FileDocument
@@ -66,6 +68,7 @@ public class FileDocument implements DSSDocument {
             throw new DSSException("File Not Found: " + file.getAbsolutePath());
         }
         this.file = file;
+        this.mimeType = MimeType.fromFileName(file.getName());
     }
 
     @Override
@@ -95,7 +98,12 @@ public class FileDocument implements DSSDocument {
 
     @Override
     public MimeType getMimeType() {
-        return MimeType.fromFileName(getName());
+        return mimeType;
+    }
+
+    @Override
+    public void setMimeType(final MimeType mimeType) {
+        this.mimeType = mimeType;
     }
 
     @Override

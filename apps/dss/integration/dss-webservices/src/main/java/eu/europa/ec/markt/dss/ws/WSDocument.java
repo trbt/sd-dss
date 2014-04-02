@@ -36,7 +36,7 @@ import eu.europa.ec.markt.dss.signature.MimeType;
 /**
  * Container for any kind of document that is to be transferred to and from web service endpoints.
  *
- * @version $Revision: 3478 $ - $Date: 2014-02-19 10:45:39 +0100 (Wed, 19 Feb 2014) $
+ * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
  */
 
 public class WSDocument implements DSSDocument {
@@ -48,6 +48,8 @@ public class WSDocument implements DSSDocument {
     private String mimeTypeString = "";
 
     private String absolutePath = "WSDocument";
+
+    protected MimeType mimeType;
 
     /**
      * The default constructor for WSDocument.
@@ -113,7 +115,12 @@ public class WSDocument implements DSSDocument {
 
     @Override
     public MimeType getMimeType() {
-        return null;
+        return mimeType;
+    }
+
+    @Override
+    public void setMimeType(MimeType mimeType) {
+        this.mimeType = mimeType;
     }
 
     public void setAbsolutePath(String absolutePath) {

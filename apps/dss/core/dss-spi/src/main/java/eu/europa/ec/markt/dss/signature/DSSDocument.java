@@ -69,9 +69,16 @@ public interface DSSDocument {
     public MimeType getMimeType();
 
     /**
+     * This method set the mime-type of the document
+     *
+     * @return
+     */
+    public void setMimeType(final MimeType mimeType);
+
+    /**
      * Save the content of the DSSDocument to the file.
      *
      * @param filePath
      */
-    public void save(String filePath);
+    public void save(final String filePath);
 }

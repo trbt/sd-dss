@@ -42,12 +42,13 @@ import eu.europa.ec.markt.dss.signature.MimeType;
 /**
  * A document composed by a CMSSignedData
  *
- * @version $Revision: 3478 $ - $Date: 2014-02-19 10:45:39 +0100 (Wed, 19 Feb 2014) $
+ * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
  */
 
 public class CMSSignedDocument implements DSSDocument {
 
     protected CMSSignedData signedData;
+    protected MimeType mimeType = MimeType.PKCS7;
 
     /**
      * The default constructor for CMSSignedDocument.
@@ -88,8 +89,12 @@ public class CMSSignedDocument implements DSSDocument {
 
     @Override
     public MimeType getMimeType() {
+        return mimeType;
+    }
 
-        return MimeType.PKCS7;
+    @Override
+    public void setMimeType(final MimeType mimeType) {
+        this.mimeType = mimeType;
     }
 
     @Override

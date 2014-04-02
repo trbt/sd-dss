@@ -23,11 +23,13 @@
  * Contractor: ARHS-Developments
  *
  * $HeadURL: http://forge.aris-lux.lan/svn/dgmarktdss/trunk/apps/dss/core/dss-spi/src/main/java/eu/europa/ec/markt/dss/signature/MimeType.java $
- * $Revision: 3436 $
- * $Date: 2014-02-11 13:30:17 +0100 (Tue, 11 Feb 2014) $
+ * $Revision: 3697 $
+ * $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
  * $Author: bielecro $
  */
 package eu.europa.ec.markt.dss.signature;
+
+import java.io.File;
 
 /**
  * TODO
@@ -35,7 +37,7 @@ package eu.europa.ec.markt.dss.signature;
  * <p> DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
- * @version $Revision: 3436 $ - $Date: 2014-02-11 13:30:17 +0100 (Tue, 11 Feb 2014) $
+ * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
  */
 public enum MimeType {
 
@@ -58,13 +60,36 @@ public enum MimeType {
     }
 
     public static MimeType fromFileName(final String name) {
+
         final String lowerCaseName = name.toLowerCase();
         if (lowerCaseName.endsWith(".xml")) {
             return XML;
         } else if (lowerCaseName.endsWith(".pdf")) {
             return PDF;
-        } else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs")) {
-            //// TODO: (Bob: 2014 Jan 28) To include zip as asic the check must be performed more deeply
+        } else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs") || lowerCaseName.endsWith(".zip") || lowerCaseName.endsWith(".7z")) {
+            return ASICS;
+        } else if (lowerCaseName.endsWith(".txt")) {
+            return TEXT;
+        } else {
+            return BINARY;
+        }
+    }
+
+    /**
+     * This method returns the mime-type extrapolated from the file name. In case of a zip container its content is analysed to determinate if it is an ASiC signature.
+     *
+     * @param file the file to be analysed
+     * @return the extrapolated mime-type of the file
+     */
+    public static MimeType fromFile(final File file) {
+
+        final String lowerCaseName = file.getName().toLowerCase();
+        if (lowerCaseName.endsWith(".xml")) {
+            return XML;
+        } else if (lowerCaseName.endsWith(".pdf")) {
+            return PDF;
+        } else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs") || lowerCaseName.endsWith(".zip") || lowerCaseName.endsWith(".7z")) {
+
             return ASICS;
         } else if (lowerCaseName.endsWith(".txt")) {
             return TEXT;

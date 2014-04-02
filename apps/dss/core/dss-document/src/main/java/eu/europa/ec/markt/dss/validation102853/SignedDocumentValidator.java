@@ -60,8 +60,8 @@ import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException.MSG;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
+import eu.europa.ec.markt.dss.signature.MimeType;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
-import eu.europa.ec.markt.dss.signature.ProfileException;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.validation102853.asic.ASiCXMLDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.bean.CertifiedRole;
@@ -116,9 +116,9 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(SignedDocumentValidator.class);
 
-    private static final String MIMETYPE = "mimetype";
+    public static final String MIME_TYPE = "mimetype";
+    public static final String MIME_TYPE_COMMENT = MIME_TYPE + "=";
 
-    // private static final String MIMETYPE_ASIC_S = "application/vnd.etsi.asic-s+zip";
     private static final String PATTERN_SIGNATURES_XML = "META-INF/(.*)(?i)signature(.*).xml";
 
     private static final String PATTERN_SIGNATURES_P7S = "META-INF/(.*)(?i)signature(.*).p7s";
@@ -241,79 +241,81 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
     }
 
     /**
-     * @param document The instance of {@code DSSDocument} to validate
+     * @param dssDocument The instance of {@code DSSDocument} to validate
      * @return
      * @throws eu.europa.ec.markt.dss.exception.DSSException
      */
-    private static SignedDocumentValidator getInstanceForAsics(final DSSDocument document) throws DSSException {
+    private static SignedDocumentValidator getInstanceForAsics(final DSSDocument dssDocument) throws DSSException {
 
         ZipInputStream asics = null;
         try {
 
-            asics = new ZipInputStream(document.openStream());
+            asics = new ZipInputStream(dssDocument.openStream());
 
             String dataFileName = "";
-            ByteArrayOutputStream dataFile = null;
-            ByteArrayOutputStream signatures = null;
+            String mimeTypeString = null;
+            ByteArrayOutputStream signedDocument = null;
+            ByteArrayOutputStream signature = null;
             ZipEntry entry;
 
             boolean cadesSigned = false;
             boolean xadesSigned = false;
 
             while ((entry = asics.getNextEntry()) != null) {
-                if (entry.getName().matches(PATTERN_SIGNATURES_P7S)) {
+
+                final String entryName = entry.getName();
+                if (entryName.matches(PATTERN_SIGNATURES_P7S)) {
+
                     if (xadesSigned) {
                         throw new DSSNotETSICompliantException(MSG.MORE_THAN_ONE_SIGNATURE);
                     }
-                    signatures = new ByteArrayOutputStream();
-                    DSSUtils.copy(asics, signatures);
-                    signatures.close();
+                    signature = new ByteArrayOutputStream();
+                    DSSUtils.copy(asics, signature);
                     cadesSigned = true;
-                } else if (entry.getName().matches(PATTERN_SIGNATURES_XML)) {
+                } else if (entryName.matches(PATTERN_SIGNATURES_XML)) {
+
                     if (cadesSigned) {
                         throw new DSSNotETSICompliantException(MSG.MORE_THAN_ONE_SIGNATURE);
                     }
-                    signatures = new ByteArrayOutputStream();
-                    DSSUtils.copy(asics, signatures);
-                    signatures.close();
+                    signature = new ByteArrayOutputStream();
+                    DSSUtils.copy(asics, signature);
                     xadesSigned = true;
-                } else if (entry.getName().equalsIgnoreCase(MIMETYPE)) {
-                    ByteArrayOutputStream mimetype = new ByteArrayOutputStream();
-                    DSSUtils.copy(asics, mimetype);
-                    mimetype.close();
-                    // Mime type implementers MAY use
-                    // "application/vnd.etsi.asic-s+zip" to identify this format
-                    // or MAY
-                    // maintain the original mimetype of the signed data object.
-                } else if (entry.getName().indexOf("/") == -1) {
-                    if (dataFile == null) {
+                } else if (entryName.equalsIgnoreCase(MIME_TYPE)) {
 
-                        dataFile = new ByteArrayOutputStream();
-                        DSSUtils.copy(asics, dataFile);
-                        dataFile.close();
-                        dataFileName = entry.getName();
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    DSSUtils.copy(asics, byteArrayOutputStream);
+                    mimeTypeString = byteArrayOutputStream.toString("UTF-8");
+                } else if (entryName.indexOf("/") == -1) {
+
+                    if (signedDocument == null) {
+
+                        signedDocument = new ByteArrayOutputStream();
+                        DSSUtils.copy(asics, signedDocument);
+                        dataFileName = entryName;
                     } else {
-                        throw new ProfileException("ASiC-S profile support only one data file");
+                        throw new DSSException("ASiC-S profile support only one data file");
                     }
                 }
             }
 
             if (xadesSigned) {
 
-                final InMemoryDocument doc = new InMemoryDocument(signatures.toByteArray());
-                final ASiCXMLDocumentValidator xmlValidator = new ASiCXMLDocumentValidator(doc, dataFile.toByteArray(), dataFileName);
+                final InMemoryDocument doc = new InMemoryDocument(signature.toByteArray());
+                final ASiCXMLDocumentValidator xmlValidator = new ASiCXMLDocumentValidator(doc, signedDocument.toByteArray(), dataFileName);
                 return xmlValidator;
             } else if (cadesSigned) {
 
-                final CMSDocumentValidator cmsDocumentValidator = new CMSDocumentValidator(new InMemoryDocument(signatures.toByteArray()));
-                cmsDocumentValidator.setExternalContent(new InMemoryDocument(dataFile.toByteArray()));
+                final CMSDocumentValidator cmsDocumentValidator = new CMSDocumentValidator(new InMemoryDocument(signature.toByteArray()));
+                cmsDocumentValidator.setExternalContent(new InMemoryDocument(signedDocument.toByteArray()));
                 return cmsDocumentValidator;
             } else {
-                throw new DSSException("Is not xades nor cades signed");
+                throw new DSSException("It is neither XAdES nor CAdES signature!");
             }
-
-        } catch (Exception ex) {
-            throw new DSSException(ex);
+        } catch (Exception e) {
+            if (e instanceof DSSException) {
+                throw (DSSException) e;
+            }
+            throw new DSSException(e);
         } finally {
             DSSUtils.closeQuietly(asics);
         }
