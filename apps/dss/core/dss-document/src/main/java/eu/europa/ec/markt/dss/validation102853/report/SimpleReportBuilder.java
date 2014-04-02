@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.TSLConstant;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.CertificateQualification;
@@ -262,6 +263,7 @@ public class SimpleReportBuilder {
     }
 
     private void addSignedBy(final XmlNode signatureNode, final XmlDom signCert) {
+
         String signedBy = "?";
         if (signCert != null) {
 
@@ -269,9 +271,13 @@ public class SimpleReportBuilder {
             final X509Principal principal = new X509Principal(dn);
             final Vector<?> values = principal.getValues(new ASN1ObjectIdentifier("2.5.4.3"));
             if (values != null && values.size() > 0) {
-                signedBy = (String) values.get(0);
-                if (signedBy == null || signedBy.isEmpty()) {
-                    signedBy = dn;
+
+                final String string = (String) values.get(0);
+                if (DSSUtils.isNotBlank(string)) {
+                    signedBy = DSSUtils.replaceStrStr(string, "&", "&amp;");
+                }
+                if (DSSUtils.isEmpty(signedBy)) {
+                    signedBy = DSSUtils.replaceStrStr(dn, "&", "&amp;");
                 }
             }
         }
