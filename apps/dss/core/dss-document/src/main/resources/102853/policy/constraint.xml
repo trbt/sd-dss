@@ -147,6 +147,7 @@
                     <Algo Size="256">ECDSA</Algo>
                 </MiniPublicKeySize>
                 <AcceptableDigestAlgo>
+                    <Algo>SHA1</Algo>
                     <Algo>SHA256</Algo>
                     <Algo>RIPEMD160</Algo>
                 </AcceptableDigestAlgo>
@@ -199,6 +200,7 @@
                     <Algo Size="256">ECDSA</Algo>
                 </MiniPublicKeySize>
                 <AcceptableDigestAlgo>
+                    <Algo>SHA1</Algo>
                     <Algo>SHA256</Algo>
                     <Algo>RIPEMD160</Algo>
                 </AcceptableDigestAlgo>
