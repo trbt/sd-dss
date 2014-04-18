@@ -22,18 +22,18 @@ package eu.europa.ec.markt.dss.validation102853.asic;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
-import eu.europa.ec.markt.dss.validation102853.xades.XMLDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.cades.CMSDocumentValidator;
 
 /**
  * Validator for ASiC signature
- *
- * <p>
+ * <p/>
+ * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
  * @version $Revision: 672 $ - $Date: 2011-05-12 11:59:21 +0200 (Thu, 12 May 2011) $
  */
-public class ASiCXMLDocumentValidator extends XMLDocumentValidator {
+public class ASiCCMSDocumentValidator extends CMSDocumentValidator {
 
     protected String asicComment;
     private String magicNumberMimeType;
@@ -46,18 +46,18 @@ public class ASiCXMLDocumentValidator extends XMLDocumentValidator {
      * @param signedDocumentFileName
      * @throws DSSException
      */
-    public ASiCXMLDocumentValidator(final byte[] signature, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
+    public ASiCCMSDocumentValidator(final byte[] signature, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
 
         super(new InMemoryDocument(signature));
         externalContent = new InMemoryDocument(signedContent, signedDocumentFileName);
     }
 
-    public String getAsicComment() {
-        return asicComment;
-    }
-
     public void setAsicComment(final String asicComment) {
         this.asicComment = asicComment;
+    }
+
+    public String getAsicComment() {
+        return asicComment;
     }
 
     public void setMagicNumberMimeType(final String magicNumberMimeType) {

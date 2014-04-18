@@ -42,26 +42,24 @@ import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
 
 public class CMSDocumentValidator extends SignedDocumentValidator {
 
-    private final CMSSignedData cmsSignedData;
+    private CMSSignedData cmsSignedData;
 
     /**
      * The default constructor for PKCS7DocumentValidator.
      *
      * @throws DSSException
      */
-    public CMSDocumentValidator(DSSDocument document) throws DSSException {
+    public CMSDocumentValidator(final DSSDocument document) throws DSSException {
 
         this.document = document;
-        InputStream is = null;
         try {
 
-            is = document.openStream();
-            this.cmsSignedData = new CMSSignedData(is);
+            final InputStream is = document.openStream();
+            if (DSSUtils.available(is) > 0) {
+                this.cmsSignedData = new CMSSignedData(is);
+            }
         } catch (CMSException e) {
             throw new DSSException("Not a valid CAdES file", e);
-        } finally {
-
-            DSSUtils.closeQuietly(is);
         }
     }
 
@@ -72,11 +70,14 @@ public class CMSDocumentValidator extends SignedDocumentValidator {
             return signatures;
         }
         signatures = new ArrayList<AdvancedSignature>();
-        for (final Object signerInformationObject : cmsSignedData.getSignerInfos().getSigners()) {
+        if (cmsSignedData != null) {
 
-            final SignerInformation signerInformation = (SignerInformation) signerInformationObject;
-            final CAdESSignature signature = new CAdESSignature(cmsSignedData, signerInformation, validationCertPool, externalContent);
-            signatures.add(signature);
+            for (final Object signerInformationObject : cmsSignedData.getSignerInfos().getSigners()) {
+
+                final SignerInformation signerInformation = (SignerInformation) signerInformationObject;
+                final CAdESSignature signature = new CAdESSignature(cmsSignedData, signerInformation, validationCertPool, externalContent);
+                signatures.add(signature);
+            }
         }
         return signatures;
     }

@@ -31,7 +31,7 @@ import eu.europa.ec.markt.dss.validation102853.SignatureForm;
 /**
  * This class This class manages the internal variables used in the process of creating of a signature and which allows to
  * accelerate the generation.<br>
- * ! This class must be derived to also take into account other formats then XAdES
+ * ! This class must be derived to  take also into account other formats then XAdES
  */
 public class ProfileParameters {
 
@@ -106,7 +106,7 @@ public class ProfileParameters {
      * @param signatureForm       This is the form of the underlying ASiC signature. Only XAdES ans CAdES forms are acceptable.
      * @return the underlying ASiC signature service.
      */
-    public DocumentSignatureService getXadesService(final CertificateVerifier certificateVerifier, final SignatureForm signatureForm) {
+    public DocumentSignatureService getUnderlyingASiCService(final CertificateVerifier certificateVerifier, final SignatureForm signatureForm) {
 
         if (underlyingASiCService == null) {
 
@@ -122,9 +122,4 @@ public class ProfileParameters {
         }
         return underlyingASiCService;
     }
-
-//    public void setXadesService(XAdESService underlyingASiCService) {
-//
-//        this.underlyingASiCService = underlyingASiCService;
-//    }
 }

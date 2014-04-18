@@ -74,11 +74,6 @@ public class SignatureParameters {
     private SignaturePackaging signaturePackaging;
 
     /**
-     * The default signature form to use within the ASiC containers.
-     */
-    private SignatureForm asicSignatureForm = SignatureForm.XAdES;
-
-    /**
      * XAdES: The ds:SignatureMethod indicates the algorithms used to sign ds:SignedInfo.
      */
     private SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RSA_SHA256;
@@ -99,7 +94,10 @@ public class SignatureParameters {
      */
     private BLevelParameters bLevelParams = new BLevelParameters();
 
-    private boolean asicComment = false;
+    /**
+     * The object representing the parameters related to ASiC from of the signature.
+     */
+    private ASiCParameters aSiCParams = new ASiCParameters();
 
     private String reason;
     private String contactInfo;
@@ -124,8 +122,7 @@ public class SignatureParameters {
             throw new DSSNullException(SignatureParameters.class);
         }
         bLevelParams = new BLevelParameters(source.bLevelParams);
-        asicComment = source.asicComment;
-        asicSignatureForm = source.asicSignatureForm;
+        aSiCParams = new ASiCParameters(source.aSiCParams);
 
         if (certificateChain != null) {
 
@@ -147,27 +144,6 @@ public class SignatureParameters {
         timestampDigestAlgorithm = source.timestampDigestAlgorithm;
         // This is a simple copy of reference and not of the object content!
         context = source.context;
-    }
-
-    public boolean isAsicComment() {
-        return asicComment;
-    }
-
-    public void setAsicComment(final boolean asicComment) {
-        this.asicComment = asicComment;
-    }
-
-    public SignatureForm getAsicSignatureForm() {
-        return asicSignatureForm;
-    }
-
-    /**
-     * Sets the signature form associated with an ASiC container. Only two forms are acceptable: XAdES and CAdES.
-     *
-     * @param asicSignatureForm signature form to associate with the ASiC container.
-     */
-    public void setAsicSignatureForm(final SignatureForm asicSignatureForm) {
-        this.asicSignatureForm = asicSignatureForm;
     }
 
     public DSSDocument getOriginalDocument() {
@@ -474,6 +450,15 @@ public class SignatureParameters {
     public BLevelParameters bLevel() {
 
         return bLevelParams;
+    }
+
+    public ASiCParameters aSiC() {
+
+        if (aSiCParams == null) {
+
+            aSiCParams = new ASiCParameters();
+        }
+        return aSiCParams;
     }
 
     public DigestAlgorithm getTimestampDigestAlgorithm() {
