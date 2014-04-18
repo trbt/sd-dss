@@ -329,6 +329,9 @@ class PdfBoxSignatureService implements PDFSignatureService {
                         return existingSignatureDocTimestamp;
                     }
                 }
+                for (final PdfSignatureOrDocTimestampInfo outerSignature : existingSignature.getOuterSignatures()) {
+                    pdfSignatureOrDocTimestampInfo.addOuterSignature(outerSignature);
+                }
                 iterator.remove();
                 signaturesFound.add(pdfSignatureOrDocTimestampInfo);
                 if (LOG.isDebugEnabled()) {
