@@ -147,7 +147,7 @@ public final class DSSUtils {
 
     /**
      * Chunk separator per RFC 2045 section 2.1.
-     *
+     * <p/>
      * <p>
      * N.B. The next major release may break compatibility and make this field private.
      * </p>
@@ -435,7 +435,7 @@ public final class DSSUtils {
      * FROM: Apache IOUtils
      * Get the contents of an {@code InputStream} as a String
      * using the default character encoding of the platform.
-     * <p>
+     * <p/>
      * This method buffers the input internally, so there is no need to use a
      * {@code BufferedInputStream}.
      *
@@ -569,10 +569,10 @@ public final class DSSUtils {
      * FROM: Apache IOUtils
      * Copy bytes from an {@code InputStream} to an
      * {@code OutputStream}.
-     * <p>
+     * <p/>
      * This method buffers the input internally, so there is no need to use a
      * {@code BufferedInputStream}.
-     * <p>
+     * <p/>
      * Large streams (over 2GB) will return a bytes copied value of
      * {@code -1} after the copy has completed since the correct
      * number of bytes cannot be returned as an int. For large streams
@@ -598,7 +598,7 @@ public final class DSSUtils {
      * FROM: Apache IOUtils
      * Copy bytes from a large (over 2GB) {@code InputStream} to an
      * {@code OutputStream}.
-     * <p>
+     * <p/>
      * This method buffers the input internally, so there is no need to use a
      * {@code BufferedInputStream}.
      *
@@ -1182,6 +1182,7 @@ public final class DSSUtils {
 
         try {
 
+            LOG.debug("Signature Algorithm: " + javaSignatureAlgorithm);
             final Signature signature = Signature.getInstance(javaSignatureAlgorithm);
 
             signature.initSign(privateKey);
@@ -1430,7 +1431,7 @@ public final class DSSUtils {
 
     /**
      * FROM: Apache
-     *
+     * <p/>
      * Reads the contents of a file into a byte array.
      * The file is always closed.
      *
@@ -1451,13 +1452,13 @@ public final class DSSUtils {
 
     /**
      * FROM: Apache
-     *
+     * <p/>
      * Opens a {@link java.io.FileInputStream} for the specified file, providing better
      * error messages than simply calling {@code new FileInputStream(file)}.
-     * <p>
+     * <p/>
      * At the end of the method either the stream will be successfully opened,
      * or an exception will have been thrown.
-     * <p>
+     * <p/>
      * An exception is thrown if the file does not exist.
      * An exception is thrown if the file object exists but is a directory.
      * An exception is thrown if the file exists but cannot be read.
@@ -1506,7 +1507,7 @@ public final class DSSUtils {
     /**
      * FROM: Apache
      * Get the contents of an {@code InputStream} as a {@code byte[]}.
-     * <p>
+     * <p/>
      * This method buffers the input internally, so there is no need to use a
      * {@code BufferedInputStream}.
      *
@@ -1677,7 +1678,7 @@ public final class DSSUtils {
 
     /**
      * <p>Checks if a String is empty ("") or null.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.isEmpty(null)      = true
      * DSSUtils.isEmpty("")        = true
@@ -1685,7 +1686,7 @@ public final class DSSUtils {
      * DSSUtils.isEmpty("bob")     = false
      * DSSUtils.isEmpty("  bob  ") = false
      * </pre>
-     *
+     * <p/>
      * <p>NOTE: This method changed in Lang version 2.0.
      * It no longer trims the String.
      * That functionality is available in isBlank().</p>
@@ -1699,7 +1700,7 @@ public final class DSSUtils {
 
     /**
      * <p>Checks if a String is not empty ("") and not null.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.isNotEmpty(null)      = false
      * DSSUtils.isNotEmpty("")        = false
@@ -1717,10 +1718,10 @@ public final class DSSUtils {
 
     /**
      * <p>Compares two Strings, returning {@code true} if they are equal.</p>
-     *
+     * <p/>
      * <p>{@code null}s are handled without exceptions. Two {@code null}
      * references are considered to be equal. The comparison is case sensitive.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.equals(null, null)   = true
      * DSSUtils.equals(null, "abc")  = false
@@ -1741,7 +1742,7 @@ public final class DSSUtils {
 
     /**
      * <p>Checks if a String is whitespace, empty ("") or null.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.isBlank(null)      = true
      * DSSUtils.isBlank("")        = true
@@ -1769,7 +1770,7 @@ public final class DSSUtils {
 
     /**
      * <p>Checks if a String is not empty (""), not null and not whitespace only.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.isNotBlank(null)      = false
      * DSSUtils.isNotBlank("")        = false
@@ -1791,7 +1792,7 @@ public final class DSSUtils {
 
     /**
      * <p>Checks if the object is in the given array.</p>
-     *
+     * <p/>
      * <p>The method returns {@code false} if a {@code null} array is passed in.</p>
      *
      * @param array        the array to search through
@@ -1804,7 +1805,7 @@ public final class DSSUtils {
 
     /**
      * <p>Finds the index of the given object in the array.</p>
-     *
+     * <p/>
      * <p>This method returns {@link #INDEX_NOT_FOUND} ({@code -1}) for a {@code null} input array.</p>
      *
      * @param array        the array to search through for the object, may be {@code null}
@@ -1818,9 +1819,9 @@ public final class DSSUtils {
 
     /**
      * <p>Finds the index of the given object in the array starting at the given index.</p>
-     *
+     * <p/>
      * <p>This method returns {@link #INDEX_NOT_FOUND} ({@code -1}) for a {@code null} input array.</p>
-     *
+     * <p/>
      * <p>A negative startIndex is treated as zero. A startIndex larger than the array
      * length will return {@link #INDEX_NOT_FOUND} ({@code -1}).</p>
      *
@@ -1855,7 +1856,7 @@ public final class DSSUtils {
 
     /**
      * Unconditionally close an {@code OutputStream}.
-     * <p>
+     * <p/>
      * Equivalent to {@link OutputStream#close()}, except any exceptions will be ignored.
      * This is typically used in finally blocks.
      *
@@ -1873,7 +1874,7 @@ public final class DSSUtils {
 
     /**
      * Unconditionally close an {@code InputStream}.
-     * <p>
+     * <p/>
      * Equivalent to {@link InputStream#close()}, except any exceptions will be ignored.
      * This is typically used in finally blocks.
      *
@@ -1891,7 +1892,7 @@ public final class DSSUtils {
 
     /**
      * Unconditionally close an {@code Reader}.
-     * <p>
+     * <p/>
      * Equivalent to {@link Reader#close()}, except any exceptions will be ignored.
      * This is typically used in finally blocks.
      *
@@ -1909,7 +1910,7 @@ public final class DSSUtils {
 
     /**
      * Unconditionally close a {@code Writer}.
-     * <p>
+     * <p/>
      * Equivalent to {@link Writer#close()}, except any exceptions will be ignored.
      * This is typically used in finally blocks.
      *
@@ -1928,7 +1929,7 @@ public final class DSSUtils {
     /**
      * Get the contents of an {@code InputStream} as a list of Strings,
      * one entry per line, using the default character encoding of the platform.
-     * <p>
+     * <p/>
      * This method buffers the input internally, so there is no need to use a
      * {@code BufferedInputStream}.
      *
@@ -1946,7 +1947,7 @@ public final class DSSUtils {
     /**
      * Get the contents of a {@code Reader} as a list of Strings,
      * one entry per line.
-     * <p>
+     * <p/>
      * This method buffers the input internally, so there is no need to use a
      * {@code BufferedReader}.
      *
@@ -1975,12 +1976,12 @@ public final class DSSUtils {
     /**
      * <p>Joins the elements of the provided array into a single String
      * containing the provided list of elements.</p>
-     *
+     * <p/>
      * <p>No delimiter is added before or after the list.
      * A {@code null} separator is the same as an empty String ("").
      * Null objects or empty strings within the array are represented by
      * empty strings.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.join(null, *)                = null
      * DSSUtils.join([], *)                  = ""
@@ -2005,10 +2006,10 @@ public final class DSSUtils {
     /**
      * <p>Joins the elements of the provided {@code Collection} into
      * a single String containing the provided elements.</p>
-     *
+     * <p/>
      * <p>No delimiter is added before or after the list.
      * A {@code null} separator is the same as an empty String ("").</p>
-     *
+     * <p/>
      * <p>See the examples here: {@link #join(Object[], String)}. </p>
      *
      * @param collection the {@code Collection} of values to join together, may be null
@@ -2026,10 +2027,10 @@ public final class DSSUtils {
     /**
      * <p>Joins the elements of the provided {@code Iterator} into
      * a single String containing the provided elements.</p>
-     *
+     * <p/>
      * <p>No delimiter is added before or after the list.
      * A {@code null} separator is the same as an empty String ("").</p>
-     *
+     * <p/>
      * <p>See the examples here: {@link #join(Object[], String)}. </p>
      *
      * @param iterator  the {@code Iterator} of values to join together, may be null
@@ -2071,12 +2072,12 @@ public final class DSSUtils {
     /**
      * <p>Joins the elements of the provided array into a single String
      * containing the provided list of elements.</p>
-     *
+     * <p/>
      * <p>No delimiter is added before or after the list.
      * A {@code null} separator is the same as an empty String ("").
      * Null objects or empty strings within the array are represented by
      * empty strings.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.join(null, *)                = null
      * DSSUtils.join([], *)                  = ""
@@ -2128,13 +2129,13 @@ public final class DSSUtils {
     /**
      * <p>Gets the substring before the last occurrence of a separator.
      * The separator is not returned.</p>
-     *
+     * <p/>
      * <p>A {@code null} string input will return {@code null}.
      * An empty ("") string input will return the empty string.
      * An empty or {@code null} separator will return the input string.</p>
-     *
+     * <p/>
      * <p>If nothing is found, the string input is returned.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.substringBeforeLast(null, *)      = null
      * DSSUtils.substringBeforeLast("", *)        = ""
@@ -2166,14 +2167,14 @@ public final class DSSUtils {
     /**
      * <p>Gets the substring after the last occurrence of a separator.
      * The separator is not returned.</p>
-     *
+     * <p/>
      * <p>A {@code null} string input will return {@code null}.
      * An empty ("") string input will return the empty string.
      * An empty or {@code null} separator will return the empty string if
      * the input string is not {@code null}.</p>
-     *
+     * <p/>
      * <p>If nothing is found, the empty string is returned.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.substringAfterLast(null, *)      = null
      * DSSUtils.substringAfterLast("", *)        = ""
@@ -2209,7 +2210,7 @@ public final class DSSUtils {
     /**
      * <p>Repeat a String {@code repeat} times to form a
      * new String.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.repeat(null, 2) = null
      * DSSUtils.repeat("", 0)   = ""
@@ -2271,13 +2272,13 @@ public final class DSSUtils {
     /**
      * <p>Returns padding using the specified delimiter repeated
      * to a given length.</p>
-     *
+     * <p/>
      * <pre>
      * DSSUtils.padding(0, 'e')  = ""
      * DSSUtils.padding(3, 'e')  = "eee"
      * DSSUtils.padding(-2, 'e') = IndexOutOfBoundsException
      * </pre>
-     *
+     * <p/>
      * <p>Note: this method doesn't not support padding with
      * <a href="http://www.unicode.org/glossary/#supplementary_character">Unicode Supplementary Characters</a>
      * as they require a pair of {@code char}s to be represented.
@@ -2305,7 +2306,7 @@ public final class DSSUtils {
     /**
      * <p>Gets the {@code toString} of an {@code Object} returning
      * an empty string ("") if {@code null} input.</p>
-     *
+     * <p/>
      * <pre>
      * ObjectUtils.toString(null)         = ""
      * ObjectUtils.toString("")           = ""
@@ -2343,14 +2344,14 @@ public final class DSSUtils {
         final HashMap<String, String> secondStringStringHashMap = get(secondX500Principal);
         final boolean containsAll = firstStringStringHashMap.entrySet().containsAll(secondStringStringHashMap.entrySet());
 
-//        final String firstRfc2253Name = firstX500Principal.getName(X500Principal.RFC2253);
-//        final String secondRfc2253Name = secondX500Principal.getName(X500Principal.RFC2253);
-//        if (firstRfc2253Name.equals(secondRfc2253Name)) {
-//            return true;
-//        }
-//        final String firstCanonicalName = firstX500Principal.getName(X500Principal.CANONICAL);
-//        final String secondCanonicalName = secondX500Principal.getName(X500Principal.CANONICAL);
-//        final boolean equals = firstCanonicalName.equals(secondCanonicalName);
+        //        final String firstRfc2253Name = firstX500Principal.getName(X500Principal.RFC2253);
+        //        final String secondRfc2253Name = secondX500Principal.getName(X500Principal.RFC2253);
+        //        if (firstRfc2253Name.equals(secondRfc2253Name)) {
+        //            return true;
+        //        }
+        //        final String firstCanonicalName = firstX500Principal.getName(X500Principal.CANONICAL);
+        //        final String secondCanonicalName = secondX500Principal.getName(X500Principal.CANONICAL);
+        //        final boolean equals = firstCanonicalName.equals(secondCanonicalName);
         return containsAll;
     }
 
@@ -2519,7 +2520,7 @@ public final class DSSUtils {
         final ASN1Encodable[] asn1Encodables = asn1Sequence.toArray();
         final StringBuilder stringBuilder = new StringBuilder();
         /**
-         * RFC 4514               LDAP: Distinguished Names
+         * RFC 4514 LDAP: Distinguished Names
          * 2.1.  Converting the RDNSequence
          *
          * If the RDNSequence is an empty sequence, the result is the empty or
@@ -2653,19 +2654,19 @@ public final class DSSUtils {
      * invocation of a method for this input stream. The next invocation
      * might be the same thread or another thread.  A single read or skip of this
      * many bytes will not block, but may read or skip fewer bytes.
-     *
+     * <p/>
      * <p> Note that while some implementations of {@code InputStream} will return
      * the total number of bytes in the stream, many will not.  It is
      * never correct to use the return value of this method to allocate
      * a buffer intended to hold all data in this stream.
-     *
+     * <p/>
      * <p> A subclass' implementation of this method may choose to throw an
      * {@link IOException} if this input stream has been closed by
      * invoking the {@link InputStream#close()} method.
-     *
+     * <p/>
      * <p> The {@code available} method for class {@code InputStream} always
      * returns {@code 0}.
-     *
+     * <p/>
      * <p> This method should be overridden by subclasses.
      *
      * @return an estimate of the number of bytes that can be read (or skipped
@@ -2680,5 +2681,36 @@ public final class DSSUtils {
         } catch (IOException e) {
             throw new DSSException(e);
         }
+    }
+
+    /**
+     * Returns <tt>true</tt> if the first {@code elementNumber} elements of the two specified arrays are
+     * <i>equal</i>.  Two arrays are considered equal if the first {@code elementNumber} corresponding pairs of elements in the two arrays are equal.
+     * Also, two array references are considered equal if both are <tt>null</tt>.<p>
+     *
+     * @param leftArray     one array to be tested for equality
+     * @param rightArray    the other array to be tested for equality
+     * @param elementNumber the number of elements from the beginning to be tested
+     * @return <tt>true</tt> if the two arrays are equal
+     */
+    public static boolean equals(final byte[] leftArray, final byte[] rightArray, final int elementNumber) {
+
+        if (leftArray == rightArray) {
+            return true;
+        }
+        if (leftArray == null || rightArray == null) {
+            return false;
+        }
+        if (leftArray == null && rightArray == null) {
+            return true;
+        }
+        for (int ii = 0; ii < elementNumber; ii++) {
+
+            if (leftArray[ii] != rightArray[ii]) {
+
+                return false;
+            }
+        }
+        return true;
     }
 }
