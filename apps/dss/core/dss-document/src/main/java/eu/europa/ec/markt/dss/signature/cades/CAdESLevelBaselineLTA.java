@@ -117,7 +117,7 @@ public class CAdESLevelBaselineLTA extends CAdESSignatureExtension {
 
         final ASN1Object timeStampAttributeValue = getTimeStampAttributeValue(signatureTsa, encodedToTimestamp, timestampDigestAlgorithm, atsHashIndexAttribute);
 
-        final AttributeTable newUnsignedAttributes = unsignedAttributes.add(OID.id_etsi_electronicSignatureStandard_attributes_archiveTimestampV3, timeStampAttributeValue);
+        final AttributeTable newUnsignedAttributes = unsignedAttributes.add(OID.id_aa_ets_archiveTimestampV3, timeStampAttributeValue);
         return newUnsignedAttributes;
     }
 

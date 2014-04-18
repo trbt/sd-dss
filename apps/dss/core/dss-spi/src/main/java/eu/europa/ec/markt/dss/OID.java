@@ -87,11 +87,11 @@ public class OID {
      * id-aa-ets-archiveTimestampV3 OBJECT IDENTIFIER ::= { itu-t(0) identified-organization(4) etsi(0) electronic-signature-standard(1733)
      * attributes(2) 4 }
      */
-    public static final ASN1ObjectIdentifier id_etsi_electronicSignatureStandard_attributes_archiveTimestampV3 = id_etsi_electronicSignatureStandard_attributes.branch("4");
+    public static final ASN1ObjectIdentifier id_aa_ets_archiveTimestampV3 = id_etsi_electronicSignatureStandard_attributes.branch("4");
 
     /**
      * id-aa-ATSHashIndex OBJECT IDENTIFIER ::= { itu-t(0) identified-organization(4) etsi(0) electronicsignature-standard(1733)
      * attributes(2) 5 }
      */
-    public static final ASN1ObjectIdentifier id_etsi_electronicSignatureStandard_attributes_atsHashIndex = id_etsi_electronicSignatureStandard_attributes.branch("5");
+    public static final ASN1ObjectIdentifier id_aa_ATSHashIndex = id_etsi_electronicSignatureStandard_attributes.branch("5");
 }

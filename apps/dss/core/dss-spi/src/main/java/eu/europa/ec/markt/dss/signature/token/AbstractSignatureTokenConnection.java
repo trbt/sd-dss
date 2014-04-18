@@ -46,21 +46,22 @@ public abstract class AbstractSignatureTokenConnection implements SignatureToken
 
     @Override
     @Deprecated
-    public byte[] sign(final InputStream stream, final DigestAlgorithm digestAlgo, final DSSPrivateKeyEntry keyEntry) throws DSSException {
-        final EncryptionAlgorithm encryptionAlgo = keyEntry.getEncryptionAlgorithm();
-        LOG.info("Signature algorithm: " + encryptionAlgo + "/" + digestAlgo);
-        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.getAlgorithm(encryptionAlgo, digestAlgo);
+    public byte[] sign(final InputStream stream, final DigestAlgorithm digestAlgorithm, final DSSPrivateKeyEntry keyEntry) throws DSSException {
+
+        final EncryptionAlgorithm encryptionAlgorithm = keyEntry.getEncryptionAlgorithm();
+        LOG.info("Signature algorithm: " + encryptionAlgorithm + "/" + digestAlgorithm);
+        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.getAlgorithm(encryptionAlgorithm, digestAlgorithm);
         final String javaSignatureAlgorithm = signatureAlgorithm.getJCEId();
         final byte[] encryptedBytes = DSSUtils.encrypt(javaSignatureAlgorithm, keyEntry.getPrivateKey(), stream);
         return encryptedBytes;
     }
 
     @Override
-    public byte[] sign(final byte[] bytes, final DigestAlgorithm digestAlgo, final DSSPrivateKeyEntry keyEntry) throws DSSException {
+    public byte[] sign(final byte[] bytes, final DigestAlgorithm digestAlgorithm, final DSSPrivateKeyEntry keyEntry) throws DSSException {
 
-        final EncryptionAlgorithm encryptionAlgo = keyEntry.getEncryptionAlgorithm();
-        LOG.info("Signature algorithm: " + encryptionAlgo + "/" + digestAlgo);
-        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.getAlgorithm(encryptionAlgo, digestAlgo);
+        final EncryptionAlgorithm encryptionAlgorithm = keyEntry.getEncryptionAlgorithm();
+        LOG.info("Signature algorithm: " + encryptionAlgorithm + "/" + digestAlgorithm);
+        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.getAlgorithm(encryptionAlgorithm, digestAlgorithm);
         final String javaSignatureAlgorithm = signatureAlgorithm.getJCEId();
         final byte[] encryptedBytes = DSSUtils.encrypt(javaSignatureAlgorithm, keyEntry.getPrivateKey(), bytes);
         return encryptedBytes;

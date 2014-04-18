@@ -57,7 +57,7 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 /**
  * PAdES implementation of the DocumentSignatureService
  *
- * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
+ * @version $Revision: 3729 $ - $Date: 2014-04-18 05:32:39 +0200 (Fri, 18 Apr 2014) $
  */
 
 public class PAdESService extends AbstractSignatureService {
@@ -102,15 +102,15 @@ public class PAdESService extends AbstractSignatureService {
 
     @Override
     @Deprecated
-    public InputStream toBeSigned(DSSDocument document, SignatureParameters parameters) throws DSSException {
+    public InputStream toBeSigned(DSSDocument toSignDocument, SignatureParameters parameters) throws DSSException {
 
-        final byte[] dataToSign = getDataToSign(document, parameters);
+        final byte[] dataToSign = getDataToSign(toSignDocument, parameters);
         final InputStream inputStreamToSign = DSSUtils.toInputStream(dataToSign);
         return inputStreamToSign;
     }
 
     @Override
-    public byte[] getDataToSign(DSSDocument document, SignatureParameters parameters) throws DSSException {
+    public byte[] getDataToSign(DSSDocument toSignDocument, SignatureParameters parameters) throws DSSException {
 
         assertSigningDateInCertificateValidityRange(parameters);
 
@@ -119,14 +119,14 @@ public class PAdESService extends AbstractSignatureService {
         final PreComputedContentSigner preComputedContentSigner = new PreComputedContentSigner(signatureAlgo.getJCEId());
 
         final PDFSignatureService pdfSignatureService = PdfObjFactory.getInstance().newPAdESSignatureService();
-        final byte[] messageDigest = pdfSignatureService.digest(document.openStream(), parameters, parameters.getDigestAlgorithm());
+        final byte[] messageDigest = pdfSignatureService.digest(toSignDocument.openStream(), parameters, parameters.getDigestAlgorithm());
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Calculated digest on byte range " + DSSUtils.encodeHexString(messageDigest));
         }
 
         SignerInfoGeneratorBuilder signerInfoGeneratorBuilder = cmsSignedDataGeneratorBuilder
-              .getSignerInfoGeneratorBuilder(document, parameters, digestCalculatorProvider, messageDigest);
+              .getSignerInfoGeneratorBuilder(toSignDocument, parameters, digestCalculatorProvider, messageDigest);
 
         final X509Certificate signingCertificate = parameters.getSigningCertificate();
         final List<X509Certificate> certificateChain = parameters.getCertificateChain();
@@ -142,7 +142,7 @@ public class PAdESService extends AbstractSignatureService {
     }
 
     @Override
-    public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
+    public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
         assertSigningDateInCertificateValidityRange(parameters);
         try {
             final SignatureAlgorithm signatureAlgo = parameters.getSignatureAlgorithm();
@@ -150,14 +150,14 @@ public class PAdESService extends AbstractSignatureService {
             final PreComputedContentSigner preComputedContentSigner = new PreComputedContentSigner(signatureAlgo.getJCEId(), signatureValue);
 
             final PDFSignatureService pdfSignatureService = PdfObjFactory.getInstance().newPAdESSignatureService();
-            final byte[] messageDigest = pdfSignatureService.digest(document.openStream(), parameters, parameters.getDigestAlgorithm());
+            final byte[] messageDigest = pdfSignatureService.digest(toSignDocument.openStream(), parameters, parameters.getDigestAlgorithm());
             if (LOG.isInfoEnabled()) {
 
                 LOG.info("Calculated digest on byte range +++++ " + DSSUtils.encodeHexString(messageDigest) + " +++++");
             }
 
             SignerInfoGeneratorBuilder signerInfoGeneratorBuilder = cmsSignedDataGeneratorBuilder
-                  .getSignerInfoGeneratorBuilder(document, parameters, digestCalculatorProvider, messageDigest);
+                  .getSignerInfoGeneratorBuilder(toSignDocument, parameters, digestCalculatorProvider, messageDigest);
 
             final CMSSignedDataGenerator generator = cmsSignedDataGeneratorBuilder
                   .createCMSSignedDataGenerator(certificateVerifier, parameters.getSigningCertificate(), parameters.getCertificateChain(), preComputedContentSigner,
@@ -176,13 +176,13 @@ public class PAdESService extends AbstractSignatureService {
 
             final ByteArrayOutputStream output = new ByteArrayOutputStream();
             final byte[] encodedData = DSSASN1Utils.getEncoded(data);
-            pdfSignatureService.sign(document.openStream(), encodedData, output, parameters, parameters.getDigestAlgorithm());
+            pdfSignatureService.sign(toSignDocument.openStream(), encodedData, output, parameters, parameters.getDigestAlgorithm());
 
             DSSDocument doc = null;
-            if (DSSUtils.isEmpty(document.getName())) {
+            if (DSSUtils.isEmpty(toSignDocument.getName())) {
                 doc = new InMemoryDocument(output.toByteArray(), null, MimeType.PDF);
             } else {
-                doc = new InMemoryDocument(output.toByteArray(), document.getName(), MimeType.PDF);
+                doc = new InMemoryDocument(output.toByteArray(), toSignDocument.getName(), MimeType.PDF);
             }
 
             final SignatureExtension extension = getExtensionProfile(parameters);
@@ -197,25 +197,25 @@ public class PAdESService extends AbstractSignatureService {
     }
 
     @Override
-    public DSSDocument extendDocument(DSSDocument document, SignatureParameters parameters) throws DSSException {
+    public DSSDocument extendDocument(DSSDocument toExtendDocument, SignatureParameters parameters) throws DSSException {
 
         SignatureExtension extension = getExtensionProfile(parameters);
         if (extension != null) {
-            return extension.extendSignatures(document, parameters);
+            return extension.extendSignatures(toExtendDocument, parameters);
         }
-        return document;
+        return toExtendDocument;
     }
 
     @Override
-    public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters) throws DSSException {
+    public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
 
         SignatureTokenConnection token = parameters.getSigningToken();
         if (token == null) {
             throw new IllegalArgumentException("SigningToken is null, the connection through available API to the SSCD must be set.");
         }
-        final byte[] dataToSign = getDataToSign(document, parameters);
+        final byte[] dataToSign = getDataToSign(toSignDocument, parameters);
         final byte[] signatureValue = token.sign(dataToSign, parameters.getDigestAlgorithm(), parameters.getPrivateKeyEntry());
-        final DSSDocument dssDocument = signDocument(document, parameters, signatureValue);
+        final DSSDocument dssDocument = signDocument(toSignDocument, parameters, signatureValue);
         return dssDocument;
     }
 }

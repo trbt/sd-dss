@@ -505,8 +505,8 @@ public final class DSSXMLUtils {
         try {
 
             final Canonicalizer c14n = Canonicalizer.getInstance(canonicalizationMethod);
-            final byte[] canonicalised = c14n.canonicalizeSubtree(node);
-            return canonicalised;
+            final byte[] canonicalized = c14n.canonicalizeSubtree(node);
+            return canonicalized;
         } catch (InvalidCanonicalizerException e) {
             throw new DSSException(e);
         } catch (CanonicalizationException e) {

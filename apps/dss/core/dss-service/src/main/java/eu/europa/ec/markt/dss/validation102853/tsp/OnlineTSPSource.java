@@ -42,7 +42,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 /**
  * Class encompassing a RFC 3161 TSA, accessed through HTTP(S) to a given URI
  *
- * @version $Revision: 3570 $ - $Date: 2014-03-06 18:36:39 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3675 $ - $Date: 2014-03-31 19:59:20 +0200 (Mon, 31 Mar 2014) $
  */
 
 public class OnlineTSPSource implements TSPSource {

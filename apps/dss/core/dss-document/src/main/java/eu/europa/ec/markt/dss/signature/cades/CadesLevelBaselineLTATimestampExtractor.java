@@ -151,7 +151,7 @@ public class CadesLevelBaselineLTATimestampExtractor {
         vector.add(crLsHashIndex);
         vector.add(unsignedAttributesHashIndex);
         final ASN1Sequence derSequence = new DERSequence(vector);
-        return new Attribute(OID.id_etsi_electronicSignatureStandard_attributes_atsHashIndex, new DERSet(derSequence));
+        return new Attribute(OID.id_aa_ATSHashIndex, new DERSet(derSequence));
     }
 
     /**
@@ -474,7 +474,7 @@ public class CadesLevelBaselineLTATimestampExtractor {
      */
     private ASN1Sequence getAtsHashIndex(TimestampToken timestampToken) {
         final AttributeTable timestampTokenUnsignedAttributes = timestampToken.getUnsignedAttributes();
-        final Attribute atsHashIndexAttribute = timestampTokenUnsignedAttributes.get(OID.id_etsi_electronicSignatureStandard_attributes_atsHashIndex);
+        final Attribute atsHashIndexAttribute = timestampTokenUnsignedAttributes.get(OID.id_aa_ATSHashIndex);
         final ASN1Set attrValues = atsHashIndexAttribute.getAttrValues();
         return (ASN1Sequence) attrValues.getObjectAt(0).toASN1Primitive();
     }

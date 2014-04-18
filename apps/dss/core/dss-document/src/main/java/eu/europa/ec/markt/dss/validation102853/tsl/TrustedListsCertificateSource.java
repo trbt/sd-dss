@@ -164,7 +164,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
             super.addCertificate(cert, serviceInfo);
         } catch (DSSNotETSICompliantException ex) {
 
-            LOG.error("The entry for " + trustedService.getServiceName() + " doesn't respect ESTI specification " + ex.getLocalizedMessage());
+            LOG.error("The entry for " + trustedService.getServiceName() + " doesn't respect ETSI specification " + ex.getLocalizedMessage());
         }
     }
 

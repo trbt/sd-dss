@@ -19,11 +19,11 @@
         <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
     </bean>
 
-    <bean id="ocspHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.OCSPDataLoader">
+    <bean id="ocspDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.OCSPDataLoader">
         <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
     </bean>
 
-    <bean id="fileCacheHttpDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.FileCacheDataLoader">
+    <bean id="fileCacheDataLoader" class="eu.europa.ec.markt.dss.validation102853.https.FileCacheDataLoader">
         <property name="proxyPreferenceManager" ref="proxyPreferenceManager"/>
         <!-- Per default uses "java.io.tmpdir" property -->
         <!--<property name="fileCacheDirectory" value="/temp"/>-->
@@ -40,12 +40,12 @@
     </bean>
 
     <bean id="ocspSource" class="eu.europa.ec.markt.dss.validation102853.ocsp.OnlineOCSPSource">
-        <property name="dataLoader" ref="ocspHttpDataLoader"/>
+        <property name="dataLoader" ref="ocspDataLoader"/>
     </bean>
 
     <bean id="trustedListSource"
           class="eu.europa.ec.markt.dss.validation102853.tsl.ReloadableTrustedListCertificateSource">
-        <property name="dataLoader" ref="fileCacheHttpDataLoader"/>
+        <property name="dataLoader" ref="fileCacheDataLoader"/>
         <property name="checkSignature" value="false"/>
         <property name="lotlCertificate" value="classpath://ec.europa.eu.crt"/>
         <property name="lotlUrl" value="https://ec.europa.eu/information_society/policy/esignature/trusted-list/tl-mp.xml"/>

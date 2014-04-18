@@ -27,65 +27,64 @@ import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 
 /**
- * Interface for DocumentSignatureService. Provides operations for sign/verify a document.
+ * Interface for DocumentSignatureService. Provides operations for sign/verify a toSignDocument.
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3729 $ - $Date: 2014-04-18 05:32:39 +0200 (Fri, 18 Apr 2014) $
  */
 public interface DocumentSignatureService {
 
     /**
      * Retrieves the stream of data that need to be signed.
      *
-     * @param document   document to sign
-     * @param parameters set of driving parameters
+     * @param toSignDocument document to sign
+     * @param parameters     set of driving parameters
      * @return
      * @throws DSSException
      * @deprecated (Added in version 4) use {@code getDataToSign}
      */
     @Deprecated
-    public InputStream toBeSigned(final DSSDocument document, final SignatureParameters parameters) throws DSSException;
+    public InputStream toBeSigned(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException;
 
     /**
      * Retrieves the stream of data that need to be signed. (Added in version 4)
      *
-     *
-     * @param document   document to sign
-     * @param parameters set of driving parameters
+     * @param toSignDocument document to sign
+     * @param parameters     set of driving parameters
      * @return
      * @throws DSSException
      */
-    public byte[] getDataToSign(final DSSDocument document, final SignatureParameters parameters) throws DSSException;
+    public byte[] getDataToSign(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException;
 
     /**
-     * Signs the document with the provided signatureValue.
+     * Signs the toSignDocument with the provided signatureValue.
      *
-     * @param document       document to sign
+     * @param toSignDocument document to sign
      * @param parameters     set of driving parameters
      * @param signatureValue
      * @return
      * @throws DSSException
      */
-    public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException;
+    public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException;
 
     /**
-     * Signs the document in the single operation. it is possible when the private key is known on the server side or everything is done on the client side.
+     * Signs the toSignDocument in the single operation. it is possible when the private key is known on the server side or everything is done on the client side.
      *
-     * @param document   document to sign
+     * @param toSignDocument document to sign
+     * @param parameters     set of driving parameters
+     * @return
+     * @throws DSSException
+     */
+    public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException;
+
+    /**
+     * Extends the level of the signatures in the toSignDocument
+     *
+     * @param toExtendDocument   document to extend
      * @param parameters set of driving parameters
      * @return
      * @throws DSSException
      */
-    public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters) throws DSSException;
-
-    /**
-     * Extends the level of the signatures in the document
-     *
-     * @param document   document to extend
-     * @param parameters set of driving parameters
-     * @return
-     * @throws DSSException
-     */
-    public DSSDocument extendDocument(final DSSDocument document, final SignatureParameters parameters) throws DSSException;
+    public DSSDocument extendDocument(final DSSDocument toExtendDocument, final SignatureParameters parameters) throws DSSException;
 
     /**
      * This setter allows to define the TSP (timestamp provider) source.

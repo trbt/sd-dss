@@ -42,7 +42,7 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 /**
  * XAdES implementation of DocumentSignatureService
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3729 $ - $Date: 2014-04-18 05:32:39 +0200 (Fri, 18 Apr 2014) $
  */
 
 public class XAdESService extends AbstractSignatureService {
@@ -125,28 +125,28 @@ public class XAdESService extends AbstractSignatureService {
 
     @Override
     @Deprecated
-    public InputStream toBeSigned(final DSSDocument document, final SignatureParameters parameters) throws DSSException {
+    public InputStream toBeSigned(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
 
-        final byte[] dataToSign = getDataToSign(document, parameters);
+        final byte[] dataToSign = getDataToSign(toSignDocument, parameters);
         final InputStream inputStreamToSign = DSSUtils.toInputStream(dataToSign);
         return inputStreamToSign;
     }
 
     @Override
-    public byte[] getDataToSign(final DSSDocument document, final SignatureParameters parameters) throws DSSException {
+    public byte[] getDataToSign(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
 
         if (parameters.getSignatureLevel() == null) {
             throw new DSSNullException(SignatureParameters.class);
         }
         assertSigningDateInCertificateValidityRange(parameters);
         final XAdESLevelBaselineB profile = new XAdESLevelBaselineB(certificateVerifier);
-        final byte[] dataToSign = profile.getDataToSign(document, parameters);
+        final byte[] dataToSign = profile.getDataToSign(toSignDocument, parameters);
         parameters.getContext().setProfile(profile);
         return dataToSign;
     }
 
     @Override
-    public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
+    public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
 
         if (parameters.getSignatureLevel() == null) {
             throw new DSSNullException(SignatureParameters.class);
@@ -162,7 +162,7 @@ public class XAdESService extends AbstractSignatureService {
 
             profile = new XAdESLevelBaselineB(certificateVerifier);
         }
-        final DSSDocument signedDoc = profile.signDocument(document, parameters, signatureValue);
+        final DSSDocument signedDoc = profile.signDocument(toSignDocument, parameters, signatureValue);
         final SignatureExtension extension = getExtensionProfile(parameters);
         if (extension != null) {
 
@@ -173,7 +173,7 @@ public class XAdESService extends AbstractSignatureService {
     }
 
     @Override
-    public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters) throws DSSException {
+    public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
 
         if (parameters.getSignatureLevel() == null) {
             throw new DSSNullException(SignatureParameters.class);
@@ -186,24 +186,24 @@ public class XAdESService extends AbstractSignatureService {
         parameters.getContext().setOperationKind(Operation.SIGNING);
 
         final XAdESLevelBaselineB profile = new XAdESLevelBaselineB(certificateVerifier);
-        final byte[] dataToSign = profile.getDataToSign(document, parameters);
+        final byte[] dataToSign = profile.getDataToSign(toSignDocument, parameters);
         parameters.getContext().setProfile(profile);
 
         final DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
         final DSSPrivateKeyEntry dssPrivateKeyEntry = parameters.getPrivateKeyEntry();
         final byte[] signatureValue = signingToken.sign(dataToSign, digestAlgorithm, dssPrivateKeyEntry);
-        final DSSDocument dssDocument = signDocument(document, parameters, signatureValue);
+        final DSSDocument dssDocument = signDocument(toSignDocument, parameters, signatureValue);
         return dssDocument;
     }
 
     @Override
-    public DSSDocument extendDocument(final DSSDocument document, final SignatureParameters parameters) throws DSSException {
+    public DSSDocument extendDocument(final DSSDocument toExtendDocument, final SignatureParameters parameters) throws DSSException {
 
         parameters.getContext().setOperationKind(Operation.EXTENDING);
         final SignatureExtension extension = getExtensionProfile(parameters);
         if (extension != null) {
 
-            final DSSDocument dssDocument = extension.extendSignatures(document, parameters);
+            final DSSDocument dssDocument = extension.extendSignatures(toExtendDocument, parameters);
             return dssDocument;
         }
         throw new DSSException("Cannot extend to " + parameters.getSignatureLevel().name());
