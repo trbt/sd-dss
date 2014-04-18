@@ -23,7 +23,7 @@ package eu.europa.ec.markt.dss.signature;
 /**
  * Signature profile handled by the SD-DSS framework.
  *
- * @version $Revision: 3623 $ - $Date: 2014-03-24 08:28:52 +0100 (Mon, 24 Mar 2014) $
+ * @version $Revision: 3712 $ - $Date: 2014-04-11 17:51:31 +0200 (Fri, 11 Apr 2014) $
  */
 
 public enum SignatureLevel {
@@ -38,7 +38,7 @@ public enum SignatureLevel {
 
     ASiC_S_BASELINE_LT(null), ASiC_S_BASELINE_T(ASiC_S_BASELINE_LT), ASiC_S_BASELINE_B(ASiC_S_BASELINE_T),
 
-    ASiC_E_BASELINE_LT(null), ASiC_E_BASELINE_T(ASiC_E_BASELINE_LT), ASiC_E_BASELINE_B(ASiC_E_BASELINE_T);
+    ASiC_E_BASELINE_LT(null), ASiC_E_BASELINE_T(ASiC_E_BASELINE_LT), ASiC_E_BASELINE_B(ASiC_E_BASELINE_T), PADES_102778_LTV(PAdES_BASELINE_B);
 
     public final SignatureLevel upperLevel;
 

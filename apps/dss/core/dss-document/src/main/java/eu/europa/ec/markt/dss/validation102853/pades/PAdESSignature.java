@@ -475,15 +475,19 @@ public class PAdESSignature extends DefaultAdvancedSignature {
 
     public boolean isDataForSignatureLevelPresent(SignatureLevel signatureLevel) {
         boolean dataForLevelPresent = true;
+        final List<TimestampToken> signatureTimestamps = getSignatureTimestamps();
         switch (signatureLevel) {
             case PAdES_BASELINE_LTA:
+                dataForLevelPresent = hasDocumentTimestampOnTopOfDSSDict();
+                dataForLevelPresent &= (((signatureTimestamps != null) && (!signatureTimestamps.isEmpty())));
+                break;
+            case PADES_102778_LTV:
                 dataForLevelPresent = hasDocumentTimestampOnTopOfDSSDict();
                 break;
             case PAdES_BASELINE_LT:
                 dataForLevelPresent &= hasDSSDictionary();
                 // break omitted purposely
             case PAdES_BASELINE_T:
-                final List<TimestampToken> signatureTimestamps = getSignatureTimestamps();
                 dataForLevelPresent &= (((signatureTimestamps != null) && (!signatureTimestamps.isEmpty())));
                 // break omitted purposely
             case PAdES_BASELINE_B:
@@ -497,7 +501,7 @@ public class PAdESSignature extends DefaultAdvancedSignature {
     }
 
     public SignatureLevel[] getSignatureLevels() {
-        return new SignatureLevel[]{SignatureLevel.PAdES_BASELINE_B, SignatureLevel.PAdES_BASELINE_T, SignatureLevel.PAdES_BASELINE_LT, SignatureLevel.PAdES_BASELINE_LTA};
+        return new SignatureLevel[]{SignatureLevel.PAdES_BASELINE_B, SignatureLevel.PAdES_BASELINE_T, SignatureLevel.PAdES_BASELINE_LT, SignatureLevel.PADES_102778_LTV, SignatureLevel.PAdES_BASELINE_LTA};
     }
 
     private boolean hasDSSDictionary() {

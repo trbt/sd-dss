@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.mina.util.ConcurrentHashSet;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 
@@ -64,7 +65,7 @@ abstract class PdfBoxCMSInfo implements PdfSignatureOrDocTimestampInfo {
     private boolean verified;
     private SignatureCryptographicVerification verifyResult;
 
-    private Set<PdfSignatureOrDocTimestampInfo> outerSignatures = new HashSet<PdfSignatureOrDocTimestampInfo>();
+    private Set<PdfSignatureOrDocTimestampInfo> outerSignatures = new ConcurrentHashSet<PdfSignatureOrDocTimestampInfo>();
 
     /**
      *
