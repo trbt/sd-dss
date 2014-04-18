@@ -82,7 +82,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
  * HTTP & HTTPS: using HttpClient which is more flexible for HTTPS without having to add the certificate to the JVM TrustStore. It takes into account a proxy management through
  * {@code ProxyPreferenceManager}. The authentication is also supported.<p/>
  *
- * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
+ * @version $Revision: 3710 $ - $Date: 2014-04-10 11:09:53 +0200 (Thu, 10 Apr 2014) $
  */
 public class CommonsDataLoader implements DataLoader {
 
@@ -279,7 +279,9 @@ public class CommonsDataLoader implements DataLoader {
     @Override
     public byte[] get(final String urlString) throws DSSCannotFetchDataException {
 
-        if (urlString.startsWith(HTTP)) {
+        if (urlString.startsWith(FILE)) {
+            return fileGet(urlString);
+        } else if (urlString.startsWith(HTTP)) {
             return httpGet(urlString);
         } else if (urlString.startsWith(FTP)) {
             return ftpGet(urlString);
@@ -290,6 +292,15 @@ public class CommonsDataLoader implements DataLoader {
         }
 
         return httpGet(urlString);
+    }
+
+    private byte[] fileGet(String urlString) {
+        try {
+            return DSSUtils.toByteArray(new URL(urlString).openStream());
+        } catch (IOException e) {
+            LOG.warn(e.toString(), e);
+        }
+        return null;
     }
 
     /**
