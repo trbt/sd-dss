@@ -43,6 +43,8 @@ import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.qualified.ETSIQCObjectIdentifiers;
+import org.bouncycastle.cms.CMSSignedData;
+import org.bouncycastle.tsp.TimeStampToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -63,6 +65,7 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.MimeType;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.validation102853.asic.ASiCCMSDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.asic.ASiCTimestampDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.asic.ASiCXMLDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.bean.CertifiedRole;
 import eu.europa.ec.markt.dss.validation102853.bean.CommitmentType;
@@ -116,12 +119,17 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(SignedDocumentValidator.class);
 
+    /**
+     * This variable can hold a specific {@code ProcessExecutor}
+     */
+    protected ProcessExecutor processExecutor = null;
+
     public static final String MIME_TYPE = "mimetype";
     public static final String MIME_TYPE_COMMENT = MIME_TYPE + "=";
 
-    private static final String PATTERN_SIGNATURES_XML = "META-INF/(.*)(?i)signature(.*).xml";
-
-    private static final String PATTERN_SIGNATURES_P7S = "META-INF/(.*)(?i)signature(.*).p7s";
+    private static final String PATTERN_SIGNATURES_XML = "META-INF/signatures.xml";
+    private static final String PATTERN_SIGNATURES_P7S = "META-INF/signature.p7s";
+    private static final String PATTERN_TIMESTAMP_TST = "META-INF/timestamp.tst";
 
     /*
      * The factory used to create DiagnosticData
@@ -283,15 +291,17 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
             String dataFileName = "";
             ByteArrayOutputStream signedDocument = null;
             ByteArrayOutputStream signature = null;
+            ByteArrayOutputStream timeStamp = null;
             ZipEntry entry;
 
             boolean cadesSigned = false;
             boolean xadesSigned = false;
+            boolean timestamped = false;
 
             while ((entry = asics.getNextEntry()) != null) {
 
                 final String entryName = entry.getName();
-                if (entryName.matches(PATTERN_SIGNATURES_P7S)) {
+                if (entryName.contains(PATTERN_SIGNATURES_P7S)) {
 
                     if (xadesSigned) {
                         throw new DSSNotETSICompliantException(MSG.MORE_THAN_ONE_SIGNATURE);
@@ -299,7 +309,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
                     signature = new ByteArrayOutputStream();
                     DSSUtils.copy(asics, signature);
                     cadesSigned = true;
-                } else if (entryName.matches(PATTERN_SIGNATURES_XML)) {
+                } else if (entryName.contains(PATTERN_SIGNATURES_XML)) {
 
                     if (cadesSigned) {
                         throw new DSSNotETSICompliantException(MSG.MORE_THAN_ONE_SIGNATURE);
@@ -307,6 +317,11 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
                     signature = new ByteArrayOutputStream();
                     DSSUtils.copy(asics, signature);
                     xadesSigned = true;
+                } else if (entryName.contains(PATTERN_TIMESTAMP_TST)) {
+
+                    timeStamp = new ByteArrayOutputStream();
+                    DSSUtils.copy(asics, timeStamp);
+                    timestamped = true;
                 } else if (entryName.equalsIgnoreCase(MIME_TYPE)) {
 
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -342,8 +357,15 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
                 cmsValidator.setAsicComment(asicCommentString);
                 cmsValidator.setMagicNumberMimeType(magicNumberMimeType);
                 return cmsValidator;
+            } else if (timestamped) {
+
+                final ASiCTimestampDocumentValidator timestampDocumentValidator = new ASiCTimestampDocumentValidator(timeStamp.toByteArray(), signedDocument.toByteArray(),
+                      dataFileName);
+                timestampDocumentValidator.setAsicComment(asicCommentString);
+                timestampDocumentValidator.setMagicNumberMimeType(magicNumberMimeType);
+                return timestampDocumentValidator;
             } else {
-                throw new DSSException("It is neither XAdES nor CAdES signature!");
+                throw new DSSException("It is neither XAdES nor CAdES, nor timestamp signature!");
             }
         } catch (Exception e) {
             if (e instanceof DSSException) {
@@ -590,9 +612,24 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
         return detailedReport;
     }
 
+    /**
+     * This method provides the possibility to set the specific {@code ProcessExecutor}
+     *
+     * @param processExecutor
+     */
+    public void setProcessExecutor(final ProcessExecutor processExecutor) {
+
+        this.processExecutor = processExecutor;
+    }
+
     protected ProcessExecutor getProcessExecutor(final Document diagnosticDataDom, final Document validationPolicyDom) {
 
-        return new ProcessExecutor(diagnosticDataDom, validationPolicyDom);
+        if (processExecutor == null) {
+            processExecutor = new ProcessExecutor();
+        }
+        processExecutor.setDiagnosticDataDom(diagnosticDataDom);
+        processExecutor.setValidationPolicyDom(validationPolicyDom);
+        return processExecutor;
     }
 
     /**

@@ -85,28 +85,18 @@ public class ProcessExecutor {
     protected Date currentTime = new Date();
 
     /**
-     * This constructor instantiates the validation process with the given diagnostic data file and the policy file. It
-     * is used for tests.
-     *
-     * @param diagnosticDataDom
-     * @param validationPolicyDom
+     * This is the default constructor. The process parameters must be initialised wih setters: {@code setDiagnosticDataDom} and {@code setValidationPolicyDom}
      */
-    public ProcessExecutor(final Document diagnosticDataDom, final Document validationPolicyDom) {
+    public ProcessExecutor() {
 
-        if (diagnosticDataDom == null) {
-
-            throw new DSSException("The diagnostic data is null!");
-        }
-        this.diagnosticDataDom = diagnosticDataDom;
-        this.validationPolicyDom = validationPolicyDom; // Policy data can be null (no policy)
     }
 
-    /**
-     * The constructor with only diagnostic data.
-     */
-    public ProcessExecutor(final Document diagnosticData) {
+    public void setDiagnosticDataDom(Document diagnosticDataDom) {
+        this.diagnosticDataDom = diagnosticDataDom;
+    }
 
-        this(diagnosticData, null);
+    public void setValidationPolicyDom(Document validationPolicyDom) {
+        this.validationPolicyDom = validationPolicyDom;
     }
 
     /**
