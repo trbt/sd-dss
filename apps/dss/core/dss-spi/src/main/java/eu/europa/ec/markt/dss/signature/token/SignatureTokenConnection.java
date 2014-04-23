@@ -29,44 +29,44 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Connection through available API to the SSCD (SmartCard, MSCAPI, PKCS#12)
  *
- * @version $Revision: 3378 $ - $Date: 2014-01-23 00:46:55 +0100 (Thu, 23 Jan 2014) $
+ * @version $Revision: 3760 $ - $Date: 2014-04-21 07:53:08 +0200 (Mon, 21 Apr 2014) $
  */
 
 public interface SignatureTokenConnection {
 
-    /**
-     * Closes the connection to the SSCD.
-     */
-    void close();
+	/**
+	 * Closes the connection to the SSCD.
+	 */
+	void close();
 
-    /**
-     * Retrieves all the available keys (private keys entries) from the SSCD.
-     *
-     * @return List of encapsulated private keys
-     * @throws DSSException If there is any problem during the retrieval process
-     */
-    List<DSSPrivateKeyEntry> getKeys() throws DSSException;
+	/**
+	 * Retrieves all the available keys (private keys entries) from the SSCD.
+	 *
+	 * @return List of encapsulated private keys
+	 * @throws DSSException If there is any problem during the retrieval process
+	 */
+	List<DSSPrivateKeyEntry> getKeys() throws DSSException;
 
-    /**
-     * Signs the stream with the digest algorithm and the private key.
-     *
-     * @param stream     The stream that need to be signed
-     * @param digestAlgo The digest algorithm to be used before signing
-     * @param keyEntry   The private key to be used
-     * @return The array of bytes representing the signature value
-     * @throws DSSException If there is any problem during the signature process
-     * @deprecated use {@link eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection#sign(byte[], eu.europa.ec.markt.dss.DigestAlgorithm, DSSPrivateKeyEntry)}
-     */
-    @Deprecated
-    byte[] sign(final InputStream stream, final DigestAlgorithm digestAlgo, final DSSPrivateKeyEntry keyEntry) throws DSSException;
+	/**
+	 * Signs the stream with the digest algorithm and the private key.
+	 *
+	 * @param stream     The stream that need to be signed
+	 * @param digestAlgo The digest algorithm to be used before signing
+	 * @param keyEntry   The private key to be used
+	 * @return The array of bytes representing the signature value
+	 * @throws DSSException If there is any problem during the signature process
+	 * @deprecated use {@link eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection#sign(byte[], eu.europa.ec.markt.dss.DigestAlgorithm, DSSPrivateKeyEntry)}
+	 */
+	@Deprecated
+	byte[] sign(final InputStream stream, final DigestAlgorithm digestAlgo, final DSSPrivateKeyEntry keyEntry) throws DSSException;
 
-    /**
-     * @param bytes      The array of bytes that need to be signed
-     * @param digestAlgo The digest algorithm to be used before signing
-     * @param keyEntry   The private key to be used
-     * @return The array of bytes representing the signature value
-     * @throws DSSException If there is any problem during the signature process
-     */
-    byte[] sign(final byte[] bytes, final DigestAlgorithm digestAlgo, final DSSPrivateKeyEntry keyEntry) throws DSSException;
+	/**
+	 * @param bytes           The array of bytes that need to be signed
+	 * @param digestAlgorithm The digest algorithm to be used before signing
+	 * @param keyEntry        The private key to be used
+	 * @return The array of bytes representing the signature value
+	 * @throws DSSException If there is any problem during the signature process
+	 */
+	byte[] sign(final byte[] bytes, final DigestAlgorithm digestAlgorithm, final DSSPrivateKeyEntry keyEntry) throws DSSException;
 
 }

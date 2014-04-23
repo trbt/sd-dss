@@ -110,7 +110,7 @@ class EnvelopedSignatureBuilder extends SignatureBuilder {
 			signatureDOM.getParentNode().removeChild(signatureDOM);
 		}
 		byte[] canonicalizedBytes = DSSXMLUtils.canonicalizeSubtree(signedInfoCanonicalizationMethod, domDoc);
-		if (LOG.isInfoEnabled()) {
+		if (LOG.isTraceEnabled()) {
 			LOG.trace("Canonicalization method  -->" + signedInfoCanonicalizationMethod);
 			LOG.trace("Canonicalized REF_1      --> " + new String(canonicalizedBytes));
 		}

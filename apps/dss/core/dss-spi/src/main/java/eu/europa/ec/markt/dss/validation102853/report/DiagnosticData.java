@@ -135,17 +135,29 @@ public class DiagnosticData extends XmlDom {
         return signingCertificateId;
     }
 
-    /**
-     * This method return the revocation source for the given certificate.
-     *
-     * @param dssCertificateId DSS certificate identifier to be checked
-     * @return revocation source
-     */
-    public String getCertificateRevocationSource(final int dssCertificateId) {
+	/**
+	 * This method returns the revocation source for the given certificate.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return revocation source
+	 */
+	public String getCertificateRevocationSource(final int dssCertificateId) {
 
-        final String certificateRevocationSource = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/Revocation/Source/text()", dssCertificateId);
-        return certificateRevocationSource;
-    }
+		final String certificateRevocationSource = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/Revocation/Source/text()", dssCertificateId);
+		return certificateRevocationSource;
+	}
+
+	/**
+	 * This method returns the revocation status for the given certificate.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return revocation status
+	 */
+	public boolean getCertificateRevocationStatus(final int dssCertificateId) {
+
+		final boolean certificateRevocationStatus = getBoolValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/Revocation/Status/text()", dssCertificateId);
+		return certificateRevocationStatus;
+	}
 
     /**
      * This method returns the {@code DigestAlgorithm} of the first signature.

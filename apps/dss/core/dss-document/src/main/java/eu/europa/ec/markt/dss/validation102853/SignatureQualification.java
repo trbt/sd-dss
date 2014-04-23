@@ -20,8 +20,6 @@
 
 package eu.europa.ec.markt.dss.validation102853;
 
-import eu.europa.ec.markt.dss.validation102853.ProcessExecutor.SignatureType;
-
 public class SignatureQualification {
 
     private static final int QCP = 1;

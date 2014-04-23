@@ -44,10 +44,6 @@ public class ProcessExecutor {
 
     protected static final Logger LOG = LoggerFactory.getLogger(SignedDocumentValidator.class);
 
-    public enum SignatureType {
-        QES, AdES, AdESqc, NA
-    }
-
     /**
      * DOM representation of the diagnostic data.
      */

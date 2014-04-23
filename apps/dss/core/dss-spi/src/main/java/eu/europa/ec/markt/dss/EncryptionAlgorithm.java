@@ -28,112 +28,112 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Supported signature encryption algorithms.
  *
- * @version $Revision: 3447 $ - $Date: 2014-02-13 15:50:09 +0100 (Thu, 13 Feb 2014) $
+ * @version $Revision: 3775 $ - $Date: 2014-04-21 15:32:12 +0200 (Mon, 21 Apr 2014) $
  */
 
 public enum EncryptionAlgorithm {
 
-    RSA("RSA", "1.2.840.113549.1.1.1", "RSA/ECB/PKCS1Padding"), DSA("DSA", "1.2.840.10040.4.1", "DSA"), ECDSA("ECDSA", "1.2.840.10045.2.1", "ECDSA"), HMAC("HMAC", "", "");
+	RSA("RSA", "1.2.840.113549.1.1.1", "RSA/ECB/PKCS1Padding"), DSA("DSA", "1.2.840.10040.4.1", "DSA"), ECDSA("ECDSA", "1.2.840.10045.2.1", "ECDSA"), HMAC("HMAC", "", "");
 
-    private String name;
-    private String oid;
-    private String padding;
+	private String name;
+	private String oid;
+	private String padding;
 
-    private static class Registry {
+	private static class Registry {
 
-        private static final Map<String, EncryptionAlgorithm> OID_ALGORITHMS = registerOIDAlgorithms();
+		private static final Map<String, EncryptionAlgorithm> OID_ALGORITHMS = registerOIDAlgorithms();
 
-        private static Map<String, EncryptionAlgorithm> registerOIDAlgorithms() {
+		private static Map<String, EncryptionAlgorithm> registerOIDAlgorithms() {
 
-            Map<String, EncryptionAlgorithm> map = new HashMap<String, EncryptionAlgorithm>();
+			Map<String, EncryptionAlgorithm> map = new HashMap<String, EncryptionAlgorithm>();
 
-            for (EncryptionAlgorithm encryptionAlgo : values()) {
-                map.put(encryptionAlgo.oid, encryptionAlgo);
-            }
-            return map;
-        }
-    }
+			for (EncryptionAlgorithm encryptionAlgorithm : values()) {
+				map.put(encryptionAlgorithm.oid, encryptionAlgorithm);
+			}
+			return map;
+		}
+	}
 
-    /**
-     * Returns the encryption algorithm associated to the given OID.
-     *
-     * @param oid
-     * @return
-     */
-    public static EncryptionAlgorithm forOID(String oid) {
-        EncryptionAlgorithm algorithm = Registry.OID_ALGORITHMS.get(oid);
-        if (algorithm == null) {
-            throw new RuntimeException("Unsupported algorithm: " + oid);
-        }
-        return algorithm;
-    }
+	/**
+	 * Returns the encryption algorithm associated to the given OID.
+	 *
+	 * @param oid
+	 * @return
+	 */
+	public static EncryptionAlgorithm forOID(String oid) {
+		EncryptionAlgorithm algorithm = Registry.OID_ALGORITHMS.get(oid);
+		if (algorithm == null) {
+			throw new RuntimeException("Unsupported algorithm: " + oid);
+		}
+		return algorithm;
+	}
 
-    /**
-     * Returns the encryption algorithm associated to the given JCE name.
-     *
-     * @param name
-     * @return
-     */
-    public static EncryptionAlgorithm forName(final String name) {
+	/**
+	 * Returns the encryption algorithm associated to the given JCE name.
+	 *
+	 * @param name
+	 * @return
+	 */
+	public static EncryptionAlgorithm forName(final String name) {
 
-        // To be checked if ECC exists also .
-        if ("EC".equals(name) || "ECC".equals(name)) {
-            return ECDSA;
-        }
-        try {
+		// To be checked if ECC exists also .
+		if ("EC".equals(name) || "ECC".equals(name)) {
+			return ECDSA;
+		}
+		try {
 
-            return valueOf(name);
-        } catch (Exception e) {
-        }
-        throw new DSSException("Unsupported algorithm: " + name);
-    }
+			return valueOf(name);
+		} catch (Exception e) {
+		}
+		throw new DSSException("Unsupported algorithm: " + name);
+	}
 
-    /**
-     * Returns the encryption algorithm associated to the given JCE name.
-     *
-     * @param name
-     * @param defaultValue
-     * @return
-     */
-    public static EncryptionAlgorithm forName(final String name, final EncryptionAlgorithm defaultValue) {
+	/**
+	 * Returns the encryption algorithm associated to the given JCE name.
+	 *
+	 * @param name
+	 * @param defaultValue
+	 * @return
+	 */
+	public static EncryptionAlgorithm forName(final String name, final EncryptionAlgorithm defaultValue) {
 
-        // To be checked if ECC exists also .
-        if ("EC".equals(name) || "ECC".equals(name)) {
-            return ECDSA;
-        }
-        try {
+		// To be checked if ECC exists also .
+		if ("EC".equals(name) || "ECC".equals(name)) {
+			return ECDSA;
+		}
+		try {
 
-            final EncryptionAlgorithm encryptionAlgorithm = valueOf(name);
-            return encryptionAlgorithm;
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
+			final EncryptionAlgorithm encryptionAlgorithm = valueOf(name);
+			return encryptionAlgorithm;
+		} catch (Exception e) {
+			return defaultValue;
+		}
+	}
 
-    private EncryptionAlgorithm(String name, String oid, String padding) {
-        this.name = name;
-        this.oid = oid;
-        this.padding = padding;
-    }
+	private EncryptionAlgorithm(String name, String oid, String padding) {
+		this.name = name;
+		this.oid = oid;
+		this.padding = padding;
+	}
 
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
 
-    /**
-     * @return the OID
-     */
-    public String getOid() {
-        return oid;
-    }
+	/**
+	 * @return the OID
+	 */
+	public String getOid() {
+		return oid;
+	}
 
-    /**
-     * @return the padding
-     */
-    public String getPadding() {
-        return padding;
-    }
+	/**
+	 * @return the padding
+	 */
+	public String getPadding() {
+		return padding;
+	}
 }

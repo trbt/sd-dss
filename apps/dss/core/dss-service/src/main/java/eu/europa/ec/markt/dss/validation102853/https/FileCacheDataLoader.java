@@ -110,8 +110,9 @@ public class FileCacheDataLoader extends CommonsDataLoader {
 
     private File getCacheFile(final String fileName) {
 
-        LOG.debug("Cached file: " + fileCacheDirectory + "/" + fileName);
-        return new File(fileCacheDirectory, fileName);
+	    final String trimmedFileName = fileName.trim();
+	    LOG.debug("Cached file: " + fileCacheDirectory + "/" + trimmedFileName);
+        return new File(fileCacheDirectory, trimmedFileName);
     }
 
     /**
