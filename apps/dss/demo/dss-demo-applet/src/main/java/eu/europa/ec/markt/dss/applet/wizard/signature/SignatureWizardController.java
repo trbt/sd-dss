@@ -24,8 +24,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import javax.xml.crypto.dsig.CanonicalizationMethod;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
@@ -48,16 +52,19 @@ import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController;
 import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardStep;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.parameter.BLevelParameters.Policy;
+import eu.europa.ec.markt.dss.parameter.DSSReference;
+import eu.europa.ec.markt.dss.parameter.DSSTransform;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
+import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
 
 /**
  * TODO
- *
- * <p>
+ * <p/>
+ * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
@@ -65,154 +72,193 @@ import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
  */
 public class SignatureWizardController extends DSSWizardController<SignatureModel> {
 
-    private FileView fileView;
-    private SignatureView signatureView;
-    private TokenView tokenView;
-    private PKCS11View pkcs11View;
-    private PKCS12View pkcs12View;
-    private SignatureDigestAlgorithmView signatureDigestAlgorithmView;
-    private CertificateView certificateView;
-    private PersonalDataView personalDataView;
-    private SaveView saveView;
-    private FinishView signView;
+	private FileView fileView;
+	private SignatureView signatureView;
+	private TokenView tokenView;
+	private PKCS11View pkcs11View;
+	private PKCS12View pkcs12View;
+	private SignatureDigestAlgorithmView signatureDigestAlgorithmView;
+	private CertificateView certificateView;
+	private PersonalDataView personalDataView;
+	private SaveView saveView;
+	private FinishView signView;
 
-    /**
-     * The default constructor for SignatureWizardController.
-     *
-     * @param core
-     * @param model
-     */
-    public SignatureWizardController(final DSSAppletCore core, final SignatureModel model) {
-        super(core, model);
-    }
+	/**
+	 * The default constructor for SignatureWizardController.
+	 *
+	 * @param core
+	 * @param model
+	 */
+	public SignatureWizardController(final DSSAppletCore core, final SignatureModel model) {
+		super(core, model);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#doCancel()
-     */
-    @Override
-    protected void doCancel() {
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#doCancel()
+	 */
+	@Override
+	protected void doCancel() {
 
-        getCore().getController(ActivityController.class).display();
-    }
+		getCore().getController(ActivityController.class).display();
+	}
 
-    /**
-     *
-     */
-    public void doRefreshPrivateKeys() {
+	/**
+	 *
+	 */
+	public void doRefreshPrivateKeys() {
 
-        try {
-            final SignatureTokenConnection tokenConnection = getModel().getTokenConnection();
-            getModel().setPrivateKeys(tokenConnection.getKeys());
-        } catch (final DSSException e) {
-            // FIXME
-            LOG.error(e.getMessage(), e);
-        }
+		try {
+			final SignatureTokenConnection tokenConnection = getModel().getTokenConnection();
+			getModel().setPrivateKeys(tokenConnection.getKeys());
+		} catch (final DSSException e) {
+			// FIXME
+			LOG.error(e.getMessage(), e);
+		}
 
-    }
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#doStart()
-     */
-    @Override
-    protected Class<? extends WizardStep<SignatureModel, ? extends WizardController<SignatureModel>>> doStart() {
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#doStart()
+	 */
+	@Override
+	protected Class<? extends WizardStep<SignatureModel, ? extends WizardController<SignatureModel>>> doStart() {
 
-        return FileStep.class;
-    }
+		return FileStep.class;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerViews()
-     */
-    @Override
-    protected void registerViews() {
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerViews()
+	 */
+	@Override
+	protected void registerViews() {
 
-        fileView = new FileView(getCore(), this, getModel());
-        signatureView = new SignatureView(getCore(), this, getModel());
-        tokenView = new TokenView(getCore(), this, getModel());
-        pkcs11View = new PKCS11View(getCore(), this, getModel());
-        pkcs12View = new PKCS12View(getCore(), this, getModel());
-        signatureDigestAlgorithmView = new SignatureDigestAlgorithmView(getCore(), this, getModel());
-        certificateView = new CertificateView(getCore(), this, getModel());
-        personalDataView = new PersonalDataView(getCore(), this, getModel());
-        saveView = new SaveView(getCore(), this, getModel());
-        signView = new FinishView(getCore(), this, getModel());
-    }
+		fileView = new FileView(getCore(), this, getModel());
+		signatureView = new SignatureView(getCore(), this, getModel());
+		tokenView = new TokenView(getCore(), this, getModel());
+		pkcs11View = new PKCS11View(getCore(), this, getModel());
+		pkcs12View = new PKCS12View(getCore(), this, getModel());
+		signatureDigestAlgorithmView = new SignatureDigestAlgorithmView(getCore(), this, getModel());
+		certificateView = new CertificateView(getCore(), this, getModel());
+		personalDataView = new PersonalDataView(getCore(), this, getModel());
+		saveView = new SaveView(getCore(), this, getModel());
+		signView = new FinishView(getCore(), this, getModel());
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerWizardStep()
-     */
-    @Override
-    protected Map<Class<? extends WizardStep<SignatureModel, ? extends WizardController<SignatureModel>>>, ? extends WizardStep<SignatureModel, ? extends WizardController<SignatureModel>>> registerWizardStep() {
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerWizardStep()
+	 */
+	@Override
+	protected Map<Class<? extends WizardStep<SignatureModel, ? extends WizardController<SignatureModel>>>, ? extends WizardStep<SignatureModel, ? extends WizardController<SignatureModel>>> registerWizardStep() {
 
-        final SignatureModel model = getModel();
+		final SignatureModel model = getModel();
 
-        final Map steps = new HashMap();
-        steps.put(FileStep.class, new FileStep(model, fileView, this));
-        steps.put(SignatureStep.class, new SignatureStep(model, signatureView, this));
-        steps.put(TokenStep.class, new TokenStep(model, tokenView, this));
-        steps.put(PKCS11Step.class, new PKCS11Step(model, pkcs11View, this));
-        steps.put(PKCS12Step.class, new PKCS12Step(model, pkcs12View, this));
-        steps.put(SignatureDigestAlgorithmStep.class, new SignatureDigestAlgorithmStep(model, signatureDigestAlgorithmView, this));
-        steps.put(CertificateStep.class, new CertificateStep(model, certificateView, this));
-        steps.put(PersonalDataStep.class, new PersonalDataStep(model, personalDataView, this));
-        steps.put(SaveStep.class, new SaveStep(model, saveView, this));
-        steps.put(FinishStep.class, new FinishStep(model, signView, this));
+		final Map steps = new HashMap();
+		steps.put(FileStep.class, new FileStep(model, fileView, this));
+		steps.put(SignatureStep.class, new SignatureStep(model, signatureView, this));
+		steps.put(TokenStep.class, new TokenStep(model, tokenView, this));
+		steps.put(PKCS11Step.class, new PKCS11Step(model, pkcs11View, this));
+		steps.put(PKCS12Step.class, new PKCS12Step(model, pkcs12View, this));
+		steps.put(SignatureDigestAlgorithmStep.class, new SignatureDigestAlgorithmStep(model, signatureDigestAlgorithmView, this));
+		steps.put(CertificateStep.class, new CertificateStep(model, certificateView, this));
+		steps.put(PersonalDataStep.class, new PersonalDataStep(model, personalDataView, this));
+		steps.put(SaveStep.class, new SaveStep(model, saveView, this));
+		steps.put(FinishStep.class, new FinishStep(model, signView, this));
 
-        return steps;
-    }
+		return steps;
+	}
 
-    /**
-     * @throws IOException
-     * @throws NoSuchAlgorithmException
-     * @throws DSSException
-     */
-    public void signDocument() throws IOException, NoSuchAlgorithmException, DSSException {
+	/**
+	 * @throws IOException
+	 * @throws NoSuchAlgorithmException
+	 * @throws DSSException
+	 */
+	public void signDocument() throws IOException, NoSuchAlgorithmException, DSSException {
 
-        final SignatureModel model = getModel();
+		final SignatureModel model = getModel();
 
-        final File fileToSign = model.getSelectedFile();
-        final SignatureTokenConnection tokenConnection = model.getTokenConnection();
-        final DSSPrivateKeyEntry privateKey = model.getSelectedPrivateKey();
+		final File fileToSign = model.getSelectedFile();
+		final SignatureTokenConnection tokenConnection = model.getTokenConnection();
+		final DSSPrivateKeyEntry privateKey = model.getSelectedPrivateKey();
 
-        final SignatureParameters parameters = new SignatureParameters();
-        parameters.setPrivateKeyEntry(privateKey);
-        final String signatureLevelString = model.getLevel();
-        final SignatureLevel signatureLevel = SignatureLevel.valueByName(signatureLevelString);
-        parameters.setSignatureLevel(signatureLevel);
-        parameters.setSignaturePackaging(model.getPackaging());
-        parameters.setSigningToken(tokenConnection);
+		final SignatureParameters parameters = new SignatureParameters();
+		parameters.setPrivateKeyEntry(privateKey);
+		parameters.setSigningToken(tokenConnection);
 
-        if (model.isClaimedCheck()) {
-            parameters.bLevel().addClaimedSignerRole(model.getClaimedRole());
-        }
+		DigestAlgorithm digestAlgorithm = model.getSignatureDigestAlgorithm();
+		if (digestAlgorithm == null) {
+			parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
+		} else {
+			parameters.setDigestAlgorithm(digestAlgorithm);
+		}
+		if (model.isTslSignatureCheck()) {
 
-        DigestAlgorithm signatureAlgorithm = model.getSignatureDigestAlgorithm();
-        if (signatureAlgorithm == null) {
-            parameters.setDigestAlgorithm(DigestAlgorithm.SHA256);
-        } else {
-            parameters.setDigestAlgorithm(signatureAlgorithm);
-        }
+			parameters.clearCertificateChain();
+			parameters.setCertificateChain(parameters.getSigningCertificate());
+			parameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_B);
+			parameters.setSignaturePackaging(SignaturePackaging.ENVELOPED);
 
-        if (model.isSignaturePolicyCheck()) {
-            final byte[] hashValue = DSSUtils.base64Decode(model.getSignaturePolicyValue());
-            final Policy policy = parameters.bLevel().getSignaturePolicy();
-            policy.setDigestValue(hashValue);
-            policy.setId(model.getSignaturePolicyId());
-            DigestAlgorithm digestAlgo = DigestAlgorithm.forName(model.getSignaturePolicyAlgo());
-            policy.setDigestAlgorithm(digestAlgo);
-        }
+			final List<DSSReference> references = new ArrayList<DSSReference>();
 
-        final DSSDocument signedDocument = SigningUtils.signDocument(serviceURL, fileToSign, parameters);
-        FileOutputStream fos = new FileOutputStream(model.getTargetFile());
-        DSSUtils.copy(signedDocument.openStream(), fos);
-        fos.close();
+			DSSReference dssReference = new DSSReference();
+			dssReference.setId("xml_ref_id");
+			dssReference.setUri("");
 
-    }
+			final List<DSSTransform> transforms = new ArrayList<DSSTransform>();
+
+			DSSTransform dssTransform = new DSSTransform();
+			dssTransform.setAlgorithm(CanonicalizationMethod.ENVELOPED);
+			transforms.add(dssTransform);
+
+			dssTransform = new DSSTransform();
+			dssTransform.setAlgorithm(CanonicalizationMethod.EXCLUSIVE);
+			transforms.add(dssTransform);
+
+			dssReference.setTransforms(transforms);
+			references.add(dssReference);
+
+			//			System.out.println("###APPLET - REFERENCES:");
+			//			for (DSSReference reference : references) {
+			//				System.out.println("    --> " + reference.getId() + "/" + reference.getUri() + "/" + reference.getType());
+			//				final List<DSSTransform> transforms_ = reference.getTransforms();
+			//				for (DSSTransform transform : transforms_) {
+			//
+			//					System.out.println("    --> ---> " + transform.getElementName() + "/" + transform.getTextContent() + "/" + transform.getAlgorithm());
+			//				}
+			//			}
+			parameters.setReferences(references);
+
+		} else {
+
+			final String signatureLevelString = model.getLevel();
+			final SignatureLevel signatureLevel = SignatureLevel.valueByName(signatureLevelString);
+			parameters.setSignatureLevel(signatureLevel);
+			parameters.setSignaturePackaging(model.getPackaging());
+
+			if (model.isClaimedCheck()) {
+				parameters.bLevel().addClaimedSignerRole(model.getClaimedRole());
+			}
+			if (model.isSignaturePolicyCheck()) {
+
+				final byte[] hashValue = DSSUtils.base64Decode(model.getSignaturePolicyValue());
+				final Policy policy = new Policy();
+				policy.setId(model.getSignaturePolicyId());
+				final DigestAlgorithm policyDigestAlgorithm = DigestAlgorithm.forName(model.getSignaturePolicyAlgo());
+				policy.setDigestAlgorithm(policyDigestAlgorithm);
+				policy.setDigestValue(hashValue);
+				parameters.bLevel().setSignaturePolicy(policy);
+			}
+		}
+		final DSSDocument signedDocument = SigningUtils.signDocument(serviceURL, fileToSign, parameters);
+		final FileOutputStream fos = new FileOutputStream(model.getTargetFile());
+		DSSUtils.copy(signedDocument.openStream(), fos);
+		fos.close();
+	}
 }
