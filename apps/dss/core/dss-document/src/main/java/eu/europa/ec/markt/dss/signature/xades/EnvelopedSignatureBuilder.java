@@ -46,7 +46,7 @@ import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
 
 /**
  * This class handles the specifics of the enveloped XML signature
- *
+ * <p/>
  * <p> DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
@@ -54,113 +54,113 @@ import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
  */
 class EnvelopedSignatureBuilder extends SignatureBuilder {
 
-    /**
-     * The default constructor for EnvelopedSignatureBuilder. The enveloped signature uses by default the exclusive method of canonicalization.
-     *
-     * @param params  The set of parameters relating to the structure and process of the creation or extension of the electronic signature.
-     * @param origDoc The original document to sign.
-     */
-    public EnvelopedSignatureBuilder(SignatureParameters params, DSSDocument origDoc) {
+	/**
+	 * The default constructor for EnvelopedSignatureBuilder. The enveloped signature uses by default the exclusive method of canonicalization.
+	 *
+	 * @param params  The set of parameters relating to the structure and process of the creation or extension of the electronic signature.
+	 * @param origDoc The original document to sign.
+	 */
+	public EnvelopedSignatureBuilder(SignatureParameters params, DSSDocument origDoc) {
 
-        super(params, origDoc);
-        signedInfoCanonicalizationMethod = CanonicalizationMethod.EXCLUSIVE;
-        reference2CanonicalizationMethod = CanonicalizationMethod.EXCLUSIVE;
-    }
+		super(params, origDoc);
+		signedInfoCanonicalizationMethod = CanonicalizationMethod.EXCLUSIVE;
+		reference2CanonicalizationMethod = CanonicalizationMethod.EXCLUSIVE;
+	}
 
-    /**
-     * This method creates the first reference (this is a reference to the file to be signed) witch is specific for each form of signature. Here, the value of the URI is set to
-     * http://www.w3.org/TR/1999/REC-xpath-19991116 (XPath recommendation) which means that an XPath-expression must be used to select a defined subset of the document tree.
-     */
-    @Override
-    protected void incorporateReference1() throws DSSException {
+	/**
+	 * This method creates the first reference (this is a reference to the file to be signed) witch is specific for each form of signature. Here, the value of the URI is set to
+	 * http://www.w3.org/TR/1999/REC-xpath-19991116 (XPath recommendation) which means that an XPath-expression must be used to select a defined subset of the document tree.
+	 */
+	@Override
+	protected void incorporateReference1() throws DSSException {
 
-        final List<DSSReference> references = params.getReferences();
-        final DSSReference reference = references.get(0);
+		final List<DSSReference> references = params.getReferences();
+		final DSSReference reference = references.get(0);
 
-        // <ds:Reference Id="xml_ref_id" URI="">
-        final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Reference");
-        referenceDom.setAttribute("Id", reference.getId());
-        referenceDom.setAttribute("URI", reference.getUri());
+		// <ds:Reference Id="xml_ref_id" URI="">
+		final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Reference");
+		referenceDom.setAttribute("Id", reference.getId());
+		referenceDom.setAttribute("URI", reference.getUri());
 
-        final Element transformsDom = DSSXMLUtils.addElement(documentDom, referenceDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transforms");
+		final Element transformsDom = DSSXMLUtils.addElement(documentDom, referenceDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transforms");
 
-        final List<DSSTransform> transforms = reference.getTransforms();
-        for (final DSSTransform transform : transforms) {
+		final List<DSSTransform> transforms = reference.getTransforms();
+		for (final DSSTransform transform : transforms) {
 
-            final Element transformDom = DSSXMLUtils.addElement(documentDom, transformsDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transform");
-            transformDom.setAttribute("Algorithm", transform.getAlgorithm());
-            final String elementName = transform.getElementName();
-            if (elementName != null && !elementName.isEmpty()) {
+			final Element transformDom = DSSXMLUtils.addElement(documentDom, transformsDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transform");
+			transformDom.setAttribute("Algorithm", transform.getAlgorithm());
+			final String elementName = transform.getElementName();
+			if (elementName != null && !elementName.isEmpty()) {
 
-                final String namespace = transform.getNamespace();
-                final String textContent = transform.getTextContent();
-                DSSXMLUtils.addTextElement(documentDom, transformDom, namespace, elementName, textContent);
-            }
-        }
-        // <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-        final DigestAlgorithm digestAlgorithm = params.getDigestAlgorithm();
-        incorporateDigestMethod(referenceDom, digestAlgorithm);
+				final String namespace = transform.getNamespace();
+				final String textContent = transform.getTextContent();
+				DSSXMLUtils.addTextElement(documentDom, transformDom, namespace, elementName, textContent);
+			}
+		}
+		// <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+		final DigestAlgorithm digestAlgorithm = params.getDigestAlgorithm();
+		incorporateDigestMethod(referenceDom, digestAlgorithm);
 
-        // We remove existing signatures
-        final Document domDoc = DSSXMLUtils.buildDOM(originalDocument);
-        final NodeList signatureNodeList = domDoc.getElementsByTagNameNS(XMLSignature.XMLNS, XPathQueryHolder.XMLE_SIGNATURE);
-        for (int ii = 0; ii < signatureNodeList.getLength(); ii++) {
+		// We remove existing signatures
+		final Document domDoc = DSSXMLUtils.buildDOM(originalDocument);
+		final NodeList signatureNodeList = domDoc.getElementsByTagNameNS(XMLSignature.XMLNS, XPathQueryHolder.XMLE_SIGNATURE);
+		for (int ii = 0; ii < signatureNodeList.getLength(); ii++) {
 
-            final Element signatureDOM = (Element) signatureNodeList.item(ii);
-            signatureDOM.getParentNode().removeChild(signatureDOM);
-        }
-        byte[] canonicalizedBytes = DSSXMLUtils.canonicalizeSubtree(signedInfoCanonicalizationMethod, domDoc);
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Canonicalization method  -->" + signedInfoCanonicalizationMethod);
-            LOG.info("Canonicalised REF_1      --> " + new String(canonicalizedBytes));
-        }
-        incorporateDigestValue(referenceDom, digestAlgorithm, canonicalizedBytes);
-    }
+			final Element signatureDOM = (Element) signatureNodeList.item(ii);
+			signatureDOM.getParentNode().removeChild(signatureDOM);
+		}
+		byte[] canonicalizedBytes = DSSXMLUtils.canonicalizeSubtree(signedInfoCanonicalizationMethod, domDoc);
+		if (LOG.isInfoEnabled()) {
+			LOG.trace("Canonicalization method  -->" + signedInfoCanonicalizationMethod);
+			LOG.trace("Canonicalized REF_1      --> " + new String(canonicalizedBytes));
+		}
+		incorporateDigestValue(referenceDom, digestAlgorithm, canonicalizedBytes);
+	}
 
-    /**
-     * Adds signature value to the signature and returns XML signature (InMemoryDocument)
-     *
-     * @param signatureValue
-     * @return
-     * @throws DSSException
-     */
-    @Override
-    public DSSDocument signDocument(final byte[] signatureValue) throws DSSException {
+	/**
+	 * Adds signature value to the signature and returns XML signature (InMemoryDocument)
+	 *
+	 * @param signatureValue
+	 * @return
+	 * @throws DSSException
+	 */
+	@Override
+	public DSSDocument signDocument(final byte[] signatureValue) throws DSSException {
 
-        if (!built) {
+		if (!built) {
 
-            build();
-        }
-        final EncryptionAlgorithm encryptionAlgorithm = params.getEncryptionAlgorithm();
-        final byte[] signatureValueBytes = DSSSignatureUtils.convertToXmlDSig(encryptionAlgorithm, signatureValue);
-        final String signatureValueBase64Encoded = DSSUtils.base64Encode(signatureValueBytes);
-        final Text signatureValueNode = documentDom.createTextNode(signatureValueBase64Encoded);
-        signatureValueDom.appendChild(signatureValueNode);
+			build();
+		}
+		final EncryptionAlgorithm encryptionAlgorithm = params.getEncryptionAlgorithm();
+		final byte[] signatureValueBytes = DSSSignatureUtils.convertToXmlDSig(encryptionAlgorithm, signatureValue);
+		final String signatureValueBase64Encoded = DSSUtils.base64Encode(signatureValueBytes);
+		final Text signatureValueNode = documentDom.createTextNode(signatureValueBase64Encoded);
+		signatureValueDom.appendChild(signatureValueNode);
 
-        final Document originalDocumentDom = DSSXMLUtils.buildDOM(originalDocument);
+		final Document originalDocumentDom = DSSXMLUtils.buildDOM(originalDocument);
 
-        final Node copiedNode = originalDocumentDom.importNode(signatureDom, true);
-        originalDocumentDom.getDocumentElement().appendChild(copiedNode);
+		final Node copiedNode = originalDocumentDom.importNode(signatureDom, true);
+		originalDocumentDom.getDocumentElement().appendChild(copiedNode);
 
-        byte[] documentBytes = DSSXMLUtils.transformDomToByteArray(originalDocumentDom);
-        return new InMemoryDocument(documentBytes);
-    }
+		byte[] documentBytes = DSSXMLUtils.transformDomToByteArray(originalDocumentDom);
+		return new InMemoryDocument(documentBytes);
+	}
 
-    /**
-     * This method returns data format reference specific for enveloped signature.
-     */
-    @Override
-    protected String getDataObjectFormatObjectReference() {
+	/**
+	 * This method returns data format reference specific for enveloped signature.
+	 */
+	@Override
+	protected String getDataObjectFormatObjectReference() {
 
-        return "#xml_ref_id";
-    }
+		return "#xml_ref_id";
+	}
 
-    /**
-     * This method returns data format mime type specific for enveloped signature.
-     */
-    @Override
-    protected String getDataObjectFormatMimeType() {
+	/**
+	 * This method returns data format mime type specific for enveloped signature.
+	 */
+	@Override
+	protected String getDataObjectFormatMimeType() {
 
-        return "text/xml";
-    }
+		return "text/xml";
+	}
 }

@@ -641,8 +641,8 @@ public class AdESTValidation implements Indication, SubIndication, NodeName, Nod
         constraint.setIndications(INDETERMINATE, null, ADEST_ROTVPIIC_ANS);
         constraint.setSubIndication1(NO_VALID_TIMESTAMP);
         constraint.setSubIndication2(NO_TIMESTAMP);
-        final String formatedBestSignatureTime = RuleUtils.formatDate(bestSignatureTime);
-        constraint.setAttribute(BEST_SIGNATURE_TIME, formatedBestSignatureTime);
+        final String formattedBestSignatureTime = RuleUtils.formatDate(bestSignatureTime);
+        constraint.setAttribute(BEST_SIGNATURE_TIME, formattedBestSignatureTime);
         constraint.setConclusionReceiver(conclusion);
 
         return constraint.check();

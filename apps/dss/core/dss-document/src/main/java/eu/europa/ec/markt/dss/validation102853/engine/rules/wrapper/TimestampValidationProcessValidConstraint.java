@@ -51,7 +51,7 @@ public class TimestampValidationProcessValidConstraint extends Constraint {
     }
 
     /**
-     * This method carry out the validation of the constraint. This constraint has a constant {@code Level} FAIL.
+     * This method carries out the validation of the constraint. This constraint has a constant {@code Level} FAIL.
      *
      * @return true if the constraint is met, false otherwise.
      */

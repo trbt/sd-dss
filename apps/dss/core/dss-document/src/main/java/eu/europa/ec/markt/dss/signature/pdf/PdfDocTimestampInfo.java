@@ -29,7 +29,7 @@ import eu.europa.ec.markt.dss.validation102853.TimestampToken;
  * DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
- * @version $Revision: 3164 $ - $Date: 2013-12-10 15:04:14 +0100 (Tue, 10 Dec 2013) $
+ * @version $Revision: 3727 $ - $Date: 2014-04-16 17:07:53 +0200 (Wed, 16 Apr 2014) $
  */
 public interface PdfDocTimestampInfo extends PdfSignatureOrDocTimestampInfo {
     TimestampToken getTimestampToken();

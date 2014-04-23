@@ -56,7 +56,7 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 /**
  * CAdES implementation of DocumentSignatureService
  *
- * @version $Revision: 3729 $ - $Date: 2014-04-18 05:32:39 +0200 (Fri, 18 Apr 2014) $
+ * @version $Revision: 3760 $ - $Date: 2014-04-21 07:53:08 +0200 (Mon, 21 Apr 2014) $
  */
 
 public class CAdESService extends AbstractSignatureService {
@@ -117,8 +117,8 @@ public class CAdESService extends AbstractSignatureService {
 
         final DSSDocument dssDocument = getSignedContent(toSignDocument);
 
-        final SignatureAlgorithm signatureAlgo = parameters.getSignatureAlgorithm();
-        final PreComputedContentSigner preComputedContentSigner = new PreComputedContentSigner(signatureAlgo.getJCEId());
+        final SignatureAlgorithm signatureAlgorithm = parameters.getSignatureAlgorithm();
+        final PreComputedContentSigner preComputedContentSigner = new PreComputedContentSigner(signatureAlgorithm.getJCEId());
 
         SignerInfoGeneratorBuilder signerInfoGeneratorBuilder = cmsSignedDataGeneratorBuilder.getSignerInfoGeneratorBuilder(dssDocument, parameters, false);
 

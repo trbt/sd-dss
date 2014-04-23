@@ -88,6 +88,7 @@
         </Cryptographic>
         <MandatedSignedQProperties>
             <SigningTime Level="FAIL"/>
+	        <!--<ContentType Level="FAIL">1.2.840.113549.1.7.1</ContentType>-->
         </MandatedSignedQProperties>
     </MainSignature>
     <Timestamp>

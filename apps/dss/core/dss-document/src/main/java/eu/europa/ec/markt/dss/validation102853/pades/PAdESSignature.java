@@ -107,8 +107,7 @@ public class PAdESSignature extends DefaultAdvancedSignature {
      * @param outerCatalog
      * @param signatureDictionary
      * @param pdfSignatureOrDocTimestampInfo
-     * @throws org.bouncycastle.cms.CMSException
-     * @throws java.io.IOException
+     * @throws eu.europa.ec.markt.dss.exception.DSSException
      */
     public PAdESSignature(DSSDocument document, final PdfDict pdfCatalog, final PdfDict outerCatalog, final PdfDict signatureDictionary,
                           final PdfSignatureInfo pdfSignatureOrDocTimestampInfo, final CertificatePool certPool) throws DSSException {
@@ -481,7 +480,7 @@ public class PAdESSignature extends DefaultAdvancedSignature {
                 dataForLevelPresent = hasDocumentTimestampOnTopOfDSSDict();
                 dataForLevelPresent &= (((signatureTimestamps != null) && (!signatureTimestamps.isEmpty())));
                 break;
-            case PADES_102778_LTV:
+            case PAdES_102778_LTV:
                 dataForLevelPresent = hasDocumentTimestampOnTopOfDSSDict();
                 break;
             case PAdES_BASELINE_LT:
@@ -501,7 +500,7 @@ public class PAdESSignature extends DefaultAdvancedSignature {
     }
 
     public SignatureLevel[] getSignatureLevels() {
-        return new SignatureLevel[]{SignatureLevel.PAdES_BASELINE_B, SignatureLevel.PAdES_BASELINE_T, SignatureLevel.PAdES_BASELINE_LT, SignatureLevel.PADES_102778_LTV, SignatureLevel.PAdES_BASELINE_LTA};
+        return new SignatureLevel[]{SignatureLevel.PAdES_BASELINE_B, SignatureLevel.PAdES_BASELINE_T, SignatureLevel.PAdES_BASELINE_LT, SignatureLevel.PAdES_102778_LTV, SignatureLevel.PAdES_BASELINE_LTA};
     }
 
     private boolean hasDSSDictionary() {
