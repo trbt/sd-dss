@@ -42,8 +42,7 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
 /**
  * This class represents a constraint and indicates its level: IGNORE, INFORM, WARN, FAIL.
- *
- * <p>
+ * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
@@ -51,305 +50,310 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
  */
 public class Constraint implements NodeName, NodeValue, AttributeName, AttributeValue, Indication, SubIndication {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Constraint.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Constraint.class);
 
-    /**
-     * This field represents the {@code XmlNode} of the constraint
-     */
-    protected XmlNode node;
+	/**
+	 * This field represents the {@code XmlNode} of the constraint
+	 */
+	protected XmlNode node;
 
-    /**
-     * This field represents the simple {@code String} value of the constraint
-     */
-    protected String value;
+	/**
+	 * This field represents the simple {@code String} value of the constraint
+	 */
+	protected String value;
 
-    /**
-     * This field represents the simple {@code String} expected value of the constraint
-     */
-    protected String expectedValue;
+	/**
+	 * This field represents the simple {@code String} expected value of the constraint
+	 */
+	protected String expectedValue;
 
-    /**
-     * This field represents the list of acceptable identifiers
-     */
-    protected List<String> identifiers;
+	/**
+	 * This field represents the list of acceptable identifiers
+	 */
+	protected List<String> identifiers;
 
-    protected String indication;
-    protected String subIndication;
+	protected String indication;
+	protected String subIndication;
 
-    protected MessageTag failureMessageTag;
+	protected MessageTag failureMessageTag;
 
-    protected Map<String, String> messageAttributes = new HashMap<String, String>();
-    protected Conclusion conclusion;
+	protected Map<String, String> messageAttributes = new HashMap<String, String>();
+	protected Conclusion conclusion;
 
-    /**
-     * This method creates the constraint {@code XmlNode}.
-     *
-     * @param parentNode Represents the parent {@code XmlNode} to which the constraint node should be attached.
-     * @param messageTag is the message describing the constraint.
-     * @return the {@code XmlNode} representing the current constraint in the validation process
-     */
-    public XmlNode create(final XmlNode parentNode, final MessageTag messageTag) {
+	/**
+	 * This method creates the constraint {@code XmlNode}.
+	 *
+	 * @param parentNode Represents the parent {@code XmlNode} to which the constraint node should be attached.
+	 * @param messageTag is the message describing the constraint.
+	 * @return the {@code XmlNode} representing the current constraint in the validation process
+	 */
+	public XmlNode create(final XmlNode parentNode, final MessageTag messageTag) {
 
-        this.node = parentNode.addChild(CONSTRAINT);
-        this.node.addChild(NAME, messageTag.getMessage()).setAttribute(NAME_ID, messageTag.name());
-        return this.node;
-    }
+		this.node = parentNode.addChild(CONSTRAINT);
+		this.node.addChild(NAME, messageTag.getMessage()).setAttribute(NAME_ID, messageTag.name());
+		return this.node;
+	}
 
-    /**
-     * This method creates the constraint {@code XmlNode}. This method should be used when the message describing the constraint comports dynamic parameters.
-     *
-     * @param parentNode Represents the parent {@code XmlNode} to which the constraint node should be attached.
-     * @param messageTag is the message describing the constraint.
-     * @param parameters the dynamic parameters to integrate into the message.
-     * @return the {@code XmlNode} representing the current constraint in the validation process.
-     */
-    public XmlNode create(final XmlNode parentNode, final MessageTag messageTag, final String parameters) {
+	/**
+	 * This method creates the constraint {@code XmlNode}. This method should be used when the message describing the constraint comports dynamic parameters.
+	 *
+	 * @param parentNode Represents the parent {@code XmlNode} to which the constraint node should be attached.
+	 * @param messageTag is the message describing the constraint.
+	 * @param parameters the dynamic parameters to integrate into the message.
+	 * @return the {@code XmlNode} representing the current constraint in the validation process.
+	 */
+	public XmlNode create(final XmlNode parentNode, final MessageTag messageTag, final String parameters) {
 
-        this.node = parentNode.addChild(CONSTRAINT);
-        final String message = String.format(messageTag.getMessage(), parameters);
-        this.node.addChild(NAME, message).setAttribute(NAME_ID, messageTag.name());
-        return this.node;
-    }
+		this.node = parentNode.addChild(CONSTRAINT);
+		final String message = String.format(messageTag.getMessage(), parameters);
+		this.node.addChild(NAME, message).setAttribute(NAME_ID, messageTag.name());
+		return this.node;
+	}
 
-    /**
-     * @param value the simple value of the constraint to set.
-     */
-    public void setValue(final String value) {
-        this.value = value;
-    }
+	/**
+	 * @param value the simple value of the constraint to set.
+	 */
+	public void setValue(final String value) {
+		this.value = value;
+	}
 
-    /**
-     * @param booleanValue the simple value of the constraint to set. The {@code boolean} is converted to its {@code String} representation.
-     */
-    public void setValue(final boolean booleanValue) {
-        this.value = String.valueOf(booleanValue);
-    }
+	/**
+	 * @param booleanValue the simple value of the constraint to set. The {@code boolean} is converted to its {@code String} representation.
+	 */
+	public void setValue(final boolean booleanValue) {
+		this.value = String.valueOf(booleanValue);
+	}
 
-    /**
-     * @return the simple value of the constraint.
-     */
-    public String getValue() {
-        return value;
-    }
+	/**
+	 * @return the simple value of the constraint.
+	 */
+	public String getValue() {
+		return value;
+	}
 
-    public String getExpectedValue() {
-        return expectedValue;
-    }
+	public String getExpectedValue() {
+		return expectedValue;
+	}
 
-    /**
-     * @param expectedValue the simple expected value of the constraint to set.
-     */
-    public void setExpectedValue(final String expectedValue) {
-        this.expectedValue = expectedValue;
-    }
+	/**
+	 * @param expectedValue the simple expected value of the constraint to set.
+	 */
+	public void setExpectedValue(final String expectedValue) {
+		this.expectedValue = expectedValue;
+	}
 
-    /**
-     * This method carry out the validation of the constraint.
-     *
-     * @return true if the constraint is met, false otherwise.
-     */
-    public boolean check() {
+	/**
+	 * This method carry out the validation of the constraint.
+	 *
+	 * @return true if the constraint is met, false otherwise.
+	 */
+	public boolean check() {
 
-        if (ignore()) {
+		if (ignore()) {
 
-            node.addChild(STATUS, IGNORED);
-            return true;
-        }
-        if (inform()) {
+			node.addChild(STATUS, IGNORED);
+			return true;
+		}
+		if (inform()) {
 
-            node.addChild(STATUS, INFORMATION);
-            node.addChild(INFO, null, messageAttributes).setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
-            return true;
-        }
-        boolean error = value.isEmpty();
-        if (!error) {
+			node.addChild(STATUS, INFORMATION);
+			node.addChild(INFO, null, messageAttributes).setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
+			return true;
+		}
+		boolean error = value.isEmpty();
+		if (!error) {
 
-            if (!"*".equals(expectedValue)) {
+			if (!"*".equals(expectedValue)) {
 
-                error = expectedValue != null && !expectedValue.equals(value);
-            }
-        }
-        if (error) {
+				error = expectedValue != null && !expectedValue.equals(value);
+			}
+		}
+		if (error) {
 
-            if (warn()) {
+			if (warn()) {
 
-                node.addChild(STATUS, WARN);
-                final XmlNode xmlNode = node.addChild(WARNING, failureMessageTag, messageAttributes);
-                if (DSSUtils.isNotBlank(expectedValue) && !expectedValue.equals("true") && !expectedValue.equals("false")) {
-                    xmlNode.setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
-                }
-                conclusion.addWarning(failureMessageTag, messageAttributes);
-                return true;
-            }
-            node.addChild(STATUS, KO);
-            if (DSSUtils.isNotBlank(expectedValue) && !expectedValue.equals("true") && !expectedValue.equals("false")) {
-                node.addChild(INFO).setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
-            }
-            if (DSSUtils.isNotBlank(indication)) {
+				node.addChild(STATUS, WARN);
+				final XmlNode xmlNode = node.addChild(WARNING, failureMessageTag, messageAttributes);
+				if (DSSUtils.isNotBlank(expectedValue) && !expectedValue.equals("true") && !expectedValue.equals("false")) {
+					xmlNode.setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
+				}
+				conclusion.addWarning(failureMessageTag, messageAttributes);
+				return true;
+			}
+			node.addChild(STATUS, KO);
+			if (DSSUtils.isNotBlank(expectedValue) && !expectedValue.equals("true") && !expectedValue.equals("false")) {
+				node.addChild(INFO).setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
+			}
+			if (DSSUtils.isNotBlank(indication)) {
 
-                conclusion.setIndication(indication, subIndication);
-            }
-            conclusion.addError(failureMessageTag, messageAttributes);
-            return false;
-        }
-        node.addChild(STATUS, OK);
-        if (!messageAttributes.isEmpty()) {
-            node.addChild(INFO, null, messageAttributes);
-        }
-        return true;
-    }
+				conclusion.setIndication(indication, subIndication);
+			}
+			conclusion.addError(failureMessageTag, messageAttributes);
+			return false;
+		}
+		node.addChild(STATUS, OK);
+		if (!messageAttributes.isEmpty()) {
+			node.addChild(INFO, null, messageAttributes);
+		}
+		return true;
+	}
 
-    /**
-     * This method carry out the validation of the constraint.
-     *
-     * @return true if the constraint is met, false otherwise.
-     */
-    public boolean checkInList() {
+	/**
+	 * This method carry out the validation of the constraint.
+	 *
+	 * @return true if the constraint is met, false otherwise.
+	 */
+	public boolean checkInList() {
 
-        if (ignore()) {
+		if (ignore()) {
 
-            node.addChild(STATUS, IGNORED);
-            return true;
-        }
-        if (inform()) {
+			node.addChild(STATUS, IGNORED);
+			return true;
+		}
+		if (inform()) {
 
-            node.addChild(STATUS, INFORMATION);
-            node.addChild(INFO, null, messageAttributes).setAttribute("ExpectedValue", expectedValue).setAttribute("ConstraintValue", value);
-            return true;
-        }
-        final boolean contains = RuleUtils.contains1(value, identifiers);
-        if (!contains) {
+			node.addChild(STATUS, INFORMATION);
+			node.addChild(INFO, null, messageAttributes).setAttribute("ExpectedValue", expectedValue).setAttribute("ConstraintValue", value);
+			return true;
+		}
+		final boolean contains;
+		if (value != null && "*".equals(expectedValue)) {
 
-            if (warn()) {
+			contains = true;
+		} else {
+			contains = RuleUtils.contains1(value, identifiers);
+		}
+		if (!contains) {
 
-                node.addChild(STATUS, WARN);
-                node.addChild(WARNING, failureMessageTag, messageAttributes).setAttribute("ExpectedValue", expectedValue).setAttribute("ConstraintValue", value);
-                conclusion.addWarning(failureMessageTag, messageAttributes);
-                return true;
-            }
-            node.addChild(STATUS, KO);
-            node.addChild(INFO).setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
-            conclusion.setIndication(indication, subIndication);
-            conclusion.addError(failureMessageTag, messageAttributes);
-            return false;
-        }
-        node.addChild(STATUS, OK);
-        node.addChild(INFO, null, messageAttributes);
-        return true;
-    }
+			if (warn()) {
 
-    /**
-     * @param indication        to return when failure
-     * @param subIndication     to return when failure
-     * @param failureMessageTag is the answer to be done in case of the constraint failure.
-     */
-    public void setIndications(final String indication, final String subIndication, final MessageTag failureMessageTag) {
+				node.addChild(STATUS, WARN);
+				node.addChild(WARNING, failureMessageTag, messageAttributes).setAttribute("ExpectedValue", expectedValue).setAttribute("ConstraintValue", value);
+				conclusion.addWarning(failureMessageTag, messageAttributes);
+				return true;
+			}
+			node.addChild(STATUS, KO);
+			node.addChild(INFO).setAttribute(EXPECTED_VALUE, expectedValue).setAttribute(CONSTRAINT_VALUE, value);
+			conclusion.setIndication(indication, subIndication);
+			conclusion.addError(failureMessageTag, messageAttributes);
+			return false;
+		}
+		node.addChild(STATUS, OK);
+		node.addChild(INFO, null, messageAttributes);
+		return true;
+	}
 
-        this.indication = indication;
-        this.subIndication = subIndication;
-        this.failureMessageTag = failureMessageTag;
-    }
+	/**
+	 * @param indication        to return when failure
+	 * @param subIndication     to return when failure
+	 * @param failureMessageTag is the answer to be done in case of the constraint failure.
+	 */
+	public void setIndications(final String indication, final String subIndication, final MessageTag failureMessageTag) {
 
-    /**
-     * This method should be called when the failure of the constraint does not cause the failure of the process.
-     *
-     * @param failureMessageTag is the answer to be done in case of the constraint failure.
-     *
-     */
-    public void setIndications(final MessageTag failureMessageTag) {
+		this.indication = indication;
+		this.subIndication = subIndication;
+		this.failureMessageTag = failureMessageTag;
+	}
 
-        this.failureMessageTag = failureMessageTag;
-    }
+	/**
+	 * This method should be called when the failure of the constraint does not cause the failure of the process.
+	 *
+	 * @param failureMessageTag is the answer to be done in case of the constraint failure.
+	 */
+	public void setIndications(final MessageTag failureMessageTag) {
 
-    public void setConclusionReceiver(final Conclusion conclusion) {
-        this.conclusion = conclusion;
-    }
+		this.failureMessageTag = failureMessageTag;
+	}
 
-    /**
-     * @param identifiers the {@code List} of identifiers to set.
-     */
-    public void setIdentifiers(final List<String> identifiers) {
-        this.identifiers = identifiers;
-    }
+	public void setConclusionReceiver(final Conclusion conclusion) {
+		this.conclusion = conclusion;
+	}
 
-    public List<String> getIdentifiers() {
-        return identifiers;
-    }
+	/**
+	 * @param identifiers the {@code List} of identifiers to set.
+	 */
+	public void setIdentifiers(final List<String> identifiers) {
+		this.identifiers = identifiers;
+	}
 
-    /**
-     * This method allows to add an attribute to the answer node (to the message).
-     *
-     * @param attributeName  the attribute name
-     * @param attributeValue the attribute value
-     */
-    public Constraint setAttribute(final String attributeName, final String attributeValue) {
+	public List<String> getIdentifiers() {
+		return identifiers;
+	}
 
-        messageAttributes.put(attributeName, attributeValue);
-        return this;
-    }
+	/**
+	 * This method allows to add an attribute to the answer node (to the message).
+	 *
+	 * @param attributeName  the attribute name
+	 * @param attributeValue the attribute value
+	 */
+	public Constraint setAttribute(final String attributeName, final String attributeValue) {
 
-    public static enum Level {IGNORE, INFORM, WARN, FAIL}
+		messageAttributes.put(attributeName, attributeValue);
+		return this;
+	}
 
-    private Level level;
+	public static enum Level {IGNORE, INFORM, WARN, FAIL}
 
-    /**
-     * This is the default constructor. It takes a level of the constraint as parameter. The string representing the level is trimmed and capitalized. If there is no corresponding
-     * {@code Level} then the {@code DSSException} is raised.
-     *
-     * @param level the constraint level string.
-     */
-    public Constraint(final String level) throws DSSException {
+	private Level level;
 
-        try {
-            this.level = Level.valueOf(level.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
+	/**
+	 * This is the default constructor. It takes a level of the constraint as parameter. The string representing the level is trimmed and capitalized. If there is no corresponding
+	 * {@code Level} then the {@code DSSException} is raised.
+	 *
+	 * @param level the constraint level string.
+	 */
+	public Constraint(final String level) throws DSSException {
 
-            throw new DSSException("The validation policy configuration file should be checked: " + e.getMessage(), e);
-        }
-    }
+		try {
+			this.level = Level.valueOf(level.trim().toUpperCase());
+		} catch (IllegalArgumentException e) {
 
-    /**
-     * This method returns the constraint's level.
-     *
-     * @return the {@code Level} of the constraint
-     */
-    public Level getLevel() {
-        return level;
-    }
+			throw new DSSException("The validation policy configuration file should be checked: " + e.getMessage(), e);
+		}
+	}
 
-    /**
-     * Says if the constraint should be ignored.
-     *
-     * @return true if the constraint should be ignored.
-     */
-    public boolean ignore() {
-        return level.equals(Level.IGNORE);
-    }
+	/**
+	 * This method returns the constraint's level.
+	 *
+	 * @return the {@code Level} of the constraint
+	 */
+	public Level getLevel() {
+		return level;
+	}
 
-    /**
-     * Indicates if the constraint should only return information.
-     *
-     * @return true if the constraint should only return information.
-     */
-    public boolean inform() {
-        return level.equals(Level.INFORM);
-    }
+	/**
+	 * Says if the constraint should be ignored.
+	 *
+	 * @return true if the constraint should be ignored.
+	 */
+	public boolean ignore() {
+		return level.equals(Level.IGNORE);
+	}
 
-    /**
-     * Says if the result of the constraint should be considered as warning.
-     *
-     * @return true if the constraint should be considered as warning.
-     */
-    public boolean warn() {
-        return level.equals(Level.WARN);
-    }
+	/**
+	 * Indicates if the constraint should only return information.
+	 *
+	 * @return true if the constraint should only return information.
+	 */
+	public boolean inform() {
+		return level.equals(Level.INFORM);
+	}
 
-    /**
-     * Indicates whether the constraint should fail when it is not met.
-     *
-     * @return true if the constraint should fail.
-     */
-    public boolean fail() {
-        return level.equals(Level.FAIL);
-    }
+	/**
+	 * Says if the result of the constraint should be considered as warning.
+	 *
+	 * @return true if the constraint should be considered as warning.
+	 */
+	public boolean warn() {
+		return level.equals(Level.WARN);
+	}
+
+	/**
+	 * Indicates whether the constraint should fail when it is not met.
+	 *
+	 * @return true if the constraint should fail.
+	 */
+	public boolean fail() {
+		return level.equals(Level.FAIL);
+	}
 }

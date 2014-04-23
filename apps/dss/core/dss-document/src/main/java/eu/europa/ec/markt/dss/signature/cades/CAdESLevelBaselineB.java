@@ -42,6 +42,7 @@ import org.bouncycastle.asn1.esf.SignaturePolicyId;
 import org.bouncycastle.asn1.esf.SignaturePolicyIdentifier;
 import org.bouncycastle.asn1.esf.SignerAttribute;
 import org.bouncycastle.asn1.esf.SignerLocation;
+import org.bouncycastle.asn1.ess.ContentHints;
 import org.bouncycastle.asn1.ess.ContentIdentifier;
 import org.bouncycastle.asn1.ess.ESSCertID;
 import org.bouncycastle.asn1.ess.ESSCertIDv2;
@@ -71,300 +72,350 @@ import eu.europa.ec.markt.dss.signature.MimeType;
  * id_aa_ets_sigPolicyId attribute as specified in ETSI TS 101 733 V1.8.1, clause 5.8.1.
  * <p/>
  *
- * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
+ * @version $Revision: 3759 $ - $Date: 2014-04-21 07:52:52 +0200 (Mon, 21 Apr 2014) $
  */
 public class CAdESLevelBaselineB {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CAdESLevelBaselineB.class);
+	private static final Logger LOG = LoggerFactory.getLogger(CAdESLevelBaselineB.class);
 
-    private final boolean padesUsage;
+	private final boolean padesUsage;
 
-    /**
-     * The default constructor for CAdESLevelBaselineB.
-     */
-    public CAdESLevelBaselineB() {
-        this(false);
-    }
+	/**
+	 * The default constructor for CAdESLevelBaselineB.
+	 */
+	public CAdESLevelBaselineB() {
+		this(false);
+	}
 
-    /**
-     * The default constructor for CAdESLevelBaselineB.
-     */
-    public CAdESLevelBaselineB(boolean padesUsage) {
+	/**
+	 * The default constructor for CAdESLevelBaselineB.
+	 */
+	public CAdESLevelBaselineB(boolean padesUsage) {
 
-        this.padesUsage = padesUsage;
-    }
+		this.padesUsage = padesUsage;
+	}
 
-    /**
-     * Return the table of unsigned properties.
-     *
-     * @param document
-     * @param parameters
-     * @return
-     */
-    public AttributeTable getUnsignedAttributes(DSSDocument document, SignatureParameters parameters) {
-        return new AttributeTable(new Hashtable<ASN1ObjectIdentifier, ASN1Encodable>());
-    }
+	/**
+	 * Return the table of unsigned properties.
+	 *
+	 * @param document
+	 * @param parameters
+	 * @return
+	 */
+	public AttributeTable getUnsignedAttributes(DSSDocument document, SignatureParameters parameters) {
+		return new AttributeTable(new Hashtable<ASN1ObjectIdentifier, ASN1Encodable>());
+	}
 
-    public AttributeTable getSignedAttributes(DSSDocument document, SignatureParameters parameters) {
-        AttributeTable signedAttributes = new AttributeTable(new Hashtable<ASN1ObjectIdentifier, ASN1Encodable>());
-        signedAttributes = addSigningCertificateAttribute(parameters, signedAttributes);
-        signedAttributes = addSigningTimeAttribute(parameters, signedAttributes);
-        signedAttributes = addSignerAttribute(parameters, signedAttributes);
-        signedAttributes = addSignaturePolicyId(parameters, signedAttributes);
-        signedAttributes = addContentIdentifier(parameters, signedAttributes);
-        signedAttributes = addCommitmentType(parameters, signedAttributes);
-        signedAttributes = addSignerLocation(parameters, signedAttributes);
+	public AttributeTable getSignedAttributes(DSSDocument document, SignatureParameters parameters) {
 
-        // mime-type attribute breaks parallels signature by adding PKCS7 as a mime-type for subsequent signers.
-        // attribute is not mandatory, so it has been disabled.
-        // signedAttributes = addMimeType(document, signedAttributes);
-        return signedAttributes;
-    }
+		AttributeTable signedAttributes = new AttributeTable(new Hashtable<ASN1ObjectIdentifier, ASN1Encodable>());
+		signedAttributes = addSigningCertificateAttribute(parameters, signedAttributes);
+		signedAttributes = addSigningTimeAttribute(parameters, signedAttributes);
+		signedAttributes = addSignerAttribute(parameters, signedAttributes);
+		signedAttributes = addSignaturePolicyId(parameters, signedAttributes);
+		signedAttributes = addContentHints(parameters, signedAttributes);
+		signedAttributes = addContentIdentifier(parameters, signedAttributes);
+		signedAttributes = addCommitmentType(parameters, signedAttributes);
+		signedAttributes = addSignerLocation(parameters, signedAttributes);
 
-    /**
-     * 5.11.5 mime-type Attribute
-     * <p/>
-     * The mime-type attribute is an attribute that lets the signature generator indicate the mime-type of the signed data. It
-     * is similar in spirit to the contentDescription field of the content-hints attribute, but can be used without a multilayered
-     * document.
-     * <p/>
-     * The mime-type attribute shall be a signed attribute.
-     * <p/>
-     * The following object identifier identifies the mime-type attribute:
-     * id-aa-ets-mimeType OBJECT IDENTIFIER ::= { itu-t(0) identified-organization(4) etsi(0) electronicsignature-
-     * standard (1733) attributes(2) 1 }
-     * <p/>
-     * mime-type attribute values have ASN.1 type UTF8String:
-     * <p/>
-     * mimeType::= UTF8String
-     * <p/>
-     * The mimeType is used to indicate the encoding of the signed data, in accordance with the rules defined in
-     * RFC 2045 [6]; see annex F for an example of structured contents and MIME.
-     * Only a single mime-type attribute shall be present.
-     * <p/>
-     * The mime-type attribute shall not be used within a countersignature.
-     *
-     * @param document
-     * @param signedAttributes
-     */
-    private AttributeTable addMimeType(DSSDocument document, AttributeTable signedAttributes) {
+		// mime-type attribute breaks parallel signatures by adding PKCS7 as a mime-type for subsequent signers.
+		// This attribute is not mandatory, so it has been disabled.
+		// signedAttributes = addMimeType(document, signedAttributes);
+		return signedAttributes;
+	}
 
-        if (!padesUsage) {
-            final MimeType mimeType = document.getMimeType();
-            if (mimeType != null && DSSUtils.isNotBlank(mimeType.getCode())) {
+	/**
+	 * 5.11.5 mime-type Attribute
+	 * <p/>
+	 * The mime-type attribute is an attribute that lets the signature generator indicate the mime-type of the signed data. It
+	 * is similar in spirit to the contentDescription field of the content-hints attribute, but can be used without a multilayered
+	 * document.
+	 * <p/>
+	 * The mime-type attribute shall be a signed attribute.
+	 * <p/>
+	 * The following object identifier identifies the mime-type attribute:
+	 * id-aa-ets-mimeType OBJECT IDENTIFIER ::= { itu-t(0) identified-organization(4) etsi(0) electronicsignature-
+	 * standard (1733) attributes(2) 1 }
+	 * <p/>
+	 * mime-type attribute values have ASN.1 type UTF8String:
+	 * <p/>
+	 * mimeType::= UTF8String
+	 * <p/>
+	 * The mimeType is used to indicate the encoding of the signed data, in accordance with the rules defined in
+	 * RFC 2045 [6]; see annex F for an example of structured contents and MIME.
+	 * Only a single mime-type attribute shall be present.
+	 * <p/>
+	 * The mime-type attribute shall not be used within a countersignature.
+	 *
+	 * @param document
+	 * @param signedAttributes
+	 */
+	private AttributeTable addMimeType(DSSDocument document, AttributeTable signedAttributes) {
 
-                signedAttributes = signedAttributes.add(OID.id_aa_ets_mimeType, new DERUTF8String(mimeType.getCode()));
+		if (!padesUsage) {
+			final MimeType mimeType = document.getMimeType();
+			if (mimeType != null && DSSUtils.isNotBlank(mimeType.getCode())) {
 
-            }
-        }
-        return signedAttributes;
-    }
+				signedAttributes = signedAttributes.add(OID.id_aa_ets_mimeType, new DERUTF8String(mimeType.getCode()));
 
-    /**
-     * ETSI TS 101 733 V2.2.1 (2013-04)
-     * 5.11.3 signer-attributes Attribute
-     * NOTE 1: Only a single signer-attributes can be used.
-     *
-     * The signer-attributes attribute specifies additional attributes of the signer (e.g. role).
-     * It may be either:
-     * • claimed attributes of the signer; or
-     * • certified attributes of the signer.
-     * The signer-attributes attribute shall be a signed attribute.
-     *
-     * @param parameters
-     * @param signedAttributes
-     * @return
-     */
-    private AttributeTable addSignerAttribute(SignatureParameters parameters, AttributeTable signedAttributes) {
-        // In PAdES, the role is in the signature dictionary
-        if (!padesUsage) {
+			}
+		}
+		return signedAttributes;
+	}
 
-            final List<String> claimedSignerRoles = parameters.bLevel().getClaimedSignerRoles();
-            if (claimedSignerRoles != null) {
+	/**
+	 * ETSI TS 101 733 V2.2.1 (2013-04)
+	 * 5.11.3 signer-attributes Attribute
+	 * NOTE 1: Only a single signer-attributes can be used.
+	 * <p/>
+	 * The signer-attributes attribute specifies additional attributes of the signer (e.g. role).
+	 * It may be either:
+	 * • claimed attributes of the signer; or
+	 * • certified attributes of the signer.
+	 * The signer-attributes attribute shall be a signed attribute.
+	 *
+	 * @param parameters
+	 * @param signedAttributes
+	 * @return
+	 */
+	private AttributeTable addSignerAttribute(SignatureParameters parameters, AttributeTable signedAttributes) {
+		// In PAdES, the role is in the signature dictionary
+		if (!padesUsage) {
 
-                List<Attribute> claimedAttributes = new ArrayList<Attribute>(claimedSignerRoles.size());
-                for (final String claimedSignerRole : claimedSignerRoles) {
+			final List<String> claimedSignerRoles = parameters.bLevel().getClaimedSignerRoles();
+			if (claimedSignerRoles != null) {
 
-                    final DERUTF8String roles = new DERUTF8String(claimedSignerRole);
+				List<Attribute> claimedAttributes = new ArrayList<Attribute>(claimedSignerRoles.size());
+				for (final String claimedSignerRole : claimedSignerRoles) {
 
-                    //TODO: role attribute key (id_at_name) should be customizable
-                    final Attribute id_aa_ets_signerAttr = new Attribute(X509ObjectIdentifiers.id_at_name, new DERSet(roles));
-                    claimedAttributes.add(id_aa_ets_signerAttr);
-                }
-                signedAttributes = signedAttributes
-                      .add(PKCSObjectIdentifiers.id_aa_ets_signerAttr, new SignerAttribute(claimedAttributes.toArray(new Attribute[claimedAttributes.size()])));
-            }
+					final DERUTF8String roles = new DERUTF8String(claimedSignerRole);
 
-            //TODO: hendle CertifiedAttributes ::= AttributeCertificate -- as defined in RFC 3281: see clause 4.1.
-            // final List<String> certifiedSignerRoles = parameters.bLevel().getCertifiedSignerRoles();
-        }
-        return signedAttributes;
-    }
+					//TODO: role attribute key (id_at_name) should be customizable
+					final Attribute id_aa_ets_signerAttr = new Attribute(X509ObjectIdentifiers.id_at_name, new DERSet(roles));
+					claimedAttributes.add(id_aa_ets_signerAttr);
+				}
+				signedAttributes = signedAttributes
+					  .add(PKCSObjectIdentifiers.id_aa_ets_signerAttr, new SignerAttribute(claimedAttributes.toArray(new Attribute[claimedAttributes.size()])));
+			}
 
-    private AttributeTable addSigningTimeAttribute(SignatureParameters parameters, AttributeTable signedAttributes) {
-        if (!padesUsage) {
-            /*
-             * In PAdES, we don't include the signing time : ETSI TS 102 778-3 V1.2.1 (2010-07): 4.5.3 signing-time
+			//TODO: handle CertifiedAttributes ::= AttributeCertificate -- as defined in RFC 3281: see clause 4.1.
+			// final List<String> certifiedSignerRoles = parameters.bLevel().getCertifiedSignerRoles();
+		}
+		return signedAttributes;
+	}
+
+	private AttributeTable addSigningTimeAttribute(SignatureParameters parameters, AttributeTable signedAttributes) {
+		if (!padesUsage) {
+		    /*
+		     * In PAdES, we don't include the signing time : ETSI TS 102 778-3 V1.2.1 (2010-07): 4.5.3 signing-time
              * Attribute
              */
-            final Date signingDate = parameters.bLevel().getSigningDate();
-            if (signingDate != null) {
-                signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.pkcs_9_at_signingTime, new Time(signingDate));
-            }
-        }
-        return signedAttributes;
-    }
+			final Date signingDate = parameters.bLevel().getSigningDate();
+			if (signingDate != null) {
+				signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.pkcs_9_at_signingTime, new Time(signingDate));
+			}
+		}
+		return signedAttributes;
+	}
 
-    /**
-     * ETSI TS 101 733 V2.2.1 (2013-04)
-     * 5.11.2 signer-location Attribute
-     * The signer-location attribute specifies a mnemonic for an address associated with the signer at a particular
-     * geographical (e.g. city) location. The mnemonic is registered in the country in which the signer is located and is used in
-     * the provision of the Public Telegram Service (according to Recommendation ITU-T F.1 [11]).
-     * The signer-location attribute shall be a signed attribute.
-     *
-     * @param parameters
-     * @param signedAttributes
-     * @return
-     */
-    private AttributeTable addSignerLocation(SignatureParameters parameters, AttributeTable signedAttributes) {
-        if (!padesUsage) {
-            /*
-             * In PAdES, the role is in the signature dictionary
+	/**
+	 * ETSI TS 101 733 V2.2.1 (2013-04)
+	 * 5.11.2 signer-location Attribute
+	 * The signer-location attribute specifies a mnemonic for an address associated with the signer at a particular
+	 * geographical (e.g. city) location. The mnemonic is registered in the country in which the signer is located and is used in
+	 * the provision of the Public Telegram Service (according to Recommendation ITU-T F.1 [11]).
+	 * The signer-location attribute shall be a signed attribute.
+	 *
+	 * @param parameters
+	 * @param signedAttributes
+	 * @return
+	 */
+	private AttributeTable addSignerLocation(SignatureParameters parameters, AttributeTable signedAttributes) {
+		if (!padesUsage) {
+		    /*
+		     * In PAdES, the role is in the signature dictionary
              */
-            final BLevelParameters.SignerLocation signerLocationParameter = parameters.bLevel().getSignerLocation();
-            if (signerLocationParameter != null) {
+			final BLevelParameters.SignerLocation signerLocationParameter = parameters.bLevel().getSignerLocation();
+			if (signerLocationParameter != null) {
 
-                final DERUTF8String country = new DERUTF8String(signerLocationParameter.getCountry());
-                final DERUTF8String locality = new DERUTF8String(signerLocationParameter.getLocality());
-                final ASN1EncodableVector postalAddress = new ASN1EncodableVector();
-                final List<String> postalAddressParameter = signerLocationParameter.getPostalAddress();
-                if (postalAddressParameter != null) {
+				final DERUTF8String country = signerLocationParameter.getCountry() == null ? null : new DERUTF8String(signerLocationParameter.getCountry());
+				final DERUTF8String locality = signerLocationParameter.getLocality() == null ? null : new DERUTF8String(signerLocationParameter.getLocality());
+				final ASN1EncodableVector postalAddress = new ASN1EncodableVector();
+				final List<String> postalAddressParameter = signerLocationParameter.getPostalAddress();
+				if (postalAddressParameter != null) {
 
-                    for (final String addressLine : postalAddressParameter) {
+					for (final String addressLine : postalAddressParameter) {
 
-                        postalAddress.add(new DERUTF8String(addressLine));
-                    }
-                }
-                final DERSequence derSequencePostalAddress = new DERSequence(postalAddress);
-                SignerLocation signerLocation = new SignerLocation(country, locality, derSequencePostalAddress);
-                signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_signerLocation, signerLocation);
-            }
-        }
-        return signedAttributes;
-    }
+						postalAddress.add(new DERUTF8String(addressLine));
+					}
+				}
+				final DERSequence derSequencePostalAddress = new DERSequence(postalAddress);
+				SignerLocation signerLocation = new SignerLocation(country, locality, derSequencePostalAddress);
+				signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_signerLocation, signerLocation);
+			}
+		}
+		return signedAttributes;
+	}
 
-    /**
-     * ETSI TS 101 733 V2.2.1 (2013-04)
-     * <p/>
-     * 5.11.1 commitment-type-indication Attribute
-     * There may be situations where a signer wants to explicitly indicate to a verifier that by signing the data, it illustrates a
-     * type of commitment on behalf of the signer. The commitment-type-indication attribute conveys such
-     * information.
-     *
-     * @param parameters
-     * @param signedAttributes
-     */
-    private AttributeTable addCommitmentType(SignatureParameters parameters, AttributeTable signedAttributes) {
-        // commitmentTypeQualifier are not implemented
-        final BLevelParameters bLevelParameters = parameters.bLevel();
+	/**
+	 * ETSI TS 101 733 V2.2.1 (2013-04)
+	 * <p/>
+	 * 5.11.1 commitment-type-indication Attribute
+	 * There may be situations where a signer wants to explicitly indicate to a verifier that by signing the data, it illustrates a
+	 * type of commitment on behalf of the signer. The commitment-type-indication attribute conveys such
+	 * information.
+	 *
+	 * @param parameters
+	 * @param signedAttributes
+	 */
+	private AttributeTable addCommitmentType(SignatureParameters parameters, AttributeTable signedAttributes) {
+		// commitmentTypeQualifier are not implemented
+		final BLevelParameters bLevelParameters = parameters.bLevel();
 
-        if (bLevelParameters.getCommitmentTypeIndications() != null && !bLevelParameters.getCommitmentTypeIndications().isEmpty()) {
+		if (bLevelParameters.getCommitmentTypeIndications() != null && !bLevelParameters.getCommitmentTypeIndications().isEmpty()) {
 
-            ASN1EncodableVector vector = new ASN1EncodableVector();
-            for (String commitmentTypeId : bLevelParameters.getCommitmentTypeIndications()) {
-                vector.add(CommitmentTypeIndication.getInstance(new ASN1ObjectIdentifier(commitmentTypeId)));
-            }
-            signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_commitmentType, new DERSequence(vector));
-        }
-        return signedAttributes;
-    }
+			ASN1EncodableVector vector = new ASN1EncodableVector();
+			for (final String commitmentTypeId : bLevelParameters.getCommitmentTypeIndications()) {
 
-    /**
-     * ETSI TS 101 733 V2.2.1 (2013-04)
-     * <p/>
-     * 5.10.2 content-identifier Attribute
-     * The content-identifier attribute provides an identifier for the signed content, for use when a reference may be
-     * later required to that content; for example, in the content-reference attribute in other signed data sent later. The
-     * content-identifier shall be a signed attribute.
-     * content-identifier attribute type values for the ES have an ASN.1 type ContentIdentifier, as defined in
-     * ESS (RFC 2634 [5]).
-     * <p/>
-     * The minimal content-identifier attribute should contain a concatenation of user-specific identification
-     * information (such as a user name or public keying material identification information), a GeneralizedTime string,
-     * and a random number.
-     *
-     * @param parameters
-     * @param signedAttributes
-     */
-    private AttributeTable addContentIdentifier(SignatureParameters parameters, AttributeTable signedAttributes) {
+				final ASN1ObjectIdentifier objectIdentifier = new ASN1ObjectIdentifier(commitmentTypeId);
+				final CommitmentTypeIndication instance = new CommitmentTypeIndication(objectIdentifier);
+				vector.add(instance);
+			}
+			signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_commitmentType, new DERSequence(vector));
+		}
+		return signedAttributes;
+	}
+
+	/**
+	 * ETSI TS 101 733 V2.2.1 (2013-04)
+	 * <p/>
+	 * 5.10.3 content-hints Attribute
+	 * The content-hints attribute provides information on the innermost signed content of a multi-layer message where
+	 * one content is encapsulated in another.
+	 * The syntax of the content-hints attribute type of the ES is as defined in ESS (RFC 2634 [5]).
+	 * When used to indicate the precise format of the data to be presented to the user, the following rules apply:
+	 * • the contentType indicates the type of the associated content. It is an object identifier (i.e. a unique string of
+	 * integers) assigned by an authority that defines the content type; and
+	 * • when the contentType is id-data the contentDescription shall define the presentation format; the
+	 * format may be defined by MIME types.
+	 * When the format of the content is defined by MIME types, the following rules apply:
+	 * • the contentType shall be id-data as defined in CMS (RFC 3852 [4]);
+	 * • the contentDescription shall be used to indicate the encoding of the data, in accordance with the rules
+	 * defined RFC 2045 [6]; see annex F for an example of structured contents and MIME.
+	 * NOTE 1: id-data OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs7(7) 1 }.
+	 * NOTE 2: contentDescription is optional in ESS (RFC 2634 [5]). It may be used to complement
+	 * contentTypes defined elsewhere; such definitions are outside the scope of the present document.
+	 *
+	 * @param parameters
+	 * @param signedAttributes
+	 * @return
+	 */
+	private AttributeTable addContentHints(SignatureParameters parameters, AttributeTable signedAttributes) {
+
+		final BLevelParameters bLevelParameters = parameters.bLevel();
+		if (DSSUtils.isNotBlank(bLevelParameters.getContentHintsType())) {
+
+			final ASN1ObjectIdentifier contentHintsType = new ASN1ObjectIdentifier(bLevelParameters.getContentHintsType());
+			final String contentHintsDescriptionString = bLevelParameters.getContentHintsDescription();
+			final DERUTF8String contentHintsDescription = DSSUtils.isBlank(contentHintsDescriptionString) ? null : new DERUTF8String(contentHintsDescriptionString);
+			//		"text/plain";
+			//		"1.2.840.113549.1.7.1";
+
+			final ContentHints contentHints = new ContentHints(contentHintsType, contentHintsDescription);
+			signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_contentHint, contentHints);
+		}
+		return signedAttributes;
+	}
+
+	/**
+	 * ETSI TS 101 733 V2.2.1 (2013-04)
+	 * <p/>
+	 * 5.10.2 content-identifier Attribute
+	 * The content-identifier attribute provides an identifier for the signed content, for use when a reference may be
+	 * later required to that content; for example, in the content-reference attribute in other signed data sent later. The
+	 * content-identifier shall be a signed attribute. content-identifier attribute type values for the ES have an ASN.1 type ContentIdentifier, as defined in
+	 * ESS (RFC 2634 [5]).
+	 * <p/>
+	 * The minimal content-identifier attribute should contain a concatenation of user-specific identification
+	 * information (such as a user name or public keying material identification information), a GeneralizedTime string,
+	 * and a random number.
+	 *
+	 * @param parameters
+	 * @param signedAttributes
+	 */
+	private AttributeTable addContentIdentifier(SignatureParameters parameters, AttributeTable signedAttributes) {
+
         /* this attribute is prohibited in PAdES B */
-        if (!padesUsage) {
-            final String contentIdentifierPrefix = parameters.bLevel().getContentIdentifierPrefix();
-            if (DSSUtils.isNotBlank(contentIdentifierPrefix)) {
-                final String contentIdentifierSuffix;
-                if (DSSUtils.isBlank(parameters.bLevel().getContentIdentifierSuffix())) {
-                    final Date now = new Date();
-                    final String asn1GeneralizedTimeString = new ASN1GeneralizedTime(now).getTimeString();
-                    final long randomNumber = new Random(now.getTime()).nextLong();
-                    contentIdentifierSuffix = asn1GeneralizedTimeString + randomNumber;
-                    parameters.bLevel().setContentIdentifierSuffix(contentIdentifierSuffix);
-                } else {
-                    contentIdentifierSuffix = parameters.bLevel().getContentIdentifierSuffix();
-                }
-                final String contentIdentifierString = contentIdentifierPrefix + contentIdentifierSuffix;
-                ContentIdentifier contentIdentifier = new ContentIdentifier(contentIdentifierString.getBytes());
-                signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_contentIdentifier, contentIdentifier);
-            }
-        }
-        return signedAttributes;
-    }
+		if (!padesUsage) {
 
-    private AttributeTable addSignaturePolicyId(final SignatureParameters parameters, AttributeTable signedAttributes) {
+			final BLevelParameters bLevelParameters = parameters.bLevel();
+			final String contentIdentifierPrefix = bLevelParameters.getContentIdentifierPrefix();
+			if (DSSUtils.isNotBlank(contentIdentifierPrefix)) {
 
-        Policy policy = parameters.bLevel().getSignaturePolicy();
-        if (policy != null && policy.getId() != null) {
+				final String contentIdentifierSuffix;
+				if (DSSUtils.isBlank(bLevelParameters.getContentIdentifierSuffix())) {
 
-            final String policyId = policy.getId();
-            SignaturePolicyIdentifier sigPolicy = null;
-            if (!"".equals(policyId)) { // explicit
+					final Date now = new Date();
+					final String asn1GeneralizedTimeString = new ASN1GeneralizedTime(now).getTimeString();
+					final long randomNumber = new Random(now.getTime()).nextLong();
+					contentIdentifierSuffix = asn1GeneralizedTimeString + randomNumber;
+					bLevelParameters.setContentIdentifierSuffix(contentIdentifierSuffix);
+				} else {
+					contentIdentifierSuffix = bLevelParameters.getContentIdentifierSuffix();
+				}
+				final String contentIdentifierString = contentIdentifierPrefix + contentIdentifierSuffix;
+				final ContentIdentifier contentIdentifier = new ContentIdentifier(contentIdentifierString.getBytes());
+				signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_contentIdentifier, contentIdentifier);
+			}
+		}
+		return signedAttributes;
+	}
 
-                final ASN1ObjectIdentifier derOIPolicyId = new ASN1ObjectIdentifier(policyId);
-                final ASN1ObjectIdentifier oid = policy.getDigestAlgorithm().getOid();
-                final AlgorithmIdentifier algorithmIdentifier = new AlgorithmIdentifier(oid);
-                OtherHashAlgAndValue otherHashAlgAndValue = new OtherHashAlgAndValue(algorithmIdentifier, new DEROctetString(policy.getDigestValue()));
-                sigPolicy = new SignaturePolicyIdentifier(new SignaturePolicyId(derOIPolicyId, otherHashAlgAndValue));
-            } else {// implicit
-                sigPolicy = new SignaturePolicyIdentifier();
-            }
-            signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_sigPolicyId, sigPolicy);
-        }
-        return signedAttributes;
-    }
+	private AttributeTable addSignaturePolicyId(final SignatureParameters parameters, AttributeTable signedAttributes) {
 
-    private AttributeTable addSigningCertificateAttribute(final SignatureParameters parameters, AttributeTable signedAttributes) throws DSSException {
+		Policy policy = parameters.bLevel().getSignaturePolicy();
+		if (policy != null && policy.getId() != null) {
 
-        final DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
-        final X509Certificate signingCertificate = parameters.getSigningCertificate();
-        final byte[] encoded = DSSUtils.getEncoded(signingCertificate);
-        final byte[] certHash = DSSUtils.digest(digestAlgorithm, encoded);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Adding Certificate Hash {} with algorithm {}", DSSUtils.encodeHexString(certHash), digestAlgorithm.getName());
-        }
-        final IssuerSerial issuerSerial = DSSUtils.getIssuerSerial(signingCertificate);
-        if (digestAlgorithm == DigestAlgorithm.SHA1) {
+			final String policyId = policy.getId();
+			SignaturePolicyIdentifier sigPolicy = null;
+			if (!"".equals(policyId)) { // explicit
 
-            final ESSCertID essCertId = new ESSCertID(certHash, issuerSerial);
-            final SigningCertificate cadesSigningCertificate = new SigningCertificate(essCertId);
-            signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_signingCertificate, cadesSigningCertificate);
-        } else {
+				final ASN1ObjectIdentifier derOIPolicyId = new ASN1ObjectIdentifier(policyId);
+				final ASN1ObjectIdentifier oid = policy.getDigestAlgorithm().getOid();
+				final AlgorithmIdentifier algorithmIdentifier = new AlgorithmIdentifier(oid);
+				OtherHashAlgAndValue otherHashAlgAndValue = new OtherHashAlgAndValue(algorithmIdentifier, new DEROctetString(policy.getDigestValue()));
+				sigPolicy = new SignaturePolicyIdentifier(new SignaturePolicyId(derOIPolicyId, otherHashAlgAndValue));
+			} else {// implicit
+				sigPolicy = new SignaturePolicyIdentifier();
+			}
+			signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_sigPolicyId, sigPolicy);
+		}
+		return signedAttributes;
+	}
 
-            final ESSCertIDv2 essCertIDv2 = new ESSCertIDv2(digestAlgorithm.getAlgorithmIdentifier(), certHash, issuerSerial);
-            final ESSCertIDv2[] essCertIDv2Array = new ESSCertIDv2[]{essCertIDv2};
-            final SigningCertificateV2 cadesSigningCertificateV2 = new SigningCertificateV2(essCertIDv2Array);
-            signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_signingCertificateV2, cadesSigningCertificateV2);
-        }
-        return signedAttributes;
-    }
+	private AttributeTable addSigningCertificateAttribute(final SignatureParameters parameters, AttributeTable signedAttributes) throws DSSException {
+
+		final DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
+		final X509Certificate signingCertificate = parameters.getSigningCertificate();
+		final byte[] encoded = DSSUtils.getEncoded(signingCertificate);
+		final byte[] certHash = DSSUtils.digest(digestAlgorithm, encoded);
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Adding Certificate Hash {} with algorithm {}", DSSUtils.encodeHexString(certHash), digestAlgorithm.getName());
+		}
+		final IssuerSerial issuerSerial = DSSUtils.getIssuerSerial(signingCertificate);
+		if (digestAlgorithm == DigestAlgorithm.SHA1) {
+
+			final ESSCertID essCertId = new ESSCertID(certHash, issuerSerial);
+			final SigningCertificate cadesSigningCertificate = new SigningCertificate(essCertId);
+			signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_signingCertificate, cadesSigningCertificate);
+		} else {
+
+			final ESSCertIDv2 essCertIDv2 = new ESSCertIDv2(digestAlgorithm.getAlgorithmIdentifier(), certHash, issuerSerial);
+			final ESSCertIDv2[] essCertIDv2Array = new ESSCertIDv2[]{essCertIDv2};
+			final SigningCertificateV2 cadesSigningCertificateV2 = new SigningCertificateV2(essCertIDv2Array);
+			signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_signingCertificateV2, cadesSigningCertificateV2);
+		}
+		return signedAttributes;
+	}
 
 }
