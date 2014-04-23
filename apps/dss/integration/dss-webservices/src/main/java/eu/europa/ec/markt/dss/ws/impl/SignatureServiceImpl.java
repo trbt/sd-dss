@@ -34,8 +34,11 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
+import eu.europa.ec.markt.dss.EncryptionAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.parameter.BLevelParameters;
+import eu.europa.ec.markt.dss.parameter.DSSReference;
+import eu.europa.ec.markt.dss.parameter.DSSTransform;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.DocumentSignatureService;
@@ -48,290 +51,320 @@ import eu.europa.ec.markt.dss.ws.WSParameters;
 /**
  * Implementation of the Interface for the Contract of the Signature Web Service.
  *
- * @version $Revision: 3479 $ - $Date: 2014-02-19 11:50:33 +0100 (Wed, 19 Feb 2014) $
+ * @version $Revision: 3776 $ - $Date: 2014-04-21 15:32:39 +0200 (Mon, 21 Apr 2014) $
  */
 
 @WebService(endpointInterface = "eu.europa.ec.markt.dss.ws.SignatureService", serviceName = "SignatureService")
 public class SignatureServiceImpl implements SignatureService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SignatureServiceImpl.class);
+	private static final Logger LOG = LoggerFactory.getLogger(SignatureServiceImpl.class);
 
-    private DocumentSignatureService xadesService;
+	private DocumentSignatureService xadesService;
 
-    private DocumentSignatureService cadesService;
+	private DocumentSignatureService cadesService;
 
-    private DocumentSignatureService padesService;
+	private DocumentSignatureService padesService;
 
-    private DocumentSignatureService asicService;
+	private DocumentSignatureService asicService;
 
-    /**
-     * @param xadesService the xadesService to set
-     */
-    public void setXadesService(final DocumentSignatureService xadesService) {
+	/**
+	 * @param xadesService the xadesService to set
+	 */
+	public void setXadesService(final DocumentSignatureService xadesService) {
 
-        this.xadesService = xadesService;
-    }
+		this.xadesService = xadesService;
+	}
 
-    /**
-     * @param cadesService the cadesService to set
-     */
-    public void setCadesService(final DocumentSignatureService cadesService) {
+	/**
+	 * @param cadesService the cadesService to set
+	 */
+	public void setCadesService(final DocumentSignatureService cadesService) {
 
-        this.cadesService = cadesService;
-    }
+		this.cadesService = cadesService;
+	}
 
-    /**
-     * @param padesService the padesService to set
-     */
-    public void setPadesService(final DocumentSignatureService padesService) {
+	/**
+	 * @param padesService the padesService to set
+	 */
+	public void setPadesService(final DocumentSignatureService padesService) {
 
-        this.padesService = padesService;
-    }
+		this.padesService = padesService;
+	}
 
-    /**
-     * @param asicService the asicService to set
-     */
-    public void setAsicService(final DocumentSignatureService asicService) {
+	/**
+	 * @param asicService the asicService to set
+	 */
+	public void setAsicService(final DocumentSignatureService asicService) {
 
-        this.asicService = asicService;
-    }
+		this.asicService = asicService;
+	}
 
-    private DocumentSignatureService getServiceForSignatureLevel(final SignatureLevel signatureLevel) {
+	private DocumentSignatureService getServiceForSignatureLevel(final SignatureLevel signatureLevel) {
 
-        switch (signatureLevel) {
-            case XAdES_BASELINE_B:
-            case XAdES_BASELINE_T:
-            case XAdES_C:
-            case XAdES_X:
-            case XAdES_XL:
-            case XAdES_BASELINE_LT:
-            case XAdES_A:
-            case XAdES_BASELINE_LTA:
-                return xadesService;
-            case CAdES_BASELINE_B:
-            case CAdES_BASELINE_T:
-            case CAdES_BASELINE_LT:
-            case CAdES_BASELINE_LTA:
-                return cadesService;
-            case PAdES_BASELINE_B:
-            case PAdES_BASELINE_T:
-            case PAdES_BASELINE_LT:
-            case PAdES_BASELINE_LTA:
-                return padesService;
-            case ASiC_S_BASELINE_B:
-            case ASiC_S_BASELINE_T:
-            case ASiC_S_BASELINE_LT:
-                return asicService;
-            default:
-                throw new IllegalArgumentException("Unrecognized format " + signatureLevel);
-        }
-    }
+		switch (signatureLevel) {
+			case XAdES_BASELINE_B:
+			case XAdES_BASELINE_T:
+			case XAdES_C:
+			case XAdES_X:
+			case XAdES_XL:
+			case XAdES_BASELINE_LT:
+			case XAdES_A:
+			case XAdES_BASELINE_LTA:
+				return xadesService;
+			case CAdES_BASELINE_B:
+			case CAdES_BASELINE_T:
+			case CAdES_BASELINE_LT:
+			case CAdES_BASELINE_LTA:
+				return cadesService;
+			case PAdES_BASELINE_B:
+			case PAdES_BASELINE_T:
+			case PAdES_BASELINE_LT:
+			case PAdES_BASELINE_LTA:
+				return padesService;
+			case ASiC_S_BASELINE_B:
+			case ASiC_S_BASELINE_T:
+			case ASiC_S_BASELINE_LT:
+				return asicService;
+			default:
+				throw new IllegalArgumentException("Unrecognized format " + signatureLevel);
+		}
+	}
 
-    private SignatureParameters createParameters(final WSParameters wsParameters) throws DSSException {
+	private SignatureParameters createParameters(final WSParameters wsParameters) throws DSSException {
 
-        if (wsParameters == null) {
+		if (wsParameters == null) {
 
-            return null;
-        }
-        final SignatureParameters params = new SignatureParameters();
+			return null;
+		}
+		final SignatureParameters params = new SignatureParameters();
 
-        setSignatureLevel(wsParameters, params);
+		setSignatureLevel(wsParameters, params);
 
-        setSignaturePackaging(wsParameters, params);
+		setSignaturePackaging(wsParameters, params);
 
-        setDigestAlgorithm(wsParameters, params);
+		setEncryptionAlgorithm(wsParameters, params);
 
-        setSigningDate(wsParameters, params);
+		setDigestAlgorithm(wsParameters, params);
 
-        setSigningCertificateAndChain(wsParameters, params);
+		setSigningDate(wsParameters, params);
 
-        setDeterministicId(wsParameters, params);
+		setSigningCertificateAndChain(wsParameters, params);
 
-        setSignaturePolicy(wsParameters, params);
+		setDeterministicId(wsParameters, params);
 
-        setClaimedSignerRole(wsParameters, params);
+		setSignaturePolicy(wsParameters, params);
 
-        setContentIdentifierPrefix(wsParameters, params);
-        setContentIdentifierSuffix(wsParameters, params);
+		setClaimedSignerRole(wsParameters, params);
 
-        setCommitmentTypeIndication(wsParameters, params);
+		setContentIdentifierPrefix(wsParameters, params);
+		setContentIdentifierSuffix(wsParameters, params);
 
-        setSignerLocation(wsParameters, params);
+		setCommitmentTypeIndication(wsParameters, params);
 
-        return params;
-    }
+		setSignerLocation(wsParameters, params);
 
-    private void setSignaturePolicy(WSParameters wsParameters, SignatureParameters params) {
+		setReferences(wsParameters, params);
 
-        final BLevelParameters.Policy signaturePolicy = wsParameters.getSignaturePolicy();
-        params.bLevel().setSignaturePolicy(signaturePolicy);
-    }
+		return params;
+	}
 
-    private void setSignerLocation(WSParameters wsParameters, SignatureParameters params) {
+	private void setSignaturePolicy(WSParameters wsParameters, SignatureParameters params) {
 
-        final BLevelParameters.SignerLocation signerLocation = wsParameters.getSignerLocation();
-        params.bLevel().setSignerLocation(signerLocation);
-    }
+		final BLevelParameters.Policy signaturePolicy = wsParameters.getSignaturePolicy();
+		params.bLevel().setSignaturePolicy(signaturePolicy);
+	}
 
-    private void setCommitmentTypeIndication(WSParameters wsParameters, SignatureParameters params) {
+	private void setSignerLocation(WSParameters wsParameters, SignatureParameters params) {
 
-        final List<String> commitmentTypeIndication = wsParameters.getCommitmentTypeIndication();
-        params.bLevel().setCommitmentTypeIndications(commitmentTypeIndication);
-    }
+		final BLevelParameters.SignerLocation signerLocation = wsParameters.getSignerLocation();
+		params.bLevel().setSignerLocation(signerLocation);
+	}
 
-    private void setContentIdentifierSuffix(WSParameters wsParameters, SignatureParameters params) {
+	private void setCommitmentTypeIndication(WSParameters wsParameters, SignatureParameters params) {
 
-        final String contentIdentifierSuffix = wsParameters.getContentIdentifierSuffix();
-        params.bLevel().setContentIdentifierSuffix(contentIdentifierSuffix);
-    }
+		final List<String> commitmentTypeIndication = wsParameters.getCommitmentTypeIndication();
+		params.bLevel().setCommitmentTypeIndications(commitmentTypeIndication);
+	}
 
-    private void setContentIdentifierPrefix(WSParameters wsParameters, SignatureParameters params) {
+	private void setContentIdentifierSuffix(WSParameters wsParameters, SignatureParameters params) {
 
-        final String contentIdentifierPrefix = wsParameters.getContentIdentifierPrefix();
-        params.bLevel().setContentIdentifierPrefix(contentIdentifierPrefix);
-    }
+		final String contentIdentifierSuffix = wsParameters.getContentIdentifierSuffix();
+		params.bLevel().setContentIdentifierSuffix(contentIdentifierSuffix);
+	}
 
-    private void setDigestAlgorithm(final WSParameters wsParameters, final SignatureParameters params) {
+	private void setContentIdentifierPrefix(WSParameters wsParameters, SignatureParameters params) {
 
-        final DigestAlgorithm digestAlgorithm = wsParameters.getDigestAlgorithm();
-        params.setDigestAlgorithm(digestAlgorithm);
-    }
+		final String contentIdentifierPrefix = wsParameters.getContentIdentifierPrefix();
+		params.bLevel().setContentIdentifierPrefix(contentIdentifierPrefix);
+	}
 
-    private void setDeterministicId(final WSParameters wsParameters, final SignatureParameters params) {
+	private void setEncryptionAlgorithm(WSParameters wsParameters, SignatureParameters params) {
 
-        final String deterministicId = wsParameters.getDeterministicId();
-        params.setDeterministicId(deterministicId);
-    }
+		final EncryptionAlgorithm encryptionAlgorithm = wsParameters.getEncryptionAlgorithm();
+		params.setEncryptionAlgorithm(encryptionAlgorithm);
+	}
 
-    private void setClaimedSignerRole(final WSParameters wsParameters, final SignatureParameters params) {
-        final List<String> claimedSignerRoles = wsParameters.getClaimedSignerRole();
-        if (claimedSignerRoles != null) {
-            for (final String claimedSignerRole : claimedSignerRoles) {
+	private void setDigestAlgorithm(final WSParameters wsParameters, final SignatureParameters params) {
 
-                params.bLevel().addClaimedSignerRole(claimedSignerRole);
-            }
-        }
-    }
+		final DigestAlgorithm digestAlgorithm = wsParameters.getDigestAlgorithm();
+		params.setDigestAlgorithm(digestAlgorithm);
+	}
 
-    private void setSigningCertificateAndChain(final WSParameters wsParameters, final SignatureParameters params) {
+	private void setDeterministicId(final WSParameters wsParameters, final SignatureParameters params) {
 
-        final byte[] signingCertBytes = wsParameters.getSigningCertificateBytes();
-        if (signingCertBytes == null) {
-            return;
-        }
-        final X509Certificate x509SigningCertificate = DSSUtils.loadCertificate(signingCertBytes);
-        params.setSigningCertificate(x509SigningCertificate);
+		final String deterministicId = wsParameters.getDeterministicId();
+		params.setDeterministicId(deterministicId);
+	}
 
-        final List<X509Certificate> chain = new ArrayList<X509Certificate>();
-        chain.add(x509SigningCertificate);
-        final List<byte[]> certificateChainByteArrayList = wsParameters.getCertificateChainByteArrayList();
-        if (certificateChainByteArrayList != null) {
+	private void setClaimedSignerRole(final WSParameters wsParameters, final SignatureParameters params) {
+		final List<String> claimedSignerRoles = wsParameters.getClaimedSignerRole();
+		if (claimedSignerRoles != null) {
+			for (final String claimedSignerRole : claimedSignerRoles) {
 
-            for (final byte[] x509CertificateBytes : certificateChainByteArrayList) {
-
-                final X509Certificate x509Certificate = DSSUtils.loadCertificate(x509CertificateBytes);
-                if (!chain.contains(x509Certificate)) {
-
-                    chain.add(x509Certificate);
-                }
-            }
-        }
-        params.setCertificateChain(chain);
-    }
-
-    private void setSigningDate(final WSParameters wsParameters, final SignatureParameters params) {
-
-        final Date signingDate = wsParameters.getSigningDate();
-        params.bLevel().setSigningDate(signingDate);
-    }
-
-    private void setSignaturePackaging(final WSParameters wsParameters, final SignatureParameters params) {
-
-        final SignaturePackaging signaturePackaging = wsParameters.getSignaturePackaging();
-        params.setSignaturePackaging(signaturePackaging);
-    }
-
-    private void setSignatureLevel(WSParameters wsParameters, SignatureParameters params) {
-
-        final SignatureLevel signatureLevel = wsParameters.getSignatureLevel();
-        params.setSignatureLevel(signatureLevel);
-    }
-
-    @Override
-    public byte[] getDataToSign(final WSDocument document, final WSParameters wsParameters) throws DSSException {
-
-        String exceptionMessage;
-        try {
-            if (LOG.isInfoEnabled()) {
-
-                LOG.info("WsGetDataToSign: begin");
-            }
-            final SignatureParameters params = createParameters(wsParameters);
-            final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
-            final byte[] dataToSign = service.getDataToSign(document, params);
-            if (LOG.isInfoEnabled()) {
-
-                LOG.info("WsGetDataToSign: end");
-            }
-            return dataToSign;
-        } catch (Throwable e) {
-            e.printStackTrace();
-            exceptionMessage = e.getMessage();
-        }
-        LOG.info("WsGetDataToSign: end with exception");
-        throw new DSSException(exceptionMessage);
-    }
-
-    @Override
-    public WSDocument signDocument(final WSDocument document, final WSParameters wsParameters, final byte[] signatureValue) throws DSSException {
-
-        String exceptionMessage;
-        try {
-            if (LOG.isInfoEnabled()) {
-
-                LOG.info("WsSignDocument: begin");
-            }
-            final SignatureParameters params = createParameters(wsParameters);
-            final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
-
-            final DSSDocument dssDocument = service.signDocument(document, params, signatureValue);
-            WSDocument wsDocument = new WSDocument(dssDocument);
-            if (LOG.isInfoEnabled()) {
-
-                LOG.info("WsSignDocument: end");
-            }
-            return wsDocument;
-        } catch (Throwable e) {
-            e.printStackTrace();
-            exceptionMessage = e.getMessage();
-        }
-        LOG.info("WsSignDocument: end with exception");
-        throw new DSSException(exceptionMessage);
-    }
-
-    @Override
-    public WSDocument extendSignature(final WSDocument signedDocument, final WSParameters wsParameters) throws DSSException {
-
-        String exceptionMessage;
-        try {
-            if (LOG.isInfoEnabled()) {
-
-                LOG.info("WsExtendSignature: begin");
-            }
-            final SignatureParameters params = createParameters(wsParameters);
-            final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
-            final DSSDocument dssDocument = service.extendDocument(signedDocument, params);
-            final WSDocument wsDocument = new WSDocument(dssDocument);
-            if (LOG.isInfoEnabled()) {
-
-                LOG.info("WsExtendSignature: end");
-            }
-            return wsDocument;
-        } catch (Throwable e) {
-            e.printStackTrace();
-            exceptionMessage = e.getMessage();
-        }
-        LOG.info("WsExtendSignature: end with exception");
-        throw new DSSException(exceptionMessage);
-    }
+				params.bLevel().addClaimedSignerRole(claimedSignerRole);
+			}
+		}
+	}
+
+	private void setSigningCertificateAndChain(final WSParameters wsParameters, final SignatureParameters params) {
+
+		final byte[] signingCertBytes = wsParameters.getSigningCertificateBytes();
+		if (signingCertBytes == null) {
+			return;
+		}
+		final X509Certificate x509SigningCertificate = DSSUtils.loadCertificate(signingCertBytes);
+		params.setSigningCertificate(x509SigningCertificate);
+
+		final List<X509Certificate> chain = new ArrayList<X509Certificate>();
+		chain.add(x509SigningCertificate);
+		final List<byte[]> certificateChainByteArrayList = wsParameters.getCertificateChainByteArrayList();
+		if (certificateChainByteArrayList != null) {
+
+			for (final byte[] x509CertificateBytes : certificateChainByteArrayList) {
+
+				final X509Certificate x509Certificate = DSSUtils.loadCertificate(x509CertificateBytes);
+				if (!chain.contains(x509Certificate)) {
+
+					chain.add(x509Certificate);
+				}
+			}
+		}
+		params.setCertificateChain(chain);
+	}
+
+	private void setSigningDate(final WSParameters wsParameters, final SignatureParameters params) {
+
+		final Date signingDate = wsParameters.getSigningDate();
+		params.bLevel().setSigningDate(signingDate);
+	}
+
+	private void setSignaturePackaging(final WSParameters wsParameters, final SignatureParameters params) {
+
+		final SignaturePackaging signaturePackaging = wsParameters.getSignaturePackaging();
+		params.setSignaturePackaging(signaturePackaging);
+	}
+
+	private void setSignatureLevel(WSParameters wsParameters, SignatureParameters params) {
+
+		final SignatureLevel signatureLevel = wsParameters.getSignatureLevel();
+		params.setSignatureLevel(signatureLevel);
+	}
+
+	private void setReferences(WSParameters wsParameters, SignatureParameters params) {
+
+		final List<DSSReference> references = wsParameters.getReferences();
+		//		System.out.println("###WS - REFERENCES:");
+		//		if (references == null) {
+		//
+		//			System.out.println("    --> NULL");
+		//			return;
+		//		}
+		//		for (DSSReference reference : references) {
+		//			System.out.println("    --> " + reference.getId() + "/" + reference.getUri() + "/" + reference.getType());
+		//			final List<DSSTransform> transforms = reference.getTransforms();
+		//			for (DSSTransform transform : transforms) {
+		//
+		//				System.out.println("    --> ---> " + transform.getElementName() + "/" + transform.getTextContent() + "/" + transform.getAlgorithm());
+		//			}
+		//		}
+		params.setReferences(references);
+	}
+
+	@Override
+	public byte[] getDataToSign(final WSDocument document, final WSParameters wsParameters) throws DSSException {
+
+		String exceptionMessage;
+		try {
+			if (LOG.isInfoEnabled()) {
+
+				LOG.info("WsGetDataToSign: begin");
+			}
+			final SignatureParameters params = createParameters(wsParameters);
+			final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
+			final byte[] dataToSign = service.getDataToSign(document, params);
+			if (LOG.isInfoEnabled()) {
+
+				LOG.info("WsGetDataToSign: end");
+			}
+			return dataToSign;
+		} catch (Throwable e) {
+			e.printStackTrace();
+			exceptionMessage = e.getMessage();
+		}
+		LOG.info("WsGetDataToSign: end with exception");
+		throw new DSSException(exceptionMessage);
+	}
+
+	@Override
+	public WSDocument signDocument(final WSDocument document, final WSParameters wsParameters, final byte[] signatureValue) throws DSSException {
+
+		String exceptionMessage;
+		try {
+			if (LOG.isInfoEnabled()) {
+
+				LOG.info("WsSignDocument: begin");
+			}
+			final SignatureParameters params = createParameters(wsParameters);
+			final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
+
+			final DSSDocument dssDocument = service.signDocument(document, params, signatureValue);
+			WSDocument wsDocument = new WSDocument(dssDocument);
+			if (LOG.isInfoEnabled()) {
+
+				LOG.info("WsSignDocument: end");
+			}
+			return wsDocument;
+		} catch (Throwable e) {
+			e.printStackTrace();
+			exceptionMessage = e.getMessage();
+		}
+		LOG.info("WsSignDocument: end with exception");
+		throw new DSSException(exceptionMessage);
+	}
+
+	@Override
+	public WSDocument extendSignature(final WSDocument signedDocument, final WSParameters wsParameters) throws DSSException {
+
+		String exceptionMessage;
+		try {
+			if (LOG.isInfoEnabled()) {
+
+				LOG.info("WsExtendSignature: begin");
+			}
+			final SignatureParameters params = createParameters(wsParameters);
+			final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
+			final DSSDocument dssDocument = service.extendDocument(signedDocument, params);
+			final WSDocument wsDocument = new WSDocument(dssDocument);
+			if (LOG.isInfoEnabled()) {
+
+				LOG.info("WsExtendSignature: end");
+			}
+			return wsDocument;
+		} catch (Throwable e) {
+			e.printStackTrace();
+			exceptionMessage = e.getMessage();
+		}
+		LOG.info("WsExtendSignature: end with exception");
+		throw new DSSException(exceptionMessage);
+	}
 }

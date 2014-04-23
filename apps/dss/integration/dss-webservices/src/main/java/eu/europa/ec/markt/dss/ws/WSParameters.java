@@ -27,245 +27,259 @@ import java.util.List;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.EncryptionAlgorithm;
 import eu.europa.ec.markt.dss.parameter.BLevelParameters;
+import eu.europa.ec.markt.dss.parameter.DSSReference;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 
 /**
  * Representation of a <i>SignedProperties</i> Element.
  *
- * @version $Revision: 3372 $ - $Date: 2014-01-22 15:23:17 +0100 (Wed, 22 Jan 2014) $
+ * @version $Revision: 3776 $ - $Date: 2014-04-21 15:32:39 +0200 (Mon, 21 Apr 2014) $
  */
 
 public class WSParameters {
 
-    /**
-     * {@code SignatureLevel}
-     */
-    private SignatureLevel signatureLevel; // ok
+	/**
+	 * {@code SignatureLevel}
+	 */
+	private SignatureLevel signatureLevel; // ok
 
-    private SignaturePackaging signaturePackaging; // ok
+	private SignaturePackaging signaturePackaging; // ok
 
-    /**
-     * The encryption algorithm shall be automatically extracted from the signing token.
-     */
-    private EncryptionAlgorithm encryptionAlgorithm; // ok
+	/**
+	 * The encryption algorithm shall be automatically extracted from the signing token.
+	 */
+	private EncryptionAlgorithm encryptionAlgorithm; // ok
 
-    /**
-     * XAdES: The digest algorithm used to hash ds:SignedInfo.
-     */
-    private DigestAlgorithm digestAlgorithm; // ok
+	/**
+	 * XAdES: The digest algorithm used to hash ds:SignedInfo.
+	 */
+	private DigestAlgorithm digestAlgorithm; // ok
 
-    private String deterministicId; // ok
+	private String deterministicId; // ok
 
-    private Date signingDate; // ok
+	private Date signingDate; // ok
 
-    private byte[] signingCertificateBytes; // ok
+	private byte[] signingCertificateBytes; // ok
 
-    private List<byte[]> certificateChainByteArrayList = new ArrayList<byte[]>(); // ok
+	private List<byte[]> certificateChainByteArrayList = new ArrayList<byte[]>(); // ok
 
-    private BLevelParameters.Policy signaturePolicy; // ok
+	private BLevelParameters.Policy signaturePolicy; // ok
 
-    private DigestAlgorithm signingCertificateDigestAlgorithm = DigestAlgorithm.SHA1; // ok
+	private DigestAlgorithm signingCertificateDigestAlgorithm = DigestAlgorithm.SHA1; // ok
 
-    private List<String> claimedSignerRole; // ok
+	private List<String> claimedSignerRole; // ok
 
-    private List<String> certifiedSignerRoles; // ok
+	private List<String> certifiedSignerRoles; // ok
 
-    private String contentIdentifierPrefix; // ok
-    private String contentIdentifierSuffix; // ok
+	private String contentIdentifierPrefix; // ok
+	private String contentIdentifierSuffix; // ok
 
-    private List<String> commitmentTypeIndication; // ok
-    private BLevelParameters.SignerLocation signerLocation; // ok
+	private List<String> commitmentTypeIndication; // ok
+	private BLevelParameters.SignerLocation signerLocation; // ok
 
-    private DigestAlgorithm timestampDigestAlgorithm; // ok
+	private DigestAlgorithm timestampDigestAlgorithm; // ok
 
-    /**
-     * @return
-     */
-    public SignatureLevel getSignatureLevel() {
-        return signatureLevel;
-    }
+	private List<DSSReference> references;
 
-    /**
-     * @param signatureLevel
-     */
-    public void setSignatureLevel(final SignatureLevel signatureLevel) {
-        this.signatureLevel = signatureLevel;
-    }
 
-    /**
-     * @return
-     */
-    public SignaturePackaging getSignaturePackaging() {
-        return signaturePackaging;
-    }
+	/**
+	 * @return
+	 */
+	public SignatureLevel getSignatureLevel() {
+		return signatureLevel;
+	}
 
-    /**
-     * @param signaturePackaging
-     */
-    public void setSignaturePackaging(final SignaturePackaging signaturePackaging) {
-        this.signaturePackaging = signaturePackaging;
-    }
+	/**
+	 * @param signatureLevel
+	 */
+	public void setSignatureLevel(final SignatureLevel signatureLevel) {
+		this.signatureLevel = signatureLevel;
+	}
 
-    /**
-     * @return
-     */
-    public EncryptionAlgorithm getEncryptionAlgorithm() {
-        return encryptionAlgorithm;
-    }
+	/**
+	 * @return
+	 */
+	public SignaturePackaging getSignaturePackaging() {
+		return signaturePackaging;
+	}
 
-    /**
-     * @param encryptionAlgorithm
-     */
-    public void setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
-        this.encryptionAlgorithm = encryptionAlgorithm;
-    }
+	/**
+	 * @param signaturePackaging
+	 */
+	public void setSignaturePackaging(final SignaturePackaging signaturePackaging) {
+		this.signaturePackaging = signaturePackaging;
+	}
 
-    /**
-     * @return
-     */
-    public DigestAlgorithm getDigestAlgorithm() {
-        return digestAlgorithm;
-    }
+	/**
+	 * @return
+	 */
+	public EncryptionAlgorithm getEncryptionAlgorithm() {
+		return encryptionAlgorithm;
+	}
 
-    /**
-     * @param digestAlgorithm
-     */
-    public void setDigestAlgorithm(DigestAlgorithm digestAlgorithm) {
-        this.digestAlgorithm = digestAlgorithm;
-    }
+	/**
+	 * @param encryptionAlgorithm
+	 */
+	public void setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
+		this.encryptionAlgorithm = encryptionAlgorithm;
+	}
 
-    /**
-     * @return
-     */
-    public String getDeterministicId() {
-        return deterministicId;
-    }
+	/**
+	 * @return
+	 */
+	public DigestAlgorithm getDigestAlgorithm() {
+		return digestAlgorithm;
+	}
 
-    /**
-     * @param deterministicId
-     */
-    public void setDeterministicId(String deterministicId) {
-        this.deterministicId = deterministicId;
-    }
+	/**
+	 * @param digestAlgorithm
+	 */
+	public void setDigestAlgorithm(DigestAlgorithm digestAlgorithm) {
+		this.digestAlgorithm = digestAlgorithm;
+	}
 
-    /**
-     * @return
-     */
-    public Date getSigningDate() {
-        return signingDate;
-    }
+	/**
+	 * @return
+	 */
+	public String getDeterministicId() {
+		return deterministicId;
+	}
 
-    /**
-     * @param signingDate
-     */
-    public void setSigningDate(final Date signingDate) {
-        this.signingDate = signingDate;
-    }
+	/**
+	 * @param deterministicId
+	 */
+	public void setDeterministicId(String deterministicId) {
+		this.deterministicId = deterministicId;
+	}
 
-    /**
-     * @return
-     */
-    public byte[] getSigningCertificateBytes() {
-        return signingCertificateBytes;
-    }
+	/**
+	 * @return
+	 */
+	public Date getSigningDate() {
+		return signingDate;
+	}
 
-    /**
-     * @param signingCertificateBytes
-     */
-    public void setSigningCertificateBytes(final byte[] signingCertificateBytes) {
-        this.signingCertificateBytes = signingCertificateBytes;
-    }
+	/**
+	 * @param signingDate
+	 */
+	public void setSigningDate(final Date signingDate) {
+		this.signingDate = signingDate;
+	}
 
-    /**
-     * @return
-     */
-    public List<byte[]> getCertificateChainByteArrayList() {
-        return certificateChainByteArrayList;
-    }
+	/**
+	 * @return
+	 */
+	public byte[] getSigningCertificateBytes() {
+		return signingCertificateBytes;
+	}
 
-    /**
-     * @param certificateChainByteArrayList
-     */
-    public void setCertificateChainByteArrayList(final List<byte[]> certificateChainByteArrayList) {
-        this.certificateChainByteArrayList = certificateChainByteArrayList;
-    }
+	/**
+	 * @param signingCertificateBytes
+	 */
+	public void setSigningCertificateBytes(final byte[] signingCertificateBytes) {
+		this.signingCertificateBytes = signingCertificateBytes;
+	}
 
-    /**
-     * @return
-     */
-    public BLevelParameters.Policy getSignaturePolicy() {
-        return signaturePolicy;
-    }
+	/**
+	 * @return
+	 */
+	public List<byte[]> getCertificateChainByteArrayList() {
+		return certificateChainByteArrayList;
+	}
 
-    /**
-     * @param signaturePolicy
-     */
-    public void setSignaturePolicy(final BLevelParameters.Policy signaturePolicy) {
-        this.signaturePolicy = signaturePolicy;
-    }
+	/**
+	 * @param certificateChainByteArrayList
+	 */
+	public void setCertificateChainByteArrayList(final List<byte[]> certificateChainByteArrayList) {
+		this.certificateChainByteArrayList = certificateChainByteArrayList;
+	}
 
-    public DigestAlgorithm getSigningCertificateDigestAlgorithm() {
-        return signingCertificateDigestAlgorithm;
-    }
+	/**
+	 * @return
+	 */
+	public BLevelParameters.Policy getSignaturePolicy() {
+		return signaturePolicy;
+	}
 
-    public void setSigningCertificateDigestAlgorithm(DigestAlgorithm signingCertificateDigestAlgorithm) {
-        this.signingCertificateDigestAlgorithm = signingCertificateDigestAlgorithm;
-    }
+	/**
+	 * @param signaturePolicy
+	 */
+	public void setSignaturePolicy(final BLevelParameters.Policy signaturePolicy) {
+		this.signaturePolicy = signaturePolicy;
+	}
 
-    public List<String> getClaimedSignerRole() {
-        return claimedSignerRole;
-    }
+	public DigestAlgorithm getSigningCertificateDigestAlgorithm() {
+		return signingCertificateDigestAlgorithm;
+	}
 
-    public void setClaimedSignerRole(List<String> claimedSignerRole) {
-        this.claimedSignerRole = claimedSignerRole;
-    }
+	public void setSigningCertificateDigestAlgorithm(DigestAlgorithm signingCertificateDigestAlgorithm) {
+		this.signingCertificateDigestAlgorithm = signingCertificateDigestAlgorithm;
+	}
 
-    public List<String> getCertifiedSignerRoles() {
-        return certifiedSignerRoles;
-    }
+	public List<String> getClaimedSignerRole() {
+		return claimedSignerRole;
+	}
 
-    public void setCertifiedSignerRoles(List<String> certifiedSignerRoles) {
-        this.certifiedSignerRoles = certifiedSignerRoles;
-    }
+	public void setClaimedSignerRole(List<String> claimedSignerRole) {
+		this.claimedSignerRole = claimedSignerRole;
+	}
 
-    public String getContentIdentifierPrefix() {
-        return contentIdentifierPrefix;
-    }
+	public List<String> getCertifiedSignerRoles() {
+		return certifiedSignerRoles;
+	}
 
-    public void setContentIdentifierPrefix(String contentIdentifierPrefix) {
-        this.contentIdentifierPrefix = contentIdentifierPrefix;
-    }
+	public void setCertifiedSignerRoles(List<String> certifiedSignerRoles) {
+		this.certifiedSignerRoles = certifiedSignerRoles;
+	}
 
-    public String getContentIdentifierSuffix() {
-        return contentIdentifierSuffix;
-    }
+	public String getContentIdentifierPrefix() {
+		return contentIdentifierPrefix;
+	}
 
-    public void setContentIdentifierSuffix(String contentIdentifierSuffix) {
-        this.contentIdentifierSuffix = contentIdentifierSuffix;
-    }
+	public void setContentIdentifierPrefix(String contentIdentifierPrefix) {
+		this.contentIdentifierPrefix = contentIdentifierPrefix;
+	}
 
-    public List<String> getCommitmentTypeIndication() {
-        return commitmentTypeIndication;
-    }
+	public String getContentIdentifierSuffix() {
+		return contentIdentifierSuffix;
+	}
 
-    public void setCommitmentTypeIndication(List<String> commitmentTypeIndication) {
-        this.commitmentTypeIndication = commitmentTypeIndication;
-    }
+	public void setContentIdentifierSuffix(String contentIdentifierSuffix) {
+		this.contentIdentifierSuffix = contentIdentifierSuffix;
+	}
 
-    public BLevelParameters.SignerLocation getSignerLocation() {
-        return signerLocation;
-    }
+	public List<String> getCommitmentTypeIndication() {
+		return commitmentTypeIndication;
+	}
 
-    public void setSignerLocation(BLevelParameters.SignerLocation signerLocation) {
-        this.signerLocation = signerLocation;
-    }
+	public void setCommitmentTypeIndication(List<String> commitmentTypeIndication) {
+		this.commitmentTypeIndication = commitmentTypeIndication;
+	}
 
-    public DigestAlgorithm getTimestampDigestAlgorithm() {
-        return timestampDigestAlgorithm;
-    }
+	public BLevelParameters.SignerLocation getSignerLocation() {
+		return signerLocation;
+	}
 
-    public void setTimestampDigestAlgorithm(DigestAlgorithm timestampDigestAlgorithm) {
-        this.timestampDigestAlgorithm = timestampDigestAlgorithm;
-    }
+	public void setSignerLocation(BLevelParameters.SignerLocation signerLocation) {
+		this.signerLocation = signerLocation;
+	}
+
+	public DigestAlgorithm getTimestampDigestAlgorithm() {
+		return timestampDigestAlgorithm;
+	}
+
+	public void setTimestampDigestAlgorithm(DigestAlgorithm timestampDigestAlgorithm) {
+		this.timestampDigestAlgorithm = timestampDigestAlgorithm;
+	}
+
+	public List<DSSReference> getReferences() {
+		return references;
+	}
+
+	public void setReferences(List<DSSReference> references) {
+
+		// System.out.println("@@@@@@@@@@@@@@@@@@ " + references);
+		this.references = references;
+	}
 }

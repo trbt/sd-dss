@@ -181,8 +181,6 @@ public final class DSSUtils {
 
 		try {
 
-			org.apache.xml.security.Init.init();
-
 			Security.addProvider(securityProvider);
 
 			certificateFactory = CertificateFactory.getInstance("X.509", "BC");
@@ -1187,7 +1185,7 @@ public final class DSSUtils {
 		try {
 
 			LOG.debug("Signature Algorithm: " + javaSignatureAlgorithm);
-			final Signature signature = Signature.getInstance(javaSignatureAlgorithm, securityProvider);
+			final Signature signature = Signature.getInstance(javaSignatureAlgorithm);
 
 			signature.initSign(privateKey);
 			final byte[] buffer = new byte[4096];
@@ -1226,7 +1224,7 @@ public final class DSSUtils {
 
 		try {
 
-			final Signature signature = Signature.getInstance(javaSignatureAlgorithm, securityProvider);
+			final Signature signature = Signature.getInstance(javaSignatureAlgorithm);
 
 			signature.initSign(privateKey);
 			signature.update(bytes);
