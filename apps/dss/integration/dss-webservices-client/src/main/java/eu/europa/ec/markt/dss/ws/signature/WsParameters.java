@@ -30,6 +30,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
  *         &lt;element name="deterministicId" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="digestAlgorithm" type="{http://ws.dss.markt.ec.europa.eu/}digestAlgorithm" minOccurs="0"/>
  *         &lt;element name="encryptionAlgorithm" type="{http://ws.dss.markt.ec.europa.eu/}encryptionAlgorithm" minOccurs="0"/>
+ *         &lt;element name="references" type="{http://ws.dss.markt.ec.europa.eu/}dssReference" maxOccurs="unbounded" minOccurs="0"/>
  *         &lt;element name="signatureLevel" type="{http://ws.dss.markt.ec.europa.eu/}signatureLevel" minOccurs="0"/>
  *         &lt;element name="signaturePackaging" type="{http://ws.dss.markt.ec.europa.eu/}signaturePackaging" minOccurs="0"/>
  *         &lt;element name="signaturePolicy" type="{http://ws.dss.markt.ec.europa.eu/}policy" minOccurs="0"/>
@@ -37,6 +38,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
  *         &lt;element name="signingCertificateBytes" type="{http://www.w3.org/2001/XMLSchema}base64Binary" minOccurs="0"/>
  *         &lt;element name="signingCertificateDigestAlgorithm" type="{http://ws.dss.markt.ec.europa.eu/}digestAlgorithm" minOccurs="0"/>
  *         &lt;element name="signingDate" type="{http://www.w3.org/2001/XMLSchema}dateTime" minOccurs="0"/>
+ *         &lt;element name="timestampDigestAlgorithm" type="{http://ws.dss.markt.ec.europa.eu/}digestAlgorithm" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -56,13 +58,15 @@ import javax.xml.datatype.XMLGregorianCalendar;
     "deterministicId",
     "digestAlgorithm",
     "encryptionAlgorithm",
+    "references",
     "signatureLevel",
     "signaturePackaging",
     "signaturePolicy",
     "signerLocation",
     "signingCertificateBytes",
     "signingCertificateDigestAlgorithm",
-    "signingDate"
+    "signingDate",
+    "timestampDigestAlgorithm"
 })
 public class WsParameters {
 
@@ -79,6 +83,8 @@ public class WsParameters {
     protected String deterministicId;
     protected DigestAlgorithm digestAlgorithm;
     protected EncryptionAlgorithm encryptionAlgorithm;
+    @XmlElement(nillable = true)
+    protected List<DssReference> references;
     protected SignatureLevel signatureLevel;
     protected SignaturePackaging signaturePackaging;
     protected Policy signaturePolicy;
@@ -87,6 +93,7 @@ public class WsParameters {
     protected DigestAlgorithm signingCertificateDigestAlgorithm;
     @XmlSchemaType(name = "dateTime")
     protected XMLGregorianCalendar signingDate;
+    protected DigestAlgorithm timestampDigestAlgorithm;
 
     /**
      * Gets the value of the certificateChainByteArrayList property.
@@ -324,6 +331,35 @@ public class WsParameters {
     }
 
     /**
+     * Gets the value of the references property.
+     * 
+     * <p>
+     * This accessor method returns a reference to the live list,
+     * not a snapshot. Therefore any modification you make to the
+     * returned list will be present inside the JAXB object.
+     * This is why there is not a <CODE>set</CODE> method for the references property.
+     * 
+     * <p>
+     * For example, to add a new item, do as follows:
+     * <pre>
+     *    getReferences().add(newItem);
+     * </pre>
+     * 
+     * 
+     * <p>
+     * Objects of the following type(s) are allowed in the list
+     * {@link DssReference }
+     * 
+     * 
+     */
+    public List<DssReference> getReferences() {
+        if (references == null) {
+            references = new ArrayList<DssReference>();
+        }
+        return this.references;
+    }
+
+    /**
      * Gets the value of the signatureLevel property.
      * 
      * @return
@@ -487,6 +523,30 @@ public class WsParameters {
      */
     public void setSigningDate(XMLGregorianCalendar value) {
         this.signingDate = value;
+    }
+
+    /**
+     * Gets the value of the timestampDigestAlgorithm property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link DigestAlgorithm }
+     *     
+     */
+    public DigestAlgorithm getTimestampDigestAlgorithm() {
+        return timestampDigestAlgorithm;
+    }
+
+    /**
+     * Sets the value of the timestampDigestAlgorithm property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link DigestAlgorithm }
+     *     
+     */
+    public void setTimestampDigestAlgorithm(DigestAlgorithm value) {
+        this.timestampDigestAlgorithm = value;
     }
 
 }

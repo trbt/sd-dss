@@ -33,9 +33,15 @@ import javax.xml.bind.annotation.XmlType;
  *     &lt;enumeration value="PAdES_BASELINE_LT"/>
  *     &lt;enumeration value="PAdES_BASELINE_T"/>
  *     &lt;enumeration value="PAdES_BASELINE_B"/>
+ *     &lt;enumeration value="PAdES_102778_LTV"/>
+ *     &lt;enumeration value="ASiC_S_BASELINE_LTA"/>
  *     &lt;enumeration value="ASiC_S_BASELINE_LT"/>
  *     &lt;enumeration value="ASiC_S_BASELINE_T"/>
  *     &lt;enumeration value="ASiC_S_BASELINE_B"/>
+ *     &lt;enumeration value="ASiC_E_BASELINE_LTA"/>
+ *     &lt;enumeration value="ASiC_E_BASELINE_LT"/>
+ *     &lt;enumeration value="ASiC_E_BASELINE_T"/>
+ *     &lt;enumeration value="ASiC_E_BASELINE_B"/>
  *   &lt;/restriction>
  * &lt;/simpleType>
  * </pre>
@@ -69,9 +75,9 @@ public enum SignatureLevel {
     CAdES_BASELINE_T("CAdES_BASELINE_T"),
     @XmlEnumValue("CAdES_BASELINE_B")
     CAdES_BASELINE_B("CAdES_BASELINE_B"),
-    CADES_101733_C("CADES_101733_C"),
-    CADES_101733_X("CADES_101733_X"),
-    CADES_101733_A("CADES_101733_A"),
+    CAdES_101733_C("CADES_101733_C"),
+    CAdES_101733_X("CADES_101733_X"),
+    CAdES_101733_A("CADES_101733_A"),
     @XmlEnumValue("PAdES_BASELINE_LTA")
     PAdES_BASELINE_LTA("PAdES_BASELINE_LTA"),
     @XmlEnumValue("PAdES_BASELINE_LT")
@@ -80,12 +86,24 @@ public enum SignatureLevel {
     PAdES_BASELINE_T("PAdES_BASELINE_T"),
     @XmlEnumValue("PAdES_BASELINE_B")
     PAdES_BASELINE_B("PAdES_BASELINE_B"),
+    @XmlEnumValue("PAdES_102778_LTV")
+    PAdES_102778_LTV("PAdES_102778_LTV"),
+    @XmlEnumValue("ASiC_S_BASELINE_LTA")
+    ASiC_S_BASELINE_LTA("ASiC_S_BASELINE_LTA"),
     @XmlEnumValue("ASiC_S_BASELINE_LT")
     ASiC_S_BASELINE_LT("ASiC_S_BASELINE_LT"),
     @XmlEnumValue("ASiC_S_BASELINE_T")
     ASiC_S_BASELINE_T("ASiC_S_BASELINE_T"),
     @XmlEnumValue("ASiC_S_BASELINE_B")
-    ASiC_S_BASELINE_B("ASiC_S_BASELINE_B");
+    ASiC_S_BASELINE_B("ASiC_S_BASELINE_B"),
+    @XmlEnumValue("ASiC_E_BASELINE_LTA")
+    ASiC_E_BASELINE_LTA("ASiC_E_BASELINE_LTA"),
+    @XmlEnumValue("ASiC_E_BASELINE_LT")
+    ASiC_E_BASELINE_LT("ASiC_E_BASELINE_LT"),
+    @XmlEnumValue("ASiC_E_BASELINE_T")
+    ASiC_E_BASELINE_T("ASiC_E_BASELINE_T"),
+    @XmlEnumValue("ASiC_E_BASELINE_B")
+    ASiC_E_BASELINE_B("ASiC_E_BASELINE_B");
     private final String value;
 
     SignatureLevel(String v) {
