@@ -42,11 +42,28 @@ import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
 
 public class CMSDocumentValidator extends SignedDocumentValidator {
 
-    private CMSSignedData cmsSignedData;
+    protected CMSSignedData cmsSignedData;
 
     /**
-     * The default constructor for PKCS7DocumentValidator.
+     * This constructor is used with {@code TimeStampToken}.
+     */
+    public CMSDocumentValidator() {
+    }
+
+    /**
+     * The default constructor for {@code CMSDocumentValidator}.
      *
+     * @param cmsSignedData pkcs7-signature(s)
+     */
+    public CMSDocumentValidator(final CMSSignedData cmsSignedData){
+
+        this.cmsSignedData = cmsSignedData;
+    }
+
+    /**
+     * The default constructor for {@code CMSDocumentValidator}.
+     *
+     * @param document document to validate (with the signature(s))
      * @throws DSSException
      */
     public CMSDocumentValidator(final DSSDocument document) throws DSSException {
@@ -81,5 +98,4 @@ public class CMSDocumentValidator extends SignedDocumentValidator {
         }
         return signatures;
     }
-
 }
