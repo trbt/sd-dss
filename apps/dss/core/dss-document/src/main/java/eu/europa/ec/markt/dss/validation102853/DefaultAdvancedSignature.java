@@ -44,181 +44,179 @@ import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
  */
 public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 
-    protected static int signatureCounter = 0;
+	protected static int signatureCounter = 0;
 
-    /**
-     * The reference to the signing certificate object. If the signing certificate is an input provided by the DA then getSigningCert MUST be called.
-     */
-    protected SigningCertificateValidity signingCertificateValidity;
-    /**
-     * This list contains the detail information collected during the check. It is reset for each call of {@code isDataForSignatureLevelPresent}
-     */
-    protected List<String> info;
+	/**
+	 * The reference to the signing certificate object. If the signing certificate is an input provided by the DA then getSigningCert MUST be called.
+	 */
+	protected SigningCertificateValidity signingCertificateValidity;
+	/**
+	 * This list contains the detail information collected during the check. It is reset for each call of {@code isDataForSignatureLevelPresent}
+	 */
+	protected List<String> info;
 
-    /**
-     * This variable contains the list of archive signature timestamps.
-     */
-    protected List<TimestampToken> archiveTimestamps;
+	/**
+	 * This variable contains the list of archive signature timestamps.
+	 */
+	protected List<TimestampToken> archiveTimestamps;
 
-    /**
-     * @return the upper level for which data have been found. Doesn't mean any validity of the data found. Null if unknown.
-     */
-    @Override
-    public SignatureLevel getDataFoundUpToLevel() {
-        final SignatureLevel[] signatureLevels = getSignatureLevels();
-        final SignatureLevel dataFoundUpToProfile = getDataFoundUpToProfile(signatureLevels);
-        return dataFoundUpToProfile;
-    }
+	/**
+	 * @return the upper level for which data have been found. Doesn't mean any validity of the data found. Null if unknown.
+	 */
+	@Override
+	public SignatureLevel getDataFoundUpToLevel() {
+		final SignatureLevel[] signatureLevels = getSignatureLevels();
+		final SignatureLevel dataFoundUpToProfile = getDataFoundUpToProfile(signatureLevels);
+		return dataFoundUpToProfile;
+	}
 
-    private SignatureLevel getDataFoundUpToProfile(SignatureLevel... signatureLevels) {
+	private SignatureLevel getDataFoundUpToProfile(SignatureLevel... signatureLevels) {
 
-        for (int ii = signatureLevels.length - 1; ii >= 0; ii--) {
+		for (int ii = signatureLevels.length - 1; ii >= 0; ii--) {
 
-            final SignatureLevel signatureLevel = signatureLevels[ii];
-            if (isDataForSignatureLevelPresent(signatureLevel)) {
-                return signatureLevel;
-            }
-        }
-        return null;
-    }
+			final SignatureLevel signatureLevel = signatureLevels[ii];
+			if (isDataForSignatureLevelPresent(signatureLevel)) {
+				return signatureLevel;
+			}
+		}
+		return null;
+	}
 
-    /**
-     * This method validates the signing certificate and all timestamps.
-     *
-     * @return signature validation context containing all certificates and revocation data used during the validation process.
-     */
-    public SignatureValidationContext getSignatureValidationContext(final CertificateVerifier certificateVerifier) {
+	/**
+	 * This method validates the signing certificate and all timestamps.
+	 *
+	 * @return signature validation context containing all certificates and revocation data used during the validation process.
+	 */
+	public SignatureValidationContext getSignatureValidationContext(final CertificateVerifier certificateVerifier) {
 
-        final CertificatePool validationPool = SignedDocumentValidator.createValidationPool(certificateVerifier);
-        final SignatureValidationContext validationContext = new SignatureValidationContext(this, certificateVerifier, validationPool);
-        final CertificateToken certToken = getSigningCertificateToken();
-        validationContext.setCertificateToValidate(certToken);
-        validationContext.validate();
-        return validationContext;
-    }
+		final CertificatePool validationPool = SignedDocumentValidator.createValidationPool(certificateVerifier);
+		final SignatureValidationContext validationContext = new SignatureValidationContext(this, certificateVerifier, validationPool);
+		final CertificateToken signingCertificateToken = getSigningCertificateToken();
+		validationContext.setCertificateToValidate(signingCertificateToken);
+		validationContext.validate();
+		return validationContext;
+	}
 
-    /**
-     * This method returns all certificates used during the validation process. If a certificate is already present within the signature then it is ignored.
-     *
-     * @param validationContext validation context containing all information about the validation process of the signing certificate and time-stamps
-     * @return set of certificates not yet present within the signature
-     */
-    public Set<CertificateToken> getCertificatesForInclusion(final SignatureValidationContext validationContext) {
+	/**
+	 * This method returns all certificates used during the validation process. If a certificate is already present within the signature then it is ignored.
+	 *
+	 * @param validationContext validation context containing all information about the validation process of the signing certificate and time-stamps
+	 * @return set of certificates not yet present within the signature
+	 */
+	public Set<CertificateToken> getCertificatesForInclusion(final SignatureValidationContext validationContext) {
 
-        final Set<CertificateToken> certificates = new HashSet<CertificateToken>();
-        final List<CertificateToken> certWithinSignatures = getCertificatesWithinSignatureAndTimestamps();
-        for (final CertificateToken certificateToken : validationContext.getProcessedCertificates()) {
-            if (certWithinSignatures.contains(certificateToken)) {
-                continue;
-            }
-            certificates.add(certificateToken);
-        }
-        return certificates;
-    }
+		final Set<CertificateToken> certificates = new HashSet<CertificateToken>();
+		final List<CertificateToken> certWithinSignatures = getCertificatesWithinSignatureAndTimestamps();
+		for (final CertificateToken certificateToken : validationContext.getProcessedCertificates()) {
+			if (certWithinSignatures.contains(certificateToken)) {
+				continue;
+			}
+			certificates.add(certificateToken);
+		}
+		return certificates;
+	}
 
-    public List<CertificateToken> getCertificatesWithinSignatureAndTimestamps() {
-        final List<CertificateToken> certWithinSignatures = new ArrayList<CertificateToken>();
-        certWithinSignatures.addAll(getCertificates());
-        //TODO (2013-12-11 Nicolas -> Bob): Create a convenient method to get all the timestamptokens // to get all the certificates
-        for (final TimestampToken timestampToken : getSignatureTimestamps()) {
-            certWithinSignatures.addAll(timestampToken.getCertificates());
-        }
-        for (final TimestampToken timestampToken : getArchiveTimestamps()) {
-            certWithinSignatures.addAll(timestampToken.getCertificates());
-        }
-        for (final TimestampToken timestampToken : getContentTimestamps()) {
-            certWithinSignatures.addAll(timestampToken.getCertificates());
-        }
-        for (final TimestampToken timestampToken : getTimestampsX1()) {
-            certWithinSignatures.addAll(timestampToken.getCertificates());
-        }
-        for (final TimestampToken timestampToken : getTimestampsX2()) {
-            certWithinSignatures.addAll(timestampToken.getCertificates());
-        }
-        return certWithinSignatures;
-    }
+	public List<CertificateToken> getCertificatesWithinSignatureAndTimestamps() {
+		final List<CertificateToken> certWithinSignatures = new ArrayList<CertificateToken>();
+		certWithinSignatures.addAll(getCertificates());
+		//TODO (2013-12-11 Nicolas -> Bob): Create a convenient method to get all the timestamptokens // to get all the certificates
+		for (final TimestampToken timestampToken : getSignatureTimestamps()) {
+			certWithinSignatures.addAll(timestampToken.getCertificates());
+		}
+		for (final TimestampToken timestampToken : getArchiveTimestamps()) {
+			certWithinSignatures.addAll(timestampToken.getCertificates());
+		}
+		for (final TimestampToken timestampToken : getContentTimestamps()) {
+			certWithinSignatures.addAll(timestampToken.getCertificates());
+		}
+		for (final TimestampToken timestampToken : getTimestampsX1()) {
+			certWithinSignatures.addAll(timestampToken.getCertificates());
+		}
+		for (final TimestampToken timestampToken : getTimestampsX2()) {
+			certWithinSignatures.addAll(timestampToken.getCertificates());
+		}
+		return certWithinSignatures;
+	}
 
-    /**
-     * This method returns revocation values (ocsp and crl) that will be included in the LT profile
-     *
-     * @param validationContext
-     * @return
-     */
-    public RevocationDataForInclusion getRevocationDataForInclusion(final SignatureValidationContext validationContext) {
-        //TODO: there can be also CSP and OSCP in TimestampToken CMS data
-        final Set<RevocationToken> revocationTokens = validationContext.getProcessedRevocations();
-        final OfflineCRLSource crlSource = getCRLSource();
-        final List<CRLToken> containedCRLs = crlSource.getContainedCRLTokens();
-        final OfflineOCSPSource ocspSource = getOCSPSource();
-        final List<BasicOCSPResp> basicOCSPResps = ocspSource.getContainedOCSPResponses();
-        final List<CRLToken> crlTokens = new ArrayList<CRLToken>();
-        final List<OCSPToken> ocspTokens = new ArrayList<OCSPToken>();
-        if (revocationTokens != null) {
+	/**
+	 * This method returns revocation values (ocsp and crl) that will be included in the LT profile
+	 *
+	 * @param validationContext
+	 * @return
+	 */
+	public RevocationDataForInclusion getRevocationDataForInclusion(final SignatureValidationContext validationContext) {
 
-            for (final RevocationToken revocationToken : revocationTokens) {
+		//TODO: there can be also CRL and OCSP in TimestampToken CMS data
+		final Set<RevocationToken> revocationTokens = validationContext.getProcessedRevocations();
+		final OfflineCRLSource crlSource = getCRLSource();
+		final List<CRLToken> containedCRLs = crlSource.getContainedCRLTokens();
+		final OfflineOCSPSource ocspSource = getOCSPSource();
+		final List<BasicOCSPResp> containedBasicOCSPResponses = ocspSource.getContainedOCSPResponses();
+		final List<CRLToken> crlTokens = new ArrayList<CRLToken>();
+		final List<OCSPToken> ocspTokens = new ArrayList<OCSPToken>();
+		for (final RevocationToken revocationToken : revocationTokens) {
 
-                if (revocationToken instanceof CRLToken) {
+			if (revocationToken instanceof CRLToken) {
 
-                    final boolean tokenIn = containedCRLs.contains(revocationToken);
-                    if (!tokenIn) {
+				final boolean tokenIn = containedCRLs.contains(revocationToken);
+				if (!tokenIn) {
 
-                        final CRLToken crlToken = (CRLToken) revocationToken;
-                        crlTokens.add(crlToken);
-                    }
-                } else if (revocationToken instanceof OCSPToken) {
+					final CRLToken crlToken = (CRLToken) revocationToken;
+					crlTokens.add(crlToken);
+				}
+			} else if (revocationToken instanceof OCSPToken) {
 
-                    final boolean tokenIn = DSSRevocationUtils.isTokenIn(revocationToken, basicOCSPResps);
-                    if (!tokenIn) {
+				final boolean tokenIn = DSSRevocationUtils.isTokenIn(revocationToken, containedBasicOCSPResponses);
+				if (!tokenIn) {
 
-                        final OCSPToken ocspToken = (OCSPToken) revocationToken;
-                        ocspTokens.add(ocspToken);
-                    }
-                } else {
-                    throw new DSSException("Unknown type for revocationToken: " + revocationToken.getClass().getName());
-                }
-            }
-        }
-        return new RevocationDataForInclusion(crlTokens, ocspTokens);
-    }
+					final OCSPToken ocspToken = (OCSPToken) revocationToken;
+					ocspTokens.add(ocspToken);
+				}
+			} else {
+				throw new DSSException("Unknown type for revocationToken: " + revocationToken.getClass().getName());
+			}
+		}
+		return new RevocationDataForInclusion(crlTokens, ocspTokens);
+	}
 
-    /**
-     * This list contains the detail information collected during the check. It is reset for each call.
-     *
-     * @return
-     */
-    @Override
-    public List<String> getInfo() {
+	/**
+	 * This list contains the detail information collected during the check. It is reset for each call.
+	 *
+	 * @return
+	 */
+	@Override
+	public List<String> getInfo() {
 
-        return Collections.unmodifiableList(info);
-    }
+		return Collections.unmodifiableList(info);
+	}
 
-    public static class RevocationDataForInclusion {
+	public static class RevocationDataForInclusion {
 
-        public final List<CRLToken> crlTokens;
-        public final List<OCSPToken> ocspTokens;
+		public final List<CRLToken> crlTokens;
+		public final List<OCSPToken> ocspTokens;
 
-        public RevocationDataForInclusion(final List<CRLToken> crlTokens, final List<OCSPToken> ocspTokens) {
+		public RevocationDataForInclusion(final List<CRLToken> crlTokens, final List<OCSPToken> ocspTokens) {
 
-            this.crlTokens = crlTokens;
-            this.ocspTokens = ocspTokens;
-        }
+			this.crlTokens = crlTokens;
+			this.ocspTokens = ocspTokens;
+		}
 
-        public boolean isEmpty() {
+		public boolean isEmpty() {
 
-            return crlTokens.isEmpty() && ocspTokens.isEmpty();
-        }
-    }
+			return crlTokens.isEmpty() && ocspTokens.isEmpty();
+		}
+	}
 
-    @Override
-    public CertificateToken getSigningCertificateToken() {
+	@Override
+	public CertificateToken getSigningCertificateToken() {
 
-        signingCertificateValidity = getSigningCertificateValidity();
-        if (signingCertificateValidity.isValid()) {
+		signingCertificateValidity = getSigningCertificateValidity();
+		if (signingCertificateValidity.isValid()) {
 
-            final CertificateToken signingCertificateToken = signingCertificateValidity.getCertToken();
-            return signingCertificateToken;
-        }
-        return null;
-    }
+			final CertificateToken signingCertificateToken = signingCertificateValidity.getCertToken();
+			return signingCertificateToken;
+		}
+		return null;
+	}
 }
 

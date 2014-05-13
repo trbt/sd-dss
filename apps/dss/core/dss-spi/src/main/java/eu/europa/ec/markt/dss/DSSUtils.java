@@ -65,6 +65,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.logging.Level;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -877,7 +878,7 @@ public final class DSSUtils {
 			if (null == authInfoAccessExtensionValue) {
 				return null;
 			}
-	     /* Parse the extension */
+		 /* Parse the extension */
 			final ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(authInfoAccessExtensionValue));
 			final DEROctetString oct = (DEROctetString) (asn1InputStream.readObject());
 			asn1InputStream.close();
@@ -1541,7 +1542,7 @@ public final class DSSUtils {
 	}
 
 	public static void saveToFile(final byte[] bytes, final File file) throws DSSException {
-
+            file.getParentFile().mkdirs();
 		try {
 
 			final FileOutputStream fos = new FileOutputStream(file);
@@ -2714,5 +2715,85 @@ public final class DSSUtils {
 			}
 		}
 		return true;
+	}
+
+
+	/**
+	 * replaces e.g. "\xc3\xa9" with "é"
+	 *
+	 * @param s the input
+	 * @return the output
+	 */
+	public static String unescapeMultiByteUtf8Literals(final String s) {
+		try {
+			final String q = new String(unescapePython(s.getBytes("UTF-8")), "UTF-8");
+			//			if (!q.equals(s)) {
+			//				LOG.log(Level.SEVERE, "multi byte utf literal found:\n" +
+			//							"  orig = " + s + "\n" +
+			//							"  escp = " + q
+			//				);
+			//			}
+			return q;
+		} catch (Exception e) {
+			//			LOG.log(Level.SEVERE, "Could not unescape multi byte utf literal - will use original input: " + s, e);
+			return s;
+		}
+	}
+
+	private static byte[] unescapePython(final byte[] escaped) throws Exception {
+		// simple state machine iterates over the escaped bytes and converts
+		final byte[] unescaped = new byte[escaped.length];
+		int posTarget = 0;
+		for (int posSource = 0; posSource < escaped.length; posSource++) {
+			// if its not special then just move on
+			if (escaped[posSource] != '\\') {
+				unescaped[posTarget] = escaped[posSource];
+				posTarget++;
+				continue;
+			}
+			// if there is no next byte, throw incorrect encoding error
+			if (posSource + 1 >= escaped.length) {
+				throw new Exception("String incorrectly escaped, ends with escape character.");
+			}
+			// deal with hex first
+			if (escaped[posSource + 1] == 'x') {
+				// if there's no next byte, throw incorrect encoding error
+				if (posSource + 3 >= escaped.length) {
+					throw new Exception("String incorrectly escaped, ends early with incorrect hex encoding.");
+				}
+				unescaped[posTarget] = (byte) ((Character.digit(escaped[posSource + 2], 16) << 4) + Character.digit(escaped[posSource + 3], 16));
+				posTarget++;
+				posSource += 3;
+			}
+			// deal with n, then t, then r
+			else if (escaped[posSource + 1] == 'n') {
+				unescaped[posTarget] = '\n';
+				posTarget++;
+				posSource++;
+			} else if (escaped[posSource + 1] == 't') {
+				unescaped[posTarget] = '\t';
+				posTarget++;
+				posSource++;
+			} else if (escaped[posSource + 1] == 'r') {
+				unescaped[posTarget] = '\r';
+				posTarget++;
+				posSource++;
+			} else if (escaped[posSource + 1] == '\\') {
+				unescaped[posTarget] = escaped[posSource + 1];
+				posTarget++;
+				posSource++;
+			} else if (escaped[posSource + 1] == '\'') {
+				unescaped[posTarget] = escaped[posSource + 1];
+				posTarget++;
+				posSource++;
+			} else {
+				// invalid character
+				throw new Exception("String incorrectly escaped, invalid escaped character");
+			}
+		}
+		final byte[] result = new byte[posTarget];
+		System.arraycopy(unescaped, 0, result, 0, posTarget);
+		// return byte array, not string. Callers can convert to string.
+		return result;
 	}
 }

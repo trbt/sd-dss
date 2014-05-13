@@ -36,7 +36,7 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Wrapper of a PrivateKeyEntry coming from a KeyStore.
  *
- * @version $Revision: 3558 $ - $Date: 2014-03-06 09:10:20 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3796 $ - $Date: 2014-04-24 21:41:17 +0200 (Thu, 24 Apr 2014) $
  */
 public class KSPrivateKeyEntry implements DSSPrivateKeyEntry {
 
@@ -47,7 +47,7 @@ public class KSPrivateKeyEntry implements DSSPrivateKeyEntry {
     private final PrivateKey privateKey;
 
     /**
-     * The default constructor for DSSPrivateKeyEntry.
+     * The default constructor for KSPrivateKeyEntry.
      */
     public KSPrivateKeyEntry(final PrivateKeyEntry privateKeyEntry) {
 

@@ -66,245 +66,246 @@ import eu.europa.ec.markt.tsl.jaxb.xades.ObjectIdentifierType;
 
 abstract class AbstractTrustService {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(AbstractTrustService.class);
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(AbstractTrustService.class);
 
-    private static final String TSL = "http://uri.etsi.org/02231/v2#";
+	private static final String TSL = "http://uri.etsi.org/02231/v2#";
 
-    private static final String TSLX = "http://uri.etsi.org/02231/v2/additionaltypes#";
+	private static final String TSLX = "http://uri.etsi.org/02231/v2/additionaltypes#";
 
-    private Date expiredCertsRevocationInfo;
+	private Date expiredCertsRevocationInfo;
 
-    /**
-     * @return
-     */
-    abstract List<ExtensionType> getExtensions();
+	/**
+	 * @return
+	 */
+	abstract List<ExtensionType> getExtensions();
 
-    /**
-     * @return
-     */
-    abstract DigitalIdentityListType getServiceDigitalIdentity();
+	/**
+	 * @return
+	 */
+	abstract DigitalIdentityListType getServiceDigitalIdentity();
 
-    /**
-     * @return
-     */
-    abstract String getType();
+	/**
+	 * @return
+	 */
+	abstract String getType();
 
-    /**
-     * Return the status of the service
-     *
-     * @return
-     */
-    abstract String getStatus();
+	/**
+	 * Return the status of the service
+	 *
+	 * @return
+	 */
+	abstract String getStatus();
 
-    /**
-     * @return
-     */
-    abstract Date getStatusStartDate();
+	/**
+	 * @return
+	 */
+	abstract Date getStatusStartDate();
 
-    /**
-     * @return
-     */
-    abstract Date getStatusEndDate();
+	/**
+	 * @return
+	 */
+	abstract Date getStatusEndDate();
 
-    /**
-     * @return
-     */
-    abstract String getServiceName();
+	/**
+	 * @return
+	 */
+	abstract String getServiceName();
 
-    /**
-     * Return the list of certificate representing the digital identity of this service.
-     *
-     * @return
-     */
-    List<X509Certificate> getDigitalIdentity() {
+	/**
+	 * Return the list of certificate representing the digital identity of this service.
+	 *
+	 * @return
+	 */
+	List<X509Certificate> getDigitalIdentity() {
 
-        try {
+		try {
 
-            final List<X509Certificate> certs = new ArrayList<X509Certificate>();
-            for (final DigitalIdentityType digitalIdentity : getServiceDigitalIdentity().getDigitalId()) {
+			final List<X509Certificate> certs = new ArrayList<X509Certificate>();
+			for (final DigitalIdentityType digitalIdentity : getServiceDigitalIdentity().getDigitalId()) {
 
-                final byte[] x509CertificateBytes = digitalIdentity.getX509Certificate();
-                if (x509CertificateBytes != null) {
+				final byte[] x509CertificateBytes = digitalIdentity.getX509Certificate();
+				if (x509CertificateBytes != null) {
 
-                    final X509Certificate x509Certificate = DSSUtils.loadCertificate(x509CertificateBytes);
-                    // System.out.println(" ----- > " + x509Certificate.getSubjectX500Principal());
-                    certs.add(x509Certificate);
-                }
-                // TODO: (Bob: 2014 Jan 28) In case of history: The digital identity can be also just a public key. So if the certificate is absent a dummy cert should be created
-                // TODO: (Bob: 2014 Feb 21) to be able to handle the history
-            }
-            return certs;
-        } catch (DSSException e) {
+					final X509Certificate x509Certificate = DSSUtils.loadCertificate(x509CertificateBytes);
+					// System.out.println(" ----- > " + x509Certificate.getSubjectX500Principal());
+					certs.add(x509Certificate);
+				}
+				// TODO: (Bob: 2014 Jan 28) In case of history: The digital identity can be also just a public key. So if the certificate is absent a dummy cert should be created
+				// TODO: (Bob: 2014 Feb 21) to be able to handle the history
+			}
+			return certs;
+		} catch (DSSException e) {
 
-            LOG.debug(e.getMessage(), e);
-            throw new DSSEncodingException(MSG.CERTIFICATE_CANNOT_BE_READ, e);
-        }
-    }
+			LOG.debug(e.getMessage(), e);
+			throw new DSSEncodingException(MSG.CERTIFICATE_CANNOT_BE_READ, e);
+		}
+	}
 
-    /**
-     * @return
-     */
-    ServiceInfo createServiceInfo() {
+	/**
+	 * @return
+	 */
+	ServiceInfo createServiceInfo() {
 
-        final ServiceInfo service = new ServiceInfo();
-        final List<QualificationsType> qualificationList = getQualificationsType();
-        for (final QualificationsType qualifications : qualificationList) {
+		final ServiceInfo service = new ServiceInfo();
+		final List<QualificationsType> qualificationList = getQualificationsType();
+		for (final QualificationsType qualifications : qualificationList) {
 
-            for (final QualificationElementType qualificationElement : qualifications.getQualificationElement()) {
+			for (final QualificationElementType qualificationElement : qualifications.getQualificationElement()) {
 
-                parseQualificationElement(qualificationElement, service);
-            }
-        }
-        service.setExpiredCertsRevocationInfo(expiredCertsRevocationInfo);
-        return service;
-    }
+				parseQualificationElement(qualificationElement, service);
+			}
+		}
+		service.setExpiredCertsRevocationInfo(expiredCertsRevocationInfo);
+		return service;
+	}
 
-    @SuppressWarnings("rawtypes")
-    private List<QualificationsType> getQualificationsType() {
+	@SuppressWarnings("rawtypes")
+	private List<QualificationsType> getQualificationsType() {
 
-        final List<QualificationsType> qualificationList = new ArrayList<QualificationsType>();
-        for (final ExtensionType extension : getExtensions()) {
+		final List<QualificationsType> qualificationList = new ArrayList<QualificationsType>();
+		for (final ExtensionType extension : getExtensions()) {
 
-            for (final Object object : extension.getContent()) {
+			for (final Object object : extension.getContent()) {
 
-                if (object instanceof String) {
+				if (object instanceof String) {
 
                     /* do nothing */
-                    // if (DSSUtils.isBlank(object.toString())) {
-                    //
-                    // } else {
-                    //
-                    //    LOG.warn("Extension containing " + object.toString());
-                    //    throw new RuntimeException();
-                    // }
-                } else if (object instanceof JAXBElement) {
+					// if (DSSUtils.isBlank(object.toString())) {
+					//
+					// } else {
+					//
+					//    LOG.warn("Extension containing " + object.toString());
+					//    throw new RuntimeException();
+					// }
+				} else if (object instanceof JAXBElement) {
 
-                    final JAXBElement jaxbElement = (JAXBElement) object;
-                    final Object objectValue = jaxbElement.getValue();
-                    if (objectValue instanceof AdditionalServiceInformationType) {
+					final JAXBElement jaxbElement = (JAXBElement) object;
+					final Object objectValue = jaxbElement.getValue();
+					if (objectValue instanceof AdditionalServiceInformationType) {
 
-                        // Do nothing
-                    } else if (objectValue instanceof QualificationsType) {
+						// Do nothing
+					} else if (objectValue instanceof QualificationsType) {
 
-                        qualificationList.add((QualificationsType) jaxbElement.getValue());
-                    } else if (objectValue instanceof TakenOverByType) {
+						qualificationList.add((QualificationsType) jaxbElement.getValue());
+					} else if (objectValue instanceof TakenOverByType) {
 
-                        // Do nothing
-                    } else if (objectValue instanceof XMLGregorianCalendar) {
+						// Do nothing
+					} else if (objectValue instanceof XMLGregorianCalendar) {
 
-                        // {http://uri.etsi.org/02231/v2#}ExpiredCertsRevocationInfo
-                        XMLGregorianCalendar xmlGregorianCalendar = (XMLGregorianCalendar) objectValue;
-                        expiredCertsRevocationInfo = xmlGregorianCalendar.toGregorianCalendar().getTime();
-                    } else {
-                        LOG.warn("Unrecognized extension class {}", jaxbElement.getValue().getClass());
-                    }
-                } else if (object instanceof Element) {
+						// {http://uri.etsi.org/02231/v2#}ExpiredCertsRevocationInfo
+						XMLGregorianCalendar xmlGregorianCalendar = (XMLGregorianCalendar) objectValue;
+						expiredCertsRevocationInfo = xmlGregorianCalendar.toGregorianCalendar().getTime();
+					} else {
+						LOG.warn("Unrecognized extension class {}", jaxbElement.getValue().getClass());
+					}
+				} else if (object instanceof Element) {
 
                     /* We don't know what to do with the Element without further analysis */
-                    final Element element = (Element) object;
-                    final String localName = element.getLocalName();
-                    String namespaceUri = element.getNamespaceURI();
-                    if ("AdditionalServiceInformation".equals(localName) && TSL.equals(namespaceUri)) {
+					final Element element = (Element) object;
+					final String localName = element.getLocalName();
+					String namespaceUri = element.getNamespaceURI();
+					if ("AdditionalServiceInformation".equals(localName) && TSL.equals(namespaceUri)) {
 
-                        // Do nothing
-                    } else if ("TakenOverBy".equals(localName) && TSLX.equals(namespaceUri)) {
+						// Do nothing
+					} else if ("TakenOverBy".equals(localName) && TSLX.equals(namespaceUri)) {
 
-                        // Do nothing
-                    } else {
+						// Do nothing
+					} else {
 
-                        if (TSLX.equals(namespaceUri)) {
+						if (TSLX.equals(namespaceUri)) {
 
-                            namespaceUri = "TSLX";
-                        } else if (TSL.equals(namespaceUri)) {
+							namespaceUri = "TSLX";
+						} else if (TSL.equals(namespaceUri)) {
 
-                            namespaceUri = "TSL";
-                        }
-                        throw new DSSNotETSICompliantException(DSSNotETSICompliantException.MSG.UNRECOGNIZED_TAG, namespaceUri + ":" + localName);
-                    }
-                } else {
-                    throw new RuntimeException("Unknown extension " + object.getClass());
-                }
-            }
-        }
-        return qualificationList;
-    }
+							namespaceUri = "TSL";
+						}
+						throw new DSSNotETSICompliantException(DSSNotETSICompliantException.MSG.UNRECOGNIZED_TAG, namespaceUri + ":" + localName);
+					}
+				} else {
+					throw new RuntimeException("Unknown extension " + object.getClass());
+				}
+			}
+		}
+		return qualificationList;
+	}
 
-    private void parseQualificationElement(final QualificationElementType qualificationElement, final ServiceInfo service) {
+	private void parseQualificationElement(final QualificationElementType qualificationElement, final ServiceInfo service) {
 
-        final QualifiersType qualifierList = qualificationElement.getQualifiers();
-        if (qualifierList == null || qualifierList.getQualifier().isEmpty()) {
-            return;
-        }
-        try {
+		final QualifiersType qualifierList = qualificationElement.getQualifiers();
+		if (qualifierList == null || qualifierList.getQualifier().isEmpty()) {
+			return;
+		}
+		try {
 
-            final CriteriaListType criteriaList = qualificationElement.getCriteriaList();
-            if (criteriaList != null) {
+			final CriteriaListType criteriaList = qualificationElement.getCriteriaList();
+			if (criteriaList != null) {
 
-                if (criteriaList.getKeyUsage().isEmpty() && criteriaList.getPolicySet().isEmpty() && criteriaList.getCriteriaList().isEmpty()) {
+				if (criteriaList.getKeyUsage().isEmpty() && criteriaList.getPolicySet().isEmpty() && criteriaList.getCriteriaList().isEmpty()) {
 
-                    LOG.debug("CriteriaList for service is empty, the QualificationElement is skipped.");
-                    return;
-                }
-                final Condition compositeCondition = parseCriteriaList(criteriaList);
-                for (QualifierType qualifier : qualifierList.getQualifier()) {
+					LOG.debug("CriteriaList for service is empty, the QualificationElement is skipped.");
+					return;
+				}
+				final Condition compositeCondition = parseCriteriaList(criteriaList);
+				for (QualifierType qualifier : qualifierList.getQualifier()) {
 
-                    service.addQualifierAndCondition(qualifier.getUri(), compositeCondition);
-                }
-            }
-        } catch (IllegalArgumentException e) {
+					service.addQualifierAndCondition(qualifier.getUri(), compositeCondition);
+				}
+			}
+		} catch (IllegalArgumentException e) {
 
-            throw new DSSNotETSICompliantException(DSSNotETSICompliantException.MSG.UNSUPPORTED_ASSERT);
-        }
-    }
+			throw new DSSNotETSICompliantException(DSSNotETSICompliantException.MSG.UNSUPPORTED_ASSERT);
+		}
+	}
 
-    private Condition parseCriteriaList(final CriteriaListType criteriaList) {
+	private Condition parseCriteriaList(final CriteriaListType criteriaList) {
 
-        final String assertValue = criteriaList.getAssert();
-        if (assertValue == null) {
+		final String assertValue = criteriaList.getAssert();
+		if (assertValue == null) {
 
-            LOG.info("CriteriaList assert=null!");
-        }
-        // System.out.println("--- > assert: " + assertValue);
-        final MatchingCriteriaIndicator matchingCriteriaIndicator = MatchingCriteriaIndicator.valueOf(assertValue);
+			LOG.info("CriteriaList assert=null!");
+			return null;
+		}
+		// System.out.println("--- > assert: " + assertValue);
+		final MatchingCriteriaIndicator matchingCriteriaIndicator = MatchingCriteriaIndicator.valueOf(assertValue);
 
-        final CompositeCondition condition = new CriteriaListCondition(matchingCriteriaIndicator);
-        for (final PoliciesListType policies : criteriaList.getPolicySet()) {
+		final CompositeCondition condition = new CriteriaListCondition(matchingCriteriaIndicator);
+		for (final PoliciesListType policies : criteriaList.getPolicySet()) {
 
-            final CompositeCondition compositeCondition = new CompositeCondition();
-            for (final ObjectIdentifierType objectIdentifier : policies.getPolicyIdentifier()) {
+			final CompositeCondition compositeCondition = new CompositeCondition();
+			for (final ObjectIdentifierType objectIdentifier : policies.getPolicyIdentifier()) {
 
-                final IdentifierType identifier = objectIdentifier.getIdentifier();
-                if (identifier.getQualifier() == null) {
+				final IdentifierType identifier = objectIdentifier.getIdentifier();
+				if (identifier.getQualifier() == null) {
 
-                    // System.out.println("--- > id1: " + identifier.getValue());
-                    compositeCondition.addChild(new PolicyIdCondition(identifier.getValue()));
-                } else {
+					// System.out.println("--- > id1: " + identifier.getValue());
+					compositeCondition.addChild(new PolicyIdCondition(identifier.getValue()));
+				} else {
 
-                    String id = identifier.getValue();
-                    if (id.indexOf(':') >= 0) {
+					String id = identifier.getValue();
+					if (id.indexOf(':') >= 0) {
 
-                        id = id.substring(id.lastIndexOf(':') + 1);
-                    }
-                    // System.out.println("--- > id2: " + id);
-                    compositeCondition.addChild(new PolicyIdCondition(id));
-                }
-            }
-            condition.addChild(compositeCondition);
-        }
-        for (final KeyUsageType keyUsage : criteriaList.getKeyUsage()) {
+						id = id.substring(id.lastIndexOf(':') + 1);
+					}
+					// System.out.println("--- > id2: " + id);
+					compositeCondition.addChild(new PolicyIdCondition(id));
+				}
+			}
+			condition.addChild(compositeCondition);
+		}
+		for (final KeyUsageType keyUsage : criteriaList.getKeyUsage()) {
 
-            final CompositeCondition compositeCondition = new CompositeCondition();
-            for (final KeyUsageBitType keyUsageBit : keyUsage.getKeyUsageBit()) {
+			final CompositeCondition compositeCondition = new CompositeCondition();
+			for (final KeyUsageBitType keyUsageBit : keyUsage.getKeyUsageBit()) {
 
-                compositeCondition.addChild(new KeyUsageCondition(keyUsageBit.getName(), keyUsageBit.isValue()));
-            }
-            condition.addChild(compositeCondition);
-        }
-        for (final CriteriaListType criteria : criteriaList.getCriteriaList()) {
+				compositeCondition.addChild(new KeyUsageCondition(keyUsageBit.getName(), keyUsageBit.isValue()));
+			}
+			condition.addChild(compositeCondition);
+		}
+		for (final CriteriaListType criteria : criteriaList.getCriteriaList()) {
 
-            final Condition compositeCondition = parseCriteriaList(criteria);
-            condition.addChild(compositeCondition);
-        }
-        return condition;
-    }
+			final Condition compositeCondition = parseCriteriaList(criteria);
+			condition.addChild(compositeCondition);
+		}
+		return condition;
+	}
 }

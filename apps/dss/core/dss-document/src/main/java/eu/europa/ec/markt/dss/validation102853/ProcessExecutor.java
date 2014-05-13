@@ -75,8 +75,7 @@ public class ProcessExecutor {
     protected DetailedReport detailedReport;
 
     /**
-     * See {@link eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters#getCurrentTime()} TODO The management of the currentTime must be updated between
-     * different processes!
+     * See {@link eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters#getCurrentTime()}
      */
     protected Date currentTime = new Date();
 

@@ -51,7 +51,7 @@ import eu.europa.ec.markt.dss.ws.WSParameters;
 /**
  * Implementation of the Interface for the Contract of the Signature Web Service.
  *
- * @version $Revision: 3776 $ - $Date: 2014-04-21 15:32:39 +0200 (Mon, 21 Apr 2014) $
+ * @version $Revision: 3786 $ - $Date: 2014-04-23 06:46:31 +0200 (Wed, 23 Apr 2014) $
  */
 
 @WebService(endpointInterface = "eu.europa.ec.markt.dss.ws.SignatureService", serviceName = "SignatureService")

@@ -65,15 +65,16 @@ class PAdESLevelBaselineLT implements SignatureExtension {
 
     private static final Logger LOG = LoggerFactory.getLogger(PAdESLevelBaselineLT.class);
 
-    // DSSS/VRI dictionnary is not mandatory, therefore it's not included
+    // DSSS/VRI dictionary is not mandatory, therefore it's not included
     // TODO: implementation of DSS/VRI is not complete
-    private static final boolean INCLUDE_VRI_DICTIONNARY = false;
+    private static final boolean INCLUDE_VRI_DICTIONARY = false;
 
     private final CertificateVerifier certificateVerifier;
     private final TSPSource tspSource;
 
-    PAdESLevelBaselineLT(TSPSource tspSource, CertificateVerifier certificateVerifier) {
-        this.certificateVerifier = certificateVerifier;
+    PAdESLevelBaselineLT(final TSPSource tspSource, final CertificateVerifier certificateVerifier) {
+
+	    this.certificateVerifier = certificateVerifier;
         this.tspSource = tspSource;
     }
 
@@ -85,7 +86,9 @@ class PAdESLevelBaselineLT implements SignatureExtension {
      */
     @Override
     public InMemoryDocument extendSignatures(DSSDocument document, final SignatureParameters parameters) throws DSSException {
-        try {
+
+	    try {
+
             // check if needed to extends with PAdESLevelBaselineT
             final PDFDocumentValidator pdfDocumentValidator = new PDFDocumentValidator(document);
             pdfDocumentValidator.setCertificateVerifier(certificateVerifier);
@@ -131,9 +134,8 @@ class PAdESLevelBaselineLT implements SignatureExtension {
              * The key of each entry in this dictionary is the base-16-encoded (uppercase) SHA1 digest of the signature to
              * which it applies and the value is the Signature VRI dictionary which contains the validation-related
              * information for that signature.
-             *
              */
-            if (INCLUDE_VRI_DICTIONNARY) {
+            if (INCLUDE_VRI_DICTIONARY) {
                 // TODO: implementation of DSS/VRI is not complete
                 PdfDict vriDictionary = factory.newDict("VRI");
                 for (final AdvancedSignature signature : signatures) {
