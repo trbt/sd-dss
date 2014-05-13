@@ -22,18 +22,23 @@ package eu.europa.ec.markt.dss.validation102853.report;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.EncryptionAlgorithm;
+import eu.europa.ec.markt.dss.TSLConstant;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.validation102853.TimestampType;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
 
 /**
  * This class represents all static data extracted by the process analysing the signature. They are independent from the validation policy to be applied.
- *
+ * <p/>
  * <p> DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
@@ -41,99 +46,625 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
  */
 public class DiagnosticData extends XmlDom {
 
-    private List<String> signatureIdList;
+	private List<String> signatureIdList;
 
-    public DiagnosticData(final Document document) {
-        super(document);
+	public DiagnosticData(final Document document) {
+		super(document);
+	}
+
+	/**
+	 * This method returns the list of the signature id. The result is stored in the local variable.
+	 *
+	 * @return list of signature ids, is never null, can be empty
+	 */
+	public List<String> getSignatureIdList() {
+
+		if (signatureIdList == null) {
+
+			signatureIdList = new ArrayList<String>();
+
+			final List<XmlDom> signatures = getElements("/DiagnosticData/Signature");
+			for (final XmlDom signature : signatures) {
+
+				final String signatureId = signature.getAttribute("Id");
+				signatureIdList.add(signatureId);
+			}
+		}
+		return signatureIdList;
+	}
+
+	public Date getSignatureDate() {
+
+		final Date signatureDate = getTimeValue("/DiagnosticData/Signature[1]/DateTime/text()");
+		//final XMLGregorianCalendar xmlGregorianCalendar = DSSXMLUtils.createXMLGregorianCalendar(signatureDate);
+		//xmlGregorianCalendar.
+		return signatureDate;
+	}
+
+	/**
+	 * This method returns the claimed signing time.
+	 *
+	 * @param signatureId The identifier of the signature, for which the date is sought.
+	 * @return
+	 */
+	public Date getSignatureDate(final String signatureId) {
+
+		Date signatureDate = null;
+		try {
+			signatureDate = getTimeValue("/DiagnosticData/Signature[@Id='%s']/DateTime/text()", signatureId);
+		} catch (DSSException e) {
+
+			// returns null if not found
+		}
+		return signatureDate;
+	}
+
+	/**
+	 * This method returns the signature format for the given signature.
+	 *
+	 * @param signatureId The identifier of the signature, for which the format is sought.
+	 * @return The signature format
+	 */
+	public String getSignatureFormat(final String signatureId) {
+
+		String signatureFormat = getValue("/DiagnosticData/Signature[@Id='%s']/SignatureFormat/text()", signatureId);
+		return signatureFormat;
+	}
+
+	/**
+	 * This method returns the {@code DigestAlgorithm} of the first signature.
+	 *
+	 * @return The {@code DigestAlgorithm} of the first signature
+	 */
+	public DigestAlgorithm getSignatureDigestAlgorithm() {
+
+		final String signatureDigestAlgorithmName = getValue("/DiagnosticData/Signature[1]/BasicSignature/DigestAlgoUsedToSignThisToken/text()");
+		final DigestAlgorithm signatureDigestAlgorithm = DigestAlgorithm.forName(signatureDigestAlgorithmName, null);
+		return signatureDigestAlgorithm;
+	}
+
+	/**
+	 * This method returns the {@code DigestAlgorithm} for the given signature.
+	 *
+	 * @param signatureId The identifier of the signature, for which the algorithm is sought.
+	 * @return The {@code DigestAlgorithm} for the given signature
+	 */
+	public DigestAlgorithm getSignatureDigestAlgorithm(final String signatureId) {
+
+		final String signatureDigestAlgorithmName = getValue("/DiagnosticData/Signature[@Id='%s']/BasicSignature/DigestAlgoUsedToSignThisToken/text()", signatureId);
+		final DigestAlgorithm signatureDigestAlgorithm = DigestAlgorithm.forName(signatureDigestAlgorithmName);
+		return signatureDigestAlgorithm;
+	}
+
+	/**
+	 * This method returns the {@code EncryptionAlgorithm} of the first signature.
+	 *
+	 * @return The {@code EncryptionAlgorithm} of the first signature
+	 */
+	public EncryptionAlgorithm getSignatureEncryptionAlgorithm() {
+
+		final String signatureEncryptionAlgorithmName = getValue("/DiagnosticData/Signature[1]/BasicSignature/EncryptionAlgoUsedToSignThisToken/text()");
+		final EncryptionAlgorithm signatureEncryptionAlgorithm = EncryptionAlgorithm.forName(signatureEncryptionAlgorithmName, null);
+		return signatureEncryptionAlgorithm;
+	}
+
+	/**
+	 * This method returns the {@code DigestAlgorithm} for the given signature.
+	 *
+	 * @param signatureId The identifier of the signature, for which the algorithm is sought.
+	 * @return The {@code DigestAlgorithm} for the given signature
+	 */
+	public EncryptionAlgorithm getSignatureEncryptionAlgorithm(final String signatureId) {
+
+		final String signatureEncryptionAlgorithmName = getValue("/DiagnosticData/Signature[1]/BasicSignature/EncryptionAlgoUsedToSignThisToken/text()");
+		final EncryptionAlgorithm signatureEncryptionAlgorithm = EncryptionAlgorithm.forName(signatureEncryptionAlgorithmName);
+		return signatureEncryptionAlgorithm;
+	}
+
+	/**
+	 * This method returns signing certificate dss id for the first signature.
+	 *
+	 * @return signing certificate dss id.
+	 */
+	public int getSigningCertificateId() {
+
+		final int signingCertificateId = getIntValue("/DiagnosticData/Signature[1]/SigningCertificate/@Id");
+		return signingCertificateId;
+	}
+
+	/**
+	 * This method returns signing certificate dss id for the given signature.
+	 *
+	 * @param signatureId The identifier of the signature, for which the signing certificate is sought.
+	 * @return signing certificate dss id for the given signature.
+	 */
+	public int getSigningCertificateId(final String signatureId) {
+
+		final int signingCertificateId = getIntValue("/DiagnosticData/Signature[@Id='%s']/SigningCertificate/@Id", signatureId);
+		return signingCertificateId;
+	}
+
+	/**
+	 * This method indicates if the digest value and the issuer and serial match for the signing certificate .
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the digest value and the issuer and serial match.
+	 */
+	public boolean isSigningCertificateIdentified(final String signatureId) {
+
+		final boolean digestValueMatch = getBoolValue("/DiagnosticData/Signature[@Id='%s']/SigningCertificate/DigestValueMatch/text()", signatureId);
+		final boolean issuerSerialMatch = getBoolValue("/DiagnosticData/Signature[@Id='%s']/SigningCertificate/IssuerSerialMatch/text()", signatureId);
+		return digestValueMatch && issuerSerialMatch;
+	}
+
+	/**
+	 * This method returns the list of certificates in the chain of the main signature.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return list of certificate's dss id for the given signature.
+	 */
+	public List<Integer> getSignatureCertificateChain(final String signatureId) {
+
+		final ArrayList<Integer> certificateChain = new ArrayList<Integer>();
+		final List<XmlDom> certificateId = getElements("/DiagnosticData/Signature[@Id='%s']/CertificateChain/ChainCertificate/@Id", signatureId);
+		for (XmlDom xmlDom : certificateId) {
+			final String text = xmlDom.getText();
+			certificateChain.add(Integer.valueOf(text));
+		}
+		return certificateChain;
+	}
+
+	public String getPolicyId() {
+
+		final String policyId = getValue("/DiagnosticData/Signature[1]/Policy/Id/text()");
+		return policyId;
+	}
+
+	/**
+	 * The identifier of the policy.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return the policy identifier
+	 */
+	public String getPolicyId(final String signatureId) {
+
+		final String policyId = getValue("/DiagnosticData/Signature[@Id='%s']/Policy/Id/text()", signatureId);
+		return policyId;
+	}
+
+	/**
+	 * This method returns the list of identifier of the timestamps related to the given signature.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return The list of identifier of the timestamps
+	 */
+	public List<String> getTimestampIdList(final String signatureId) {
+
+		final List<String> timestampIdList = new ArrayList<String>();
+
+		final List<XmlDom> timestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp", signatureId);
+		for (final XmlDom timestamp : timestamps) {
+
+			final String timestampId = timestamp.getAttribute("Id");
+			timestampIdList.add(timestampId);
+		}
+		return timestampIdList;
+	}
+
+	/**
+	 * This method returns the list of identifier of the timestamps related to the given signature.
+	 *
+	 * @param signatureId   The identifier of the signature.
+	 * @param timestampType The {@code TimestampType}
+	 * @return The list of identifier of the timestamps
+	 */
+	public List<String> getTimestampIdList(final String signatureId, final TimestampType timestampType) {
+
+		final List<String> timestampIdList = new ArrayList<String>();
+
+		final List<XmlDom> timestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId, timestampType.name());
+		for (final XmlDom timestamp : timestamps) {
+
+			final String timestampId = timestamp.getAttribute("Id");
+			timestampIdList.add(timestampId);
+		}
+		return timestampIdList;
+	}
+
+	/**
+	 * Indicates if there is a signature timestamp.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the signature timestamp is present
+	 */
+	public boolean isThereTLevel(final String signatureId) {
+
+		final List<XmlDom> timestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId, TimestampType.SIGNATURE_TIMESTAMP.name());
+		return timestamps.size() > 0;
+	}
+
+	/**
+	 * Indicates if the -T level is technically valid. It means that the signature and the digest are valid.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the signature and digest are valid
+	 */
+	public boolean isTLevelTechnicallyValid(final String signatureId) {
+
+		final List<XmlDom> timestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId, TimestampType.SIGNATURE_TIMESTAMP.name());
+		for (final XmlDom timestamp : timestamps) {
+
+			final boolean signatureValid = timestamp.getBoolValue("./BasicSignature/SignatureValid/text()");
+			final boolean messageImprintIntact = timestamp.getBoolValue("./MessageImprintDataIntact/text()");
+			if (signatureValid && messageImprintIntact) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Indicates if there is an -X1 or -X2 timestamp.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the -X1 or -X2 is present
+	 */
+	public boolean isThereXLevel(final String signatureId) {
+
+		final List<XmlDom> vdroTimestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId,
+			  TimestampType.VALIDATION_DATA_REFSONLY_TIMESTAMP.name());
+		final List<XmlDom> vdTimestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId,
+			  TimestampType.VALIDATION_DATA_TIMESTAMP.name());
+		return vdroTimestamps.size() > 0 || vdTimestamps.size() > 0;
+	}
+
+	/**
+	 * Indicates if the -X level is technically valid. It means that the signature and the digest are valid.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the signature and digest are valid
+	 */
+	public boolean isXLevelTechnicallyValid(final String signatureId) {
+
+		final List<XmlDom> vdroTimestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId,
+			  TimestampType.VALIDATION_DATA_REFSONLY_TIMESTAMP.name());
+		final List<XmlDom> vdTimestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId,
+			  TimestampType.VALIDATION_DATA_TIMESTAMP.name());
+		final List<XmlDom> timestamps = new ArrayList<XmlDom>(vdroTimestamps);
+		timestamps.addAll(vdroTimestamps);
+		for (final XmlDom timestamp : timestamps) {
+
+			final boolean signatureValid = timestamp.getBoolValue("./BasicSignature/SignatureValid/text()");
+			final boolean messageImprintIntact = timestamp.getBoolValue("./MessageImprintDataIntact/text()");
+			if (signatureValid && messageImprintIntact) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Indicates if there is an archive timestamp.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the archive timestamp is present
+	 */
+	public boolean isThereALevel(final String signatureId) {
+
+		final List<XmlDom> timestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId, TimestampType.ARCHIVE_TIMESTAMP.name());
+		return timestamps.size() > 0;
+	}
+
+	/**
+	 * Indicates if the -A level is technically valid. It means that the signature and the digest are valid.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the signature and digest are valid
+	 */
+	public boolean isALevelTechnicallyValid(final String signatureId) {
+
+		final List<XmlDom> timestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp[@Type='%s']", signatureId, TimestampType.ARCHIVE_TIMESTAMP.name());
+		for (final XmlDom timestamp : timestamps) {
+
+			final boolean signatureValid = timestamp.getBoolValue("./BasicSignature/SignatureValid/text()");
+			final boolean messageImprintIntact = timestamp.getBoolValue("./MessageImprintDataIntact/text()");
+			if (signatureValid && messageImprintIntact) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns the identifier of the timestamp signing certificate.
+	 *
+	 * @param timestampId timestamp id
+	 * @return signing certificate id
+	 */
+	public int getTimestampSigningCertificateId(final String timestampId) {
+
+		final int signingCertificateId = getIntValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/SigningCertificate/@Id", timestampId);
+		return signingCertificateId;
+	}
+
+	/**
+	 * Returns the digest algorithm used to compute the hash value.
+	 *
+	 * @param timestampId timestamp id
+	 * @return the digest algorithm
+	 */
+	public Date getTimestampProductionTime(final String timestampId) {
+
+		final Date productionTime = getTimeValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/ProductionTime/text()", timestampId);
+		return productionTime;
+	}
+
+	/**
+	 * Returns the digest algorithm used to compute the hash value.
+	 *
+	 * @param timestampId timestamp id
+	 * @return the digest algorithm
+	 */
+	public String getTimestampDigestAlgorithm(final String timestampId) {
+
+		final String digestAlgorithm = getValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/SignedDataDigestAlgo/text()", timestampId);
+		return digestAlgorithm;
+	}
+
+	/**
+	 * Returns the result of validation of the timestamp message imprint.
+	 *
+	 * @param timestampId timestamp id
+	 * @return true or false
+	 */
+	public boolean isTimestampMessageImprintIntact(final String timestampId) {
+
+		final boolean messageImprintIntact = getBoolValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/MessageImprintDataIntact/text()", timestampId);
+		return messageImprintIntact;
+	}
+
+	/**
+	 * Returns the result of validation of the timestamp signature.
+	 *
+	 * @param timestampId timestamp id
+	 * @return
+	 */
+	public boolean isTimestampSignatureValid(final String timestampId) {
+
+		final boolean signatureValid = getBoolValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/BasicSignature/SignatureValid/text()", timestampId);
+		return signatureValid;
+	}
+
+	/**
+	 * Returns the type of the timestamp.
+	 *
+	 * @param timestampId timestamp id
+	 * @return
+	 */
+	public String getTimestampType(final String timestampId) {
+
+		final String timestampType = getValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/@Type", timestampId);
+		return timestampType;
+	}
+
+	/**
+	 * This method indicates if the certificate signature is valid and the revocation status is valid.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return certificate validity
+	 */
+	public boolean isValidCertificate(final int dssCertificateId) {
+
+		final XmlDom certificate = getElement("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']", dssCertificateId);
+		final boolean signatureValid = certificate.getBoolValue("./BasicSignature/SignatureValid/text()");
+		final boolean revocationValid = certificate.getBoolValue("./Revocation/Status/text()");
+		final boolean trusted = certificate.getBoolValue("./Trusted/text()");
+
+		final boolean validity = signatureValid && (trusted ? true : revocationValid);
+		return validity;
+	}
+
+	/**
+	 * This method returns the subject distinguished name for the given dss certificate identifier.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return subject distinguished name
+	 */
+	public String getCertificateDN(final int dssCertificateId) {
+
+		final String subjectDistinguishedName = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/SubjectDistinguishedName[@Format='RFC2253']/text()",
+			  dssCertificateId);
+		return subjectDistinguishedName;
+	}
+
+	/**
+	 * This method returns the issuer distinguished name for the given dss certificate identifier.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return issuer distinguished name
+	 */
+	public String getCertificateIssuerDN(final int dssCertificateId) {
+
+		final String issuerDistinguishedName = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/IssuerDistinguishedName[@Format='RFC2253']/text()",
+			  dssCertificateId);
+		return issuerDistinguishedName;
+	}
+
+	/**
+	 * This method returns the serial number of the given dss certificate identifier.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return serial number
+	 */
+	public String getCertificateSerialNumber(final int dssCertificateId) {
+
+		final String serialNumber = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/SerialNumber/text()", dssCertificateId);
+		return serialNumber;
+	}
+
+	/**
+	 * This method returns the validity of the certificate at the validation time.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return serial number
+	 */
+	public boolean isCertificateValidAtValidationTime(final int dssCertificateId) {
+
+		final boolean validityAtValidationTime = getBoolValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/ValidityAtValidationTime/text()", dssCertificateId);
+		return validityAtValidationTime;
+	}
+
+	/**
+	 * This method indicates if the certificate is QCP.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCP
+	 */
+	public boolean isCertificateQCP(final int dssCertificateId) {
+
+		final boolean qcp = getBoolValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/QCStatement/QCP/text()", dssCertificateId);
+		return qcp;
+	}
+
+	/**
+	 * This method indicates if the certificate is QCPPlus.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCPPlus
+	 */
+	public boolean isCertificateQCPPlus(final int dssCertificateId) {
+
+		final boolean qcpPlus = getBoolValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/QCStatement/QCPPlus/text()", dssCertificateId);
+		return qcpPlus;
+	}
+
+	/**
+	 * This method indicates if the certificate is QCC.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCC
+	 */
+	public boolean isCertificateQCC(final int dssCertificateId) {
+
+		final boolean qcc = getBoolValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/QCStatement/QCC/text()", dssCertificateId);
+		return qcc;
+	}
+
+	/**
+	 * This method indicates if the certificate is QCSSCD.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCSSCD
+	 */
+	public boolean isCertificateQCSSCD(final int dssCertificateId) {
+
+		final boolean qcsscd = getBoolValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/QCStatement/QCSSCD/text()", dssCertificateId);
+		return qcsscd;
+	}
+
+
+	/**
+	 * This method indicates if the certificate has QCWithSSCD qualification.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCWithSSCD qualification is present
+	 */
+	public boolean hasCertificateQCWithSSCDQualification(final int dssCertificateId) {
+
+		final String condition = "contains('" + TSLConstant.QC_WITH_SSCD + "', '" + TSLConstant.QC_WITH_SSCD_119612 + "')";
+		final String qualification = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Qualifiers/Qualifier[" + condition + "]/text()",
+			  dssCertificateId);
+		return !qualification.isEmpty();
+	}
+
+	/**
+	 * This method indicates if the certificate has QCNoSSCD qualification.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCNoSSCD qualification is present
+	 */
+	public boolean hasCertificateQCNoSSCDQualification(final int dssCertificateId) {
+
+		final String condition = "contains('" + TSLConstant.QC_NO_SSCD + "', '" + TSLConstant.QC_NO_SSCD_119612 + "')";
+		final String qualification = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Qualifiers/Qualifier[" + condition + "]/text()",
+			  dssCertificateId);
+		return !qualification.isEmpty();
+	}
+
+	/**
+	 * This method indicates if the certificate has QCSSCDStatusAsInCert qualification.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCSSCDStatusAsInCert qualification is present
+	 */
+	public boolean hasCertificateQCSSCDStatusAsInCertQualification(final int dssCertificateId) {
+
+		final String condition = "contains('" + TSLConstant.QCSSCD_STATUS_AS_IN_CERT + "', '" + TSLConstant.QCSSCD_STATUS_AS_IN_CERT_119612 + "')";
+		final String qualification = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Qualifiers/Qualifier[" + condition + "]/text()",
+			  dssCertificateId);
+		return !qualification.isEmpty();
+	}
+
+	/**
+	 * This method indicates if the certificate has QCForLegalPerson qualification.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return true if QCForLegalPerson qualification is present
+	 */
+	public boolean hasCertificateQCForLegalPersonQualification(final int dssCertificateId) {
+
+		final String condition = "contains('" + TSLConstant.QC_FOR_LEGAL_PERSON + "', '" + TSLConstant.QC_FOR_LEGAL_PERSON_119612 + "')";
+		final String qualification = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Qualifiers/Qualifier[" + condition + "]/text()",
+			  dssCertificateId);
+		return !qualification.isEmpty();
+	}
+
+	/**
+	 * This method returns the associated TSPServiceName.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return TSPServiceName
+	 */
+	public String getCertificateTSPServiceName(final int dssCertificateId) {
+
+		final String tspServiceName = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/TSPServiceName/text()", dssCertificateId);
+		return tspServiceName;
+	}
+
+    public String getCertificateTSPServiceStatus(final int dssCertificateId) {
+
+        final String TSPServiceStatus = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Status/text()", dssCertificateId);
+        return TSPServiceStatus;
     }
 
-    public Date getSignatureDate() {
+    public String getCertificateTSPServiceStartDate(final int dssCertificateId) {
 
-        final Date signatureDate = getTimeValue("/DiagnosticData/Signature[1]/DateTime/text()");
-        //final XMLGregorianCalendar xmlGregorianCalendar = DSSXMLUtils.createXMLGregorianCalendar(signatureDate);
-        //xmlGregorianCalendar.
-        return signatureDate;
+        final String TSPServiceStartDate = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/StartDate/text()", dssCertificateId);
+        return TSPServiceStartDate;
     }
 
-    public Date getSignatureDate(final String signatureId) {
+    public List<String> getCertificateTSPServiceQualifiers(final int dssCertificateId) {
 
-        Date signatureDate = null;
-        try {
-            signatureDate = getTimeValue("/DiagnosticData/Signature[@Id='%s']/DateTime/text()", signatureId);
-        } catch (DSSException e) {
+        List<String> tspServiceQualifiers = new ArrayList<String>();
+        final List<XmlDom> TSPServiceQualifiers = getElements("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Qualifiers/Qualifier", dssCertificateId);
 
-            // returns null if not found
+        for (XmlDom tspServiceQualifier : TSPServiceQualifiers) {
+                tspServiceQualifiers.add(tspServiceQualifier.getText());
         }
-        return signatureDate;
+        return tspServiceQualifiers;
     }
 
-    /**
-     * This method returns the list of the signature id. The result is stored in the local variable.
-     *
-     * @return list of signature ids
-     */
-    public List<String> getSignatureId() {
+	/**
+	 * This method indicates if the associated trusted list is well signed.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return TSPServiceName
+	 */
+	public boolean isCertificateRelatedTSLWellSigned(final int dssCertificateId) {
 
-        if (signatureIdList == null) {
-
-            signatureIdList = new ArrayList<String>();
-
-            final List<XmlDom> signatures = getElements("/DiagnosticData/Signature");
-            for (final XmlDom signature : signatures) {
-
-                final String signatureId = signature.getAttribute("Id");
-                signatureIdList.add(signatureId);
-            }
-        }
-        return signatureIdList;
-    }
-
-    public String getPolicyId() {
-
-        final String policyId = getValue("/DiagnosticData/Signature[1]/Policy/Id/text()");
-        return policyId;
-    }
-
-    public List<String> getTimestampsId(final String signatureId) {
-
-        final List<String> timestampIdList = new ArrayList<String>();
-
-        final List<XmlDom> timestamps = getElements("/DiagnosticData/Signature[@Id='%s']/Timestamps/Timestamp", signatureId);
-        for (final XmlDom timestamp : timestamps) {
-
-            final String timestampId = timestamp.getAttribute("Id");
-            final String timestampTypeString = timestamp.getAttribute("Type");
-            // final TimestampType timestampTypeFromSignature = TimestampType.valueOf(timestampTypeString);
-            // if (TimestampType.ARCHIVE_TIMESTAMP.equals(timestampTypeFromSignature)) {
-
-            timestampIdList.add(timestampId);
-            // }
-        }
-        return timestampIdList;
-    }
-
-    /**
-     * This method returns signing certificate dss id for the first signature.
-     *
-     * @return signing certificate dss id.
-     */
-    public int getSigningCertificateId() {
-
-        final int signingCertificateId = getIntValue("/DiagnosticData/Signature[1]/SigningCertificate/@Id");
-        return signingCertificateId;
-    }
-
-    /**
-     * This method returns signing certificate dss id for the given signature.
-     *
-     * @param signatureId signature id
-     * @return signing certificate dss id for the given signature.
-     */
-    public int getSigningCertificateId(final String signatureId) {
-
-        final int signingCertificateId = getIntValue("/DiagnosticData/Signature[@Id='%s']/SigningCertificate/@Id", signatureId);
-        return signingCertificateId;
-    }
+		final boolean wellSigned = getBoolValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/WellSigned/text()", dssCertificateId);
+		return wellSigned;
+	}
 
 	/**
 	 * This method returns the revocation source for the given certificate.
@@ -159,101 +690,37 @@ public class DiagnosticData extends XmlDom {
 		return certificateRevocationStatus;
 	}
 
-    /**
-     * This method returns the {@code DigestAlgorithm} of the first signature.
-     *
-     * @return The {@code DigestAlgorithm} of the first signature
-     */
-    public DigestAlgorithm getSignatureDigestAlgorithm() {
+	/**
+	 * This method returns the revocation reason for the given certificate.
+	 *
+	 * @param dssCertificateId DSS certificate identifier to be checked
+	 * @return revocation reason
+	 */
+	public String getCertificateRevocationReason(int dssCertificateId) {
 
-        final String signatureDigestAlgorithmName = getValue("/DiagnosticData/Signature[1]/BasicSignature/DigestAlgoUsedToSignThisToken/text()");
-        final DigestAlgorithm signatureDigestAlgorithm = DigestAlgorithm.forName(signatureDigestAlgorithmName, null);
-        return signatureDigestAlgorithm;
+		final String revocationReason = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/Revocation/Reason/text()", dssCertificateId);
+		return revocationReason;
+	}
+
+    public String getErrorMessage(final String signatureId) {
+
+        final String errorMessage = getValue("/DiagnosticData/Signature[@Id='%s']/ErrorMessage/text()", signatureId);
+        return errorMessage;
     }
 
-    /**
-     * This method returns the {@code DigestAlgorithm} for the given signature.
-     *
-     * @param signatureId The identifier of the signature, for which the algorithm is sought.
-     * @return The {@code DigestAlgorithm} for the given signature
-     */
-    public DigestAlgorithm getSignatureDigestAlgorithm(final String signatureId) {
+    public List <String> getTrueQCStatements() {
 
-        final String signatureDigestAlgorithmName = getValue("/DiagnosticData/Signature[@Id='%s']/BasicSignature/DigestAlgoUsedToSignThisToken/text()", signatureId);
-        final DigestAlgorithm signatureDigestAlgorithm = DigestAlgorithm.forName(signatureDigestAlgorithmName);
-        return signatureDigestAlgorithm;
+        List <String> trueQcStatements = new ArrayList<String>();
+        final List <XmlDom> qcStatements = getElements("/DiagnosticData/UsedCertificates/Certificate/QCStatement");
+        for (XmlDom qcStatement : qcStatements) {
+            NodeList qcNodes = qcStatement.getRootElement().getChildNodes();
+            for (int i=0; i < qcNodes.getLength() ; ++i) {
+                if(qcNodes.item(i).getTextContent().toLowerCase().equals("true")) {
+                    trueQcStatements.add(qcNodes.item(i).getNodeName());
+                }
+            }
+        }
+        return trueQcStatements;
     }
 
-    /**
-     * This method returns the {@code EncryptionAlgorithm} of the first signature.
-     *
-     * @return The {@code EncryptionAlgorithm} of the first signature
-     */
-    public EncryptionAlgorithm getSignatureEncryptionAlgorithm() {
-
-        final String signatureEncryptionAlgorithmName = getValue("/DiagnosticData/Signature[1]/BasicSignature/EncryptionAlgoUsedToSignThisToken/text()");
-        final EncryptionAlgorithm signatureEncryptionAlgorithm = EncryptionAlgorithm.forName(signatureEncryptionAlgorithmName, null);
-        return signatureEncryptionAlgorithm;
-    }
-
-    /**
-     * This method returns the {@code DigestAlgorithm} for the given signature.
-     *
-     * @param signatureId The identifier of the signature, for which the algorithm is sought.
-     * @return The {@code DigestAlgorithm} for the given signature
-     */
-    public EncryptionAlgorithm getSignatureEncryptionAlgorithm(final String signatureId) {
-
-        final String signatureEncryptionAlgorithmName = getValue("/DiagnosticData/Signature[1]/BasicSignature/EncryptionAlgoUsedToSignThisToken/text()");
-        final EncryptionAlgorithm signatureEncryptionAlgorithm = EncryptionAlgorithm.forName(signatureEncryptionAlgorithmName);
-        return signatureEncryptionAlgorithm;
-    }
-
-    /**
-     * This method returns the revocation reason for the given certificate.
-     *
-     * @param dssCertificateId DSS certificate identifier to be checked
-     * @return revocation reason
-     */
-    public String getCertificateRevocationReason(int dssCertificateId) {
-
-        final String revocationReason = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/Revocation/Reason/text()", dssCertificateId);
-        return revocationReason;
-    }
-
-    /**
-     * Returns the result of validation of the timestamp message imprint.
-     *
-     * @param timestampId timestamp id
-     * @return true or false
-     */
-    public boolean isTimestampMessageImprintIntact(final String timestampId) {
-
-        final boolean messageImprintIntact = getBoolValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/MessageImprintDataIntact/text()", timestampId);
-        return messageImprintIntact;
-    }
-
-    /**
-     * Returns the result of validation of the timestamp signature.
-     *
-     * @param timestampId timestamp id
-     * @return
-     */
-    public boolean isTimestampSignatureValid(final String timestampId) {
-
-        final boolean signatureValid = getBoolValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/BasicSignature/SignatureValid/text()", timestampId);
-        return signatureValid;
-    }
-
-    /**
-     * Returns the type of the timestamp.
-     *
-     * @param timestampId timestamp id
-     * @return
-     */
-    public String getTimestampType(final String timestampId) {
-
-        final String timestampType = getValue("/DiagnosticData/Signature/Timestamps/Timestamp[@Id='%s']/@Type", timestampId);
-        return timestampType;
-    }
 }

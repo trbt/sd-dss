@@ -20,6 +20,7 @@
 
 package eu.europa.ec.markt.dss.validation102853;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -30,74 +31,83 @@ import eu.europa.ec.markt.dss.exception.DSSException;
  */
 public interface ValidationContext {
 
-    /**
-     * This function sets the signing certificate to be validated.
-     *
-     * @param signingCert
-     */
-    public void setCertificateToValidate(CertificateToken signingCert);
+	/**
+	 * This function sets the validation time.
+	 *
+	 * @param currentTime
+	 */
+	public void setCurrentTime(final Date currentTime);
 
-    /**
-     * Carries out the validation process in recursive manner for not yet checked tokens and for the specific signature.
-     *
-     * @throws DSSException
-     */
-    public abstract void validate() throws DSSException;
+	public Date getCurrentTime();
 
-    /**
-     * Returns a read only list of all certificates used in the process of the validation of the signature. This list
-     * includes the certificate to check, certification chain certificates, OCSP response certificate...
-     *
-     * @return The list of CertificateToken(s)
-     */
-    public abstract Set<CertificateToken> getProcessedCertificates();
+	/**
+	 * This function sets the signing certificate to be validated.
+	 *
+	 * @param signingCert
+	 */
+	public void setCertificateToValidate(CertificateToken signingCert);
 
-    /**
-     * Returns a read only list of all revocations used in the process of the validation of the signature.
-     *
-     * @return The list of CertificateToken(s)
-     */
-    public abstract Set<RevocationToken> getProcessedRevocations();
+	/**
+	 * Carries out the validation process in recursive manner for not yet checked tokens and for the specific signature.
+	 *
+	 * @throws DSSException
+	 */
+	public abstract void validate() throws DSSException;
 
-    /**
-     * Returns a read only list of all timestamps processed during the validation of the signature.
-     *
-     * @return The list of CertificateToken(s)
-     */
-    public abstract Set<TimestampToken> getProcessedTimestamps();
+	/**
+	 * Returns a read only list of all certificates used in the process of the validation of the signature. This list
+	 * includes the certificate to check, certification chain certificates, OCSP response certificate...
+	 *
+	 * @return The list of CertificateToken(s)
+	 */
+	public abstract Set<CertificateToken> getProcessedCertificates();
 
-    /**
-     * Returns the list of content timestamps.
-     *
-     * @return
-     */
-    abstract List<TimestampToken> getContentTimestamps();
+	/**
+	 * Returns a read only list of all revocations used in the process of the validation of the signature.
+	 *
+	 * @return The list of CertificateToken(s)
+	 */
+	public abstract Set<RevocationToken> getProcessedRevocations();
 
-    /**
-     * Returns the list of signature timestamps.
-     *
-     * @return
-     */
-    public abstract List<TimestampToken> getTimestampTokens();
+	/**
+	 * Returns a read only list of all timestamps processed during the validation of the signature.
+	 *
+	 * @return The list of CertificateToken(s)
+	 */
+	public abstract Set<TimestampToken> getProcessedTimestamps();
 
-    /**
-     * Returns the list of SigAndRefs timestamps.
-     *
-     * @return
-     */
-    public abstract List<TimestampToken> getSigAndRefsTimestamps();
+	/**
+	 * Returns the list of content timestamps.
+	 *
+	 * @return
+	 */
+	abstract List<TimestampToken> getContentTimestamps();
 
-    /**
-     * Returns the list of RefsOnly timestamps.
-     *
-     * @return
-     */
-    public abstract List<TimestampToken> getRefsOnlyTimestamps();
+	/**
+	 * Returns the list of signature timestamps.
+	 *
+	 * @return
+	 */
+	public abstract List<TimestampToken> getTimestampTokens();
 
-    /**
-     * Returns the list of Archive timestamps.
-     *
-     * @return
-     */
-    public abstract List<TimestampToken> getArchiveTimestamps();
+	/**
+	 * Returns the list of SigAndRefs timestamps.
+	 *
+	 * @return
+	 */
+	public abstract List<TimestampToken> getSigAndRefsTimestamps();
+
+	/**
+	 * Returns the list of RefsOnly timestamps.
+	 *
+	 * @return
+	 */
+	public abstract List<TimestampToken> getRefsOnlyTimestamps();
+
+	/**
+	 * Returns the list of Archive timestamps.
+	 *
+	 * @return
+	 */
+	public abstract List<TimestampToken> getArchiveTimestamps();
 }

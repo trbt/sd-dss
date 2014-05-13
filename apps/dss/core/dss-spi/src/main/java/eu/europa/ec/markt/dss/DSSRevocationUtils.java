@@ -111,19 +111,15 @@ public final class DSSRevocationUtils {
      * This method indicates if the given revocation token is present in the CRL or OCSP response list.
      *
      * @param revocationToken revocation token to be checked
-     * @param basicOCSPResps  list of basic OCSP responses
+     * @param basicOCSPResponses  list of basic OCSP responses
      * @return true if revocation token is present in one of the lists
      */
-    public static boolean isTokenIn(final RevocationToken revocationToken, final List<BasicOCSPResp> basicOCSPResps) {
+    public static boolean isTokenIn(final RevocationToken revocationToken, final List<BasicOCSPResp> basicOCSPResponses) {
 
-        if (revocationToken instanceof OCSPToken) {
+        if (revocationToken instanceof OCSPToken && basicOCSPResponses != null) {
 
-            if (basicOCSPResps == null) {
-
-                return false;
-            }
             final BasicOCSPResp basicOCSPResp = ((OCSPToken) revocationToken).getBasicOCSPResp();
-            final boolean contains = basicOCSPResps.contains(basicOCSPResp);
+            final boolean contains = basicOCSPResponses.contains(basicOCSPResp);
             return contains;
         }
         return false;

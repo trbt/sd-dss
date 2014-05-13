@@ -206,6 +206,22 @@ public class DetailedReport extends XmlDom {
         return valid;
     }
 
+    public Boolean areTimestampsValidOrNull() {
+
+        final List<XmlDom> indications = getElements("/ValidationData/TimestampValidationData/Signature/Timestamp/BasicBuildingBlocks/Conclusion/Indication");
+        if (indications.size() == 0) {
+            return null;
+        } else {
+            Boolean valid = true;
+            for (final XmlDom indicationDom : indications) {
+
+                final String indication = indicationDom.getText();
+                valid = valid && Indication.VALID.equals(indication);
+            }
+            return valid;
+        }
+    }
+
     public String getPolicyNotice(final String signatureId) {
 
         final String notice = getValue("/ValidationData/BasicBuildingBlocks/Signature[@Id='%s']/VCI/Constraint/Notice/text()", signatureId);

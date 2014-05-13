@@ -647,6 +647,9 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		for (final AdvancedSignature signature : getSignatures()) {
 
 			final ValidationContext valContext = new SignatureValidationContext(signature, certVerifier, validationCertPool);
+			if (processExecutor != null) {
+				valContext.setCurrentTime(processExecutor.getCurrentTime());
+			}
 			final XmlSignature xmlSignature = validateSignature(signature, valContext);
 			final Set<CertificateToken> signatureCertPool = valContext.getProcessedCertificates();
 			usedCertPool.addAll(signatureCertPool);
@@ -970,6 +973,11 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		xmlCert.setIssuerCertificate(certToken.getIssuerTokenDSSId());
 		xmlCert.setNotAfter(DSSXMLUtils.createXMLGregorianCalendar(certToken.getNotAfter()));
 		xmlCert.setNotBefore(DSSXMLUtils.createXMLGregorianCalendar(certToken.getNotBefore()));
+		Date currentTime = new Date();
+		if (processExecutor != null) {
+			currentTime = processExecutor.getCurrentTime();
+		}
+		xmlCert.setValidityAtValidationTime(certToken.isValidOn(currentTime));
 		final PublicKey publicKey = certToken.getPublicKey();
 		xmlCert.setPublicKeySize(DSSPKUtils.getPublicKeySize(publicKey));
 		xmlCert.setPublicKeyEncryptionAlgo(DSSPKUtils.getPublicKeyEncryptionAlgo(publicKey));

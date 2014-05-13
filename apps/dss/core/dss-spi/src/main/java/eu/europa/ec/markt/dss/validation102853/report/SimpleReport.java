@@ -91,12 +91,18 @@ public class SimpleReport extends XmlDom {
 		return Indication.VALID.equals(indicationValue);
 	}
 
+	/**
+	 * Returns the signature type: QES, AdES, AdESqc, NA
+	 *
+	 * @param signatureId
+	 * @return {@code SignatureType}
+	 */
 	public SignatureType getSignatureLevel(final String signatureId) {
 
 		final String signatureTypeString = getValue("/SimpleReport/Signature[@Id='%s']/SignatureLevel/text()", signatureId);
 		SignatureType signatureType;
 		try {
-				signatureType = SignatureType.valueOf(signatureTypeString);
+			signatureType = SignatureType.valueOf(signatureTypeString);
 		} catch (IllegalArgumentException e) {
 			signatureType = SignatureType.NA;
 		}

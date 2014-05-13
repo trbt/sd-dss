@@ -25,50 +25,70 @@ import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 public class SigningCertificateValidity {
 
-    private CertificateToken certToken;
-    private boolean digestMatch;
-    private boolean SerialNumberMatch;
-    private boolean nameMatch;
+	private CertificateToken certToken;
+	private boolean digestMatch;
+	private boolean issuerSerialPresent;
+	private boolean serialNumberMatch;
+	private boolean nameMatch;
 
-    public CertificateToken getCertToken() {
-        return certToken;
-    }
+	public CertificateToken getCertToken() {
+		return certToken;
+	}
 
-    public void setCertToken(final CertificateToken certToken) {
-        this.certToken = certToken;
-    }
+	public void setCertToken(final CertificateToken certToken) {
+		this.certToken = certToken;
+	}
 
-    public boolean isDigestMatch() {
-        return digestMatch;
-    }
+	public boolean isDigestMatch() {
+		return digestMatch;
+	}
 
-    public void setDigestMatch(final boolean digestMatch) {
-        this.digestMatch = digestMatch;
-    }
+	public void setDigestMatch(final boolean digestMatch) {
+		this.digestMatch = digestMatch;
+	}
 
-    public boolean isSerialNumberMatch() {
-        return SerialNumberMatch;
-    }
+	/**
+	 * Indicates if the IssuerSerial (issuerAndSerialNumber) is present in the signature.
+	 *
+	 * @return
+	 */
+	public boolean isIssuerSerialPresent() {
+		return issuerSerialPresent;
+	}
 
-    public void setSerialNumberMatch(final boolean serialNumberMatch) {
-        SerialNumberMatch = serialNumberMatch;
-    }
+	public void setIssuerSerialPresent(boolean issuerSerialPresent) {
+		this.issuerSerialPresent = issuerSerialPresent;
+	}
 
-    public X509Certificate getCertificate() {
-        return certToken.getCertificate();
-    }
+	public boolean isSerialNumberMatch() {
+		return serialNumberMatch;
+	}
 
-    public void setNameMatch(final boolean nameMatch) {
-        this.nameMatch = nameMatch;
-    }
+	public void setSerialNumberMatch(final boolean serialNumberMatch) {
+		this.serialNumberMatch = serialNumberMatch;
+	}
 
-    public boolean isNameMatch() {
-        return nameMatch;
-    }
+	public X509Certificate getCertificate() {
+		return certToken.getCertificate();
+	}
 
-    public boolean isValid() {
+	public void setNameMatch(final boolean nameMatch) {
+		this.nameMatch = nameMatch;
+	}
 
-        final boolean valid = isDigestMatch() && isNameMatch() && isSerialNumberMatch();
-        return valid;
-    }
+	public boolean isNameMatch() {
+		return nameMatch;
+	}
+
+	/**
+	 * This method returns {@code true} if the certificate digest matches. The signed reference (IssuerSerial/issuerAndSerialNumber) to the signing certificate is not taken into
+	 * account. The signed reference is checked following the validation policy.
+	 *
+	 * @return {@code true} if the certificate digest matches.
+	 */
+	public boolean isValid() {
+
+		final boolean valid = isDigestMatch();
+		return valid;
+	}
 }

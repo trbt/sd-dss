@@ -265,13 +265,17 @@ public class CertificateToken extends Token {
 	}
 
 	/**
-	 * Checks if the certificate is expired today.
+	 * Checks if the certificate is expired on the given date.
 	 *
+	 * @param date
 	 * @return
 	 */
-	public boolean isExpired() {
+	public boolean isExpiredOn(final Date date) {
 
-		return cert.getNotAfter().before(new Date());
+		if (cert == null || date == null) {
+			return true;
+		}
+		return cert.getNotAfter().before(date);
 	}
 
 	/**
@@ -302,6 +306,9 @@ public class CertificateToken extends Token {
 	 */
 	public Boolean isRevoked() {
 
+		if (isTrusted()) {
+			return false;
+		}
 		if (revocationToken == null) {
 			return null;
 		}
@@ -464,6 +471,9 @@ public class CertificateToken extends Token {
 		} catch (SignatureException e) {
 
 			signatureInvalidityReason = "SignatureException - on signature errors.";
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("ERROR: {} is not signed by {}: {}", new Object[]{getAbbreviation(), issuerToken.getAbbreviation(), e.getMessage()});
+			}
 		} catch (NoSuchProviderException e) { // if there's no default provider.
 			throw new DSSException(e);
 		}
@@ -608,8 +618,17 @@ public class CertificateToken extends Token {
 		return encoded;
 	}
 
+	/**
+	 * Returns the trust anchor associated with the certificate. If it is the self-signed certificate then {@code this} is returned.
+	 *
+	 * @return
+	 */
 	public CertificateToken getTrustAnchor() {
 
+		if (isSelfSigned() && isTrusted()) {
+
+			return this;
+		}
 		CertificateToken issuerCertToken = getIssuerToken();
 		while (issuerCertToken != null) {
 
@@ -665,7 +684,6 @@ public class CertificateToken extends Token {
 			final String certStartDate = DSSUtils.formatInternal(cert.getNotBefore());
 			final String certEndDate = DSSUtils.formatInternal(cert.getNotAfter());
 			out.append(indentStr).append("Validity period    : ").append(certStartDate).append(" - ").append(certEndDate).append('\n');
-			out.append(indentStr).append("Is expired         : ").append(isExpired()).append('\n');
 			out.append(indentStr).append("Subject name       : ").append(getSubjectX500Principal()).append('\n');
 			out.append(indentStr).append("Issuer subject name: ").append(getIssuerX500Principal()).append('\n');
 			if (sources.contains(CertificateSourceType.TRUSTED_LIST)) {
