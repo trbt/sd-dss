@@ -85,7 +85,7 @@ public final class DSSXMLUtils {
 	public static final String ID_ATTRIBUTE_NAME = "Id";
 
 	private static DocumentBuilderFactory dbFactory;
-	private static DocumentBuilder documentBuilder;
+
 
 	private static final XPathFactory factory = XPathFactory.newInstance();
 
@@ -332,16 +332,11 @@ public final class DSSXMLUtils {
 	 */
 	private static void ensureDocumentBuilder() throws DSSException {
 
-		try {
-			if (dbFactory != null) {
-				return;
-			}
-			dbFactory = DocumentBuilderFactory.newInstance();
-			dbFactory.setNamespaceAware(true);
-			documentBuilder = dbFactory.newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			throw new DSSException(e);
+		if (dbFactory != null) {
+			return;
 		}
+		dbFactory = DocumentBuilderFactory.newInstance();
+		dbFactory.setNamespaceAware(true);
 	}
 
 	/**
@@ -352,11 +347,15 @@ public final class DSSXMLUtils {
 	 * @throws IOException
 	 * @throws SAXException
 	 */
-	public static Document buildDOM() throws DSSException {
+	public static Document buildDOM() {
 
 		ensureDocumentBuilder();
 
-		return documentBuilder.newDocument();
+		try {
+			return dbFactory.newDocumentBuilder().newDocument();
+		} catch (ParserConfigurationException e) {
+			throw new DSSException(e);
+		}
 	}
 
 	/**
@@ -402,7 +401,7 @@ public final class DSSXMLUtils {
 		try {
 			ensureDocumentBuilder();
 
-			final Document rootElement = documentBuilder.parse(inputStream);
+			final Document rootElement = dbFactory.newDocumentBuilder().parse(inputStream);
 			return rootElement;
 		} catch (SAXParseException e) {
 			throw new DSSException(e);
@@ -410,6 +409,8 @@ public final class DSSXMLUtils {
 			throw new DSSException(e);
 		} catch (IOException e) {
 			throw new DSSException(e);
+		} catch (ParserConfigurationException e) {
+			throw new DSSException(e);			
 		} finally {
 			DSSUtils.closeQuietly(inputStream);
 		}
@@ -619,7 +620,12 @@ public final class DSSXMLUtils {
 	 */
 	public static Document createDocument(final String namespaceURI, final String qualifiedName, final Element element) {
 
-		final DOMImplementation domImpl = documentBuilder.getDOMImplementation();
+		DOMImplementation domImpl;
+		try {
+			domImpl = dbFactory.newDocumentBuilder().getDOMImplementation();
+		} catch (ParserConfigurationException e) {
+			throw new DSSException(e);
+		}
 		final Document newDocument = domImpl.createDocument(namespaceURI, qualifiedName, null);
 		final Element newElement = newDocument.getDocumentElement();
 		newDocument.adoptNode(element);

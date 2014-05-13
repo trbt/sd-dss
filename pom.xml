@@ -26,30 +26,6 @@
             </roles>
         </developer>
         <developer>
-            <id>hiedelch</id>
-            <name>Christian</name>
-            <organization>ARhS</organization>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>naramsda</id>
-            <name>David</name>
-            <organization>ARhS</organization>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>vanackda</id>
-            <name>David</name>
-            <organization>ARhS</organization>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
             <id>bielecro</id>
             <name>Robert</name>
             <email>Robert.Bielecki@arhs-consulting.com</email>

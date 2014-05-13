@@ -49,7 +49,7 @@ import eu.europa.ec.markt.dss.validation102853.RevocationToken;
 /**
  * Utility class used to convert OCSPResp to BasicOCSPResp
  *
- * @version $Revision: 3479 $ - $Date: 2014-02-19 11:50:33 +0100 (Wed, 19 Feb 2014) $
+ * @version $Revision: 3867 $ - $Date: 2014-05-13 21:33:34 +0200 (Tue, 13 May 2014) $
  */
 
 public final class DSSRevocationUtils {
