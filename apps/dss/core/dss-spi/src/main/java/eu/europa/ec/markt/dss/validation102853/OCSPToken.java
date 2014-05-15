@@ -132,7 +132,7 @@ public class OCSPToken extends RevocationToken {
 
                 this.issuerToken = issuerToken;
             }
-            issuerX500Principal = issuerToken.getCertificate().getSubjectX500Principal();
+            issuerX500Principal = issuerToken.getSubjectX500Principal();
         } catch (OCSPException e) {
 
             signatureInvalidityReason = e.getClass().getSimpleName() + " - " + e.getMessage();

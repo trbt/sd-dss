@@ -119,6 +119,11 @@ public class CertificateToken extends Token {
 	protected CertificateTokenValidationExtraInfo extraInfo;
 
 	/**
+	 * Normalized X500Principal (BMPString, TeletextString...)
+	 */
+	private X500Principal subjectX500PrincipalNormalized = null;
+
+	/**
 	 * This method returns an instance of {@link eu.europa.ec.markt.dss.validation102853.CertificateToken}.
 	 *
 	 * @param cert <code>X509Certificate</code>
@@ -141,7 +146,7 @@ public class CertificateToken extends Token {
 
 		this.dssId = id;
 		this.cert = cert;
-		this.issuerX500Principal = cert.getIssuerX500Principal();
+		this.issuerX500Principal = DSSUtils.getIssuerX500Principal(cert);
 		// The Algorithm OID is used and not the name {@code cert.getSigAlgName()}
 		final String sigAlgOID = cert.getSigAlgOID();
 		final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.forOID(sigAlgOID);
@@ -390,13 +395,8 @@ public class CertificateToken extends Token {
 	@Override
 	public byte[] getEncoded() {
 
-		try {
-
-			final byte[] bytes = cert.getEncoded();
-			return bytes;
-		} catch (CertificateEncodingException e) {
-			throw new DSSException("Certificate encoding error: " + e.getMessage(), e);
-		}
+		final byte[] bytes = DSSUtils.getEncoded(cert);
+		return bytes;
 	}
 
 	/**
@@ -443,7 +443,10 @@ public class CertificateToken extends Token {
 	 */
 	public X500Principal getSubjectX500Principal() {
 
-		return cert.getSubjectX500Principal();
+		if (subjectX500PrincipalNormalized == null) {
+			subjectX500PrincipalNormalized = DSSUtils.getSubjectX500Principal(cert);
+		}
+		return subjectX500PrincipalNormalized;
 	}
 
 	@Override

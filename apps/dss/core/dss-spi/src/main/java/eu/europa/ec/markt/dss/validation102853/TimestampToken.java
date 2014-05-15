@@ -153,7 +153,7 @@ public class TimestampToken extends Token {
 
 			this.issuerToken = issuerToken;
 
-			issuerX500Principal = issuerToken.getCertificate().getSubjectX500Principal();
+			issuerX500Principal = issuerToken.getSubjectX500Principal();
 			algoUsedToSignToken = issuerToken.getSignatureAlgo();
 		}
 		return signatureValid;
