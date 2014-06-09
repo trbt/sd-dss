@@ -67,6 +67,13 @@
 									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
+							<xs:element name="SignatureScopes">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="SignatureScopeType" name="SignatureScope" maxOccurs="unbounded"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
 						</xs:sequence>
 						<xs:attribute type="xs:string" name="Id" use="required"/>
 					</xs:complexType>
@@ -84,7 +91,6 @@
 										<xs:element type="DigestAlgAndValueType" name="DigestAlgAndValue" minOccurs="0" maxOccurs="unbounded"/>
 										<xs:element type="xs:dateTime" name="NotAfter"/>
 										<xs:element type="xs:dateTime" name="NotBefore"/>
-										<xs:element type="xs:boolean" name="ValidityAtValidationTime"/>
 										<xs:element type="xs:int" name="PublicKeySize"/>
 										<xs:element type="xs:string" name="PublicKeyEncryptionAlgo"/>
 
@@ -108,7 +114,7 @@
 												</xs:sequence>
 											</xs:complexType>
 										</xs:element>
-										<xs:element type="TrustedServiceProviderType" name="TrustedServiceProvider"/>
+										<xs:element type="TrustedServiceProviderType" name="TrustedServiceProvider" maxOccurs="unbounded"/>
 										<xs:element type="RevocationType" name="Revocation"/>
 										<xs:element type="InfoType" name="Info" minOccurs="0"/>
 									</xs:sequence>
@@ -128,6 +134,14 @@
 			</xs:extension>
 		</xs:simpleContent>
 	</xs:complexType>
+	<xs:complexType name="SignatureScopeType">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute type="xs:string" name="name" use="required"/>
+				<xs:attribute type="xs:string" name="scope" use="required"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
 	<xs:complexType name="BasicSignatureType">
 		<xs:sequence>
 			<xs:element type="xs:string" name="EncryptionAlgoUsedToSignThisToken"/>
@@ -141,6 +155,8 @@
 	</xs:complexType>
 	<xs:complexType name="SigningCertificateType">
 		<xs:sequence>
+			<xs:element type="xs:boolean" name="AttributePresent"/>
+			<xs:element type="xs:boolean" name="DigestValuePresent"/>
 			<xs:element type="xs:boolean" name="DigestValueMatch"/>
 			<xs:element type="xs:boolean" name="IssuerSerialMatch"/>
 		</xs:sequence>
@@ -220,7 +236,7 @@
 		<xs:attribute type="xs:int" name="Id" use="required"/>
 		<xs:attribute type="xs:string" name="Type" use="required"/>
 	</xs:complexType>
-	<xs:complexType name="TrustedServiceProviderType">
+  <xs:complexType name="TrustedServiceProviderType">
 		<xs:sequence>
 			<xs:element type="xs:string" name="TSPName"/>
 			<xs:element type="xs:string" name="TSPServiceName"/>

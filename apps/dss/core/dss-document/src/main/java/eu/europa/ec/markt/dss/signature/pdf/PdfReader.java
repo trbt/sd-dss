@@ -29,5 +29,5 @@ package eu.europa.ec.markt.dss.signature.pdf;
 public interface PdfReader {
 
 	PdfDict getCatalog();
-	
+
 }

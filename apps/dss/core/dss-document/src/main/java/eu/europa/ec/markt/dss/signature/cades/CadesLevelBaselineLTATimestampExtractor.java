@@ -170,8 +170,7 @@ public class CadesLevelBaselineLTATimestampExtractor {
 
         final List<CertificateToken> certificateTokens = cAdESSignature.getCertificatesWithinSignatureAndTimestamps();
         for (final CertificateToken certificateToken : certificateTokens) {
-            final X509Certificate certificate = certificateToken.getCertificate();
-            final byte[] encodedCertificate = DSSUtils.getEncoded(certificate);
+            final byte[] encodedCertificate = certificateToken.getEncoded();
             final byte[] digest = DSSUtils.digest(hashIndexDigestAlgorithm, encodedCertificate);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Adding to CertificatesHashIndex DSS-Identifier: {} with hash {}", certificateToken.getDSSId(), DSSUtils.encodeHexString(digest));

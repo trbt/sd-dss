@@ -31,10 +31,14 @@ import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import eu.europa.ec.markt.dss.DSSRevocationUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
-import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
+import eu.europa.ec.markt.dss.validation102853.bean.CandidatesForSigningCertificate;
 import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
+import eu.europa.ec.markt.dss.validation102853.crl.ListCRLSource;
+import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.ListOCSPSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
+import eu.europa.ec.markt.dss.validation102853.scope.SignatureScope;
 
 /**
  * TODO <p/> <p/> DISCLAIMER: Project owner DG-MARKT.
@@ -44,21 +48,39 @@ import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
  */
 public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 
+	/**
+	 * This variable is used to ensure the uniqueness of the signature in the same document.
+	 */
 	protected static int signatureCounter = 0;
 
 	/**
-	 * The reference to the signing certificate object. If the signing certificate is an input provided by the DA then getSigningCert MUST be called.
+	 * The reference to the object containing all candidates to the signing certificate.
 	 */
-	protected SigningCertificateValidity signingCertificateValidity;
+	protected CandidatesForSigningCertificate candidatesForSigningCertificate;
 	/**
 	 * This list contains the detail information collected during the check. It is reset for each call of {@code isDataForSignatureLevelPresent}
 	 */
 	protected List<String> info;
 
-	/**
-	 * This variable contains the list of archive signature timestamps.
-	 */
+	// Enclosed content timestamps.
+	protected List<TimestampToken> contentTimestamps;
+
+	// Enclosed signature timestamps.
+	protected List<TimestampToken> signatureTimestamps;
+
+	// Enclosed SignAndRefs timestamps.
+	protected List<TimestampToken> sigAndRefsTimestamps;
+
+	// Enclosed RefsOnly timestamps.
+	protected List<TimestampToken> refsOnlyTimestamps;
+
+	// This variable contains the list of enclosed archive signature timestamps.
 	protected List<TimestampToken> archiveTimestamps;
+
+    /**
+     * The scope of the signature (full document, parts of documents, etc).
+     */
+    private SignatureScope signatureScope;
 
 	/**
 	 * @return the upper level for which data have been found. Doesn't mean any validity of the data found. Null if unknown.
@@ -87,12 +109,15 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	 *
 	 * @return signature validation context containing all certificates and revocation data used during the validation process.
 	 */
-	public SignatureValidationContext getSignatureValidationContext(final CertificateVerifier certificateVerifier) {
+	public ValidationContext getSignatureValidationContext(final CertificateVerifier certificateVerifier) {
 
-		final CertificatePool validationPool = SignedDocumentValidator.createValidationPool(certificateVerifier);
-		final SignatureValidationContext validationContext = new SignatureValidationContext(this, certificateVerifier, validationPool);
+		final ValidationContext validationContext = new SignatureValidationContext();
 		final CertificateToken signingCertificateToken = getSigningCertificateToken();
-		validationContext.setCertificateToValidate(signingCertificateToken);
+		validationContext.addCertificateTokenForVerification(signingCertificateToken);
+		prepareTimestamps(validationContext);
+		certificateVerifier.setSignatureCRLSource(new ListCRLSource(getCRLSource()));
+		certificateVerifier.setSignatureOCSPSource(new ListOCSPSource(getOCSPSource()));
+		validationContext.initialize(certificateVerifier);
 		validationContext.validate();
 		return validationContext;
 	}
@@ -103,7 +128,7 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	 * @param validationContext validation context containing all information about the validation process of the signing certificate and time-stamps
 	 * @return set of certificates not yet present within the signature
 	 */
-	public Set<CertificateToken> getCertificatesForInclusion(final SignatureValidationContext validationContext) {
+	public Set<CertificateToken> getCertificatesForInclusion(final ValidationContext validationContext) {
 
 		final Set<CertificateToken> certificates = new HashSet<CertificateToken>();
 		final List<CertificateToken> certWithinSignatures = getCertificatesWithinSignatureAndTimestamps();
@@ -144,7 +169,7 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	 * @param validationContext
 	 * @return
 	 */
-	public RevocationDataForInclusion getRevocationDataForInclusion(final SignatureValidationContext validationContext) {
+	public RevocationDataForInclusion getRevocationDataForInclusion(final ValidationContext validationContext) {
 
 		//TODO: there can be also CRL and OCSP in TimestampToken CMS data
 		final Set<RevocationToken> revocationTokens = validationContext.getProcessedRevocations();
@@ -210,13 +235,119 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	@Override
 	public CertificateToken getSigningCertificateToken() {
 
-		signingCertificateValidity = getSigningCertificateValidity();
-		if (signingCertificateValidity.isValid()) {
+		candidatesForSigningCertificate = getCandidatesForSigningCertificate();
+		final SigningCertificateValidity theSigningCertificateValidity = candidatesForSigningCertificate.getTheSigningCertificateValidity();
+		if (theSigningCertificateValidity != null) {
 
-			final CertificateToken signingCertificateToken = signingCertificateValidity.getCertToken();
-			return signingCertificateToken;
+			if (theSigningCertificateValidity.isValid()) {
+
+				final CertificateToken signingCertificateToken = theSigningCertificateValidity.getCertificateToken();
+				return signingCertificateToken;
+			}
 		}
-		return null;
+		final SigningCertificateValidity theBestCandidate = candidatesForSigningCertificate.getTheBestCandidate();
+		return theBestCandidate == null ? null : theBestCandidate.getCertificateToken();
+	}
+
+	/**
+	 * This method adds all timestamps to be validated.
+	 *
+	 * @param validationContext validationContext to which the timestamps must be added
+	 */
+	@Override
+	public void prepareTimestamps(final ValidationContext validationContext) {
+
+		// TODO: to be restored
+		// this.timestampedReferences = getTimestampedReferences();
+
+        /*
+	     * This validates the signature timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getContentTimestamps()) {
+
+			validationContext.addTimestampTokenForVerification(timestampToken);
+		}
+
+        /*
+         * This validates the signature timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getSignatureTimestamps()) {
+			validationContext.addTimestampTokenForVerification(timestampToken);
+		}
+
+        /*
+         * This validates the SigAndRefs timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getTimestampsX1()) {
+			validationContext.addTimestampTokenForVerification(timestampToken);
+		}
+
+        /*
+         * This validates the RefsOnly timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getTimestampsX2()) {
+			validationContext.addTimestampTokenForVerification(timestampToken);
+		}
+
+        /*
+         * This validates the archive timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getArchiveTimestamps()) {
+			validationContext.addTimestampTokenForVerification(timestampToken);
+		}
+	}
+
+	/**
+	 * This method adds all timestamps to be validated.
+	 *
+	 */
+	@Override
+	public void validateTimestamps() {
+
+        /*
+	     * This validates the signature timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getContentTimestamps()) {
+
+			final byte[] timestampBytes = getContentTimestampData(timestampToken);
+			timestampToken.matchData(timestampBytes);
+		}
+
+        /*
+         * This validates the signature timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getSignatureTimestamps()) {
+
+			final byte[] timestampBytes = getSignatureTimestampData(timestampToken);
+			timestampToken.matchData(timestampBytes);
+		}
+
+        /*
+         * This validates the SigAndRefs timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getTimestampsX1()) {
+
+			final byte[] timestampBytes = getTimestampX1Data(timestampToken);
+			timestampToken.matchData(timestampBytes);
+		}
+
+        /*
+         * This validates the RefsOnly timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getTimestampsX2()) {
+
+			final byte[] timestampBytes = getTimestampX2Data(timestampToken);
+			timestampToken.matchData(timestampBytes);
+		}
+
+        /*
+         * This validates the archive timestamp tokensToProcess present in the signature.
+         */
+		for (final TimestampToken timestampToken : getArchiveTimestamps()) {
+
+			final byte[] timestampData = getArchiveTimestampData(timestampToken);
+			timestampToken.matchData(timestampData);
+		}
 	}
 }
 

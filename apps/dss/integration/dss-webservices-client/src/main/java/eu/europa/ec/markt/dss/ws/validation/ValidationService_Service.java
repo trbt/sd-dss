@@ -42,7 +42,7 @@ public class ValidationService_Service extends Service {
 
     public static void setROOT_SERVICE_URL(String ROOT_SERVICE_URL) {
 
-        System.out.println("ROOT_SERVICE_URL 1: " + ROOT_SERVICE_URL);
+//        System.out.println("ROOT_SERVICE_URL 1: " + ROOT_SERVICE_URL);
 /*
         if ("http://localhost:8080/dss-test/service".equals(ROOT_SERVICE_URL)) {
             ROOT_SERVICE_URL = "http://localhost:8080/dss-test/wservice";

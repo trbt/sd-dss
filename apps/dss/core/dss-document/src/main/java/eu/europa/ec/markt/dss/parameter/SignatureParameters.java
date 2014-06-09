@@ -151,7 +151,7 @@ public class SignatureParameters {
 	}
 
 	/**
-	 * This is the document to sign. In the case of the DETACHED signature this is detached  document.
+	 * This is the document to sign. In the case of the DETACHED signature this is the detached document.
 	 *
 	 * @param document
 	 */

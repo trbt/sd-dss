@@ -12,6 +12,8 @@
         <SignatureIntact Level="FAIL">true</SignatureIntact>
         <SigningCertificate>
             <Recognition Level="FAIL"/>
+	        <AttributePresent Level="FAIL"/>
+	        <DigestValuePresent Level="FAIL"/>
             <DigestValueMatch Level="FAIL">true</DigestValueMatch>
             <IssuerSerialMatch Level="FAIL">true</IssuerSerialMatch>
             <Signature Level="FAIL"/>

@@ -32,7 +32,7 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 
 /**
  * A.2 Constraints on X.509 Certificate meta-data
- *
+ * <p/>
  * The QualifiedCertificate constraint is to be applied to the signer's certificate before considering it as valid for
  * the intended use.
  *
@@ -40,80 +40,79 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
  */
 public class QualifiedCertificate implements NodeName, NodeValue, AttributeName, AttributeValue, RuleConstant {
 
-    private ValidationPolicy constraintData;
+	private ValidationPolicy constraintData;
 
-    /**
-     * The default constructor with the policy object.
-     *
-     * @param constraintData
-     */
-    public QualifiedCertificate(final ValidationPolicy constraintData) {
+	/**
+	 * The default constructor with the policy object.
+	 *
+	 * @param constraintData
+	 */
+	public QualifiedCertificate(final ValidationPolicy constraintData) {
 
-        super();
-        this.constraintData = constraintData;
-    }
+		super();
+		this.constraintData = constraintData;
+	}
 
-    /**
-     * The QualifiedCertificate constraint is to be applied to the main signature or timestamp signer's certificate
-     * before considering it as valid for the intended use.
-     *
-     * //@param isTimestamp indicates if this is a timestamp signing certificate or main signature signing certificate.
-     *
-     * @param cert the certificate to be processed
-     * @return
-     */
-    public boolean run(final XmlDom cert) {
+	/**
+	 * The QualifiedCertificate constraint is to be applied to the main signature or timestamp signer's certificate
+	 * before considering it as valid for the intended use.
+	 * <p/>
+	 * //@param isTimestamp indicates if this is a timestamp signing certificate or main signature signing certificate.
+	 *
+	 * @param cert the certificate to be processed
+	 * @return
+	 */
+	public boolean run(final XmlDom cert) {
 
-        return process(cert);
-    }
+		return process(cert);
+	}
 
-    /**
-     * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
-     *
-     * @param certificate The certificate to be processed
-     * @return
-     */
-    private boolean process(final XmlDom certificate) {
+	/**
+	 * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
+	 *
+	 * @param certificate The certificate to be processed
+	 * @return
+	 */
+	private boolean process(final XmlDom certificate) {
 
-        if (certificate == null) {
-            return false;
-        }
+		if (certificate == null) {
+			return false;
+		}
 
-        /**
-         * Mandates the signer's certificate used in validating the signature to be a qualified certificate as defined in
-         * Directive 1999/93/EC [9]. This status can be derived from:
-         */
+		/**
+		 * Mandates the signer's certificate used in validating the signature to be a qualified certificate as defined in
+		 * Directive 1999/93/EC [9]. This status can be derived from:
+		 */
 
-        /**
-         * • QcCompliance extension being set in the signer's certificate in accordance with TS 101 862 [5];
-         */
+		/**
+		 * • QcCompliance extension being set in the signer's certificate in accordance with TS 101 862 [5];
+		 */
 
-        final boolean isQCC = certificate.getBoolValue("./QCStatement/QCC/text()");
+		final boolean isQCC = certificate.getBoolValue("./QCStatement/QCC/text()");
 
-        /**
-         * • QCP+ or QCP certificate policy OID being indicated in the signer's certificate policies extension (i.e.
-         * 0.4.0.1456.1.1 or 0.4.0.1456.1.2);
-         */
+		/**
+		 * • QCP+ or QCP certificate policy OID being indicated in the signer's certificate policies extension (i.e.
+		 * 0.4.0.1456.1.1 or 0.4.0.1456.1.2);
+		 */
 
-        final boolean isQCP = certificate.getBoolValue("./QCStatement/QCP/text()");
+		final boolean isQCP = certificate.getBoolValue("./QCStatement/QCP/text()");
 
-        final boolean isQCPPlus = certificate.getBoolValue("./QCStatement/QCPPlus/text()");
+		final boolean isQCPPlus = certificate.getBoolValue("./QCStatement/QCPPlus/text()");
 
-        /**
-         * • The content of a Trusted service Status List;<br>
-         * • The content of a Trusted List through information provided in the Sie field of the applicable service entry;
-         */
+		/**
+		 * • The content of a Trusted service Status List;<br>
+		 * • The content of a Trusted List through information provided in the Sie field of the applicable service entry;
+		 */
 
-        final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(certificate);
-        final boolean isSIE = qualifiers.contains(QC_WITH_SSCD) || qualifiers.contains(QC_NO_SSCD) || qualifiers.contains(QC_WITH_SSCD_119612) || qualifiers
-              .contains(QC_NO_SSCD_119612);
+		final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(certificate);
+		final boolean isSIE = qualifiers.contains(QC_STATEMENT) || qualifiers.contains(QC_STATEMENT_119612);
 
-        /**
-         * or • Static configuration that provides such information in a trusted manner.
-         */
+		/**
+		 * or • Static configuration that provides such information in a trusted manner.
+		 */
 
-        // --> Not implemented
+		// --> Not implemented
 
-        return isQCC || isQCP || isQCPPlus || isSIE;
-    }
+		return isQCC || isQCP || isQCPPlus || isSIE;
+	}
 }

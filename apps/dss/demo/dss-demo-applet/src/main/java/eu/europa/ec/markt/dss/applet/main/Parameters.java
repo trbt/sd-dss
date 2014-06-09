@@ -44,6 +44,7 @@ import eu.europa.ec.markt.dss.validation102853.ValidationResourceManager;
  */
 public class Parameters {
 
+
     public enum AppletUsage {
         ALL, SIGN, VERIFY, EXTEND, EDIT_VALIDATION_POLICY
     }
@@ -102,6 +103,8 @@ public class Parameters {
     private String signatureLevel;
 
     private URL defaultPolicyUrl;
+
+    private URL defaultXsdPolicyUrl;
 
     /**
      *
@@ -328,6 +331,26 @@ public class Parameters {
             return getClass().getResource(ValidationResourceManager.defaultPolicyConstraintsLocation);
         } else {
             return defaultPolicyUrl;
+        }
+    }
+
+    /**
+     * Set the default xsd policy URL for validation. Can be null.
+     * @param defaultXsdPolicyUrl
+     */
+    public void setDefaultXsdPolicyUrl(URL defaultXsdPolicyUrl) {
+        this.defaultXsdPolicyUrl = defaultXsdPolicyUrl;
+    }
+
+    /**
+     *
+     * @return the defaultXsdPolicyUrl for validation. Can be null.
+     */
+    public URL getDefaultXsdPolicyUrl() {
+        if (defaultXsdPolicyUrl == null) {
+            return getClass().getResource(ValidationResourceManager.defaultPolicyXsdLocation);
+        } else {
+            return defaultXsdPolicyUrl;
         }
     }
 

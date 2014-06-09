@@ -29,7 +29,9 @@ import org.bouncycastle.tsp.TimeStampToken;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNotApplicableMethodException;
+import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
+import eu.europa.ec.markt.dss.signature.MimeType;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.cades.CMSDocumentValidator;
 
@@ -44,56 +46,101 @@ import eu.europa.ec.markt.dss.validation102853.cades.CMSDocumentValidator;
  */
 public class ASiCTimestampDocumentValidator extends CMSDocumentValidator {
 
-    protected String asicComment;
-    private String magicNumberMimeType;
-    private TimeStampToken timeStampToken;
+	/**
+	 * This mime-type comes from the container file name: (zip, asic...).
+	 */
+	private MimeType asicContainerMimeType;
 
-    /**
-     * The default constructor for ASiCXMLDocumentValidator.
-     *
-     * @param timeStampBytes
-     * @param signedContent
-     * @param signedDocumentFileName
-     * @throws eu.europa.ec.markt.dss.exception.DSSException
-     */
-    public ASiCTimestampDocumentValidator(final byte[] timeStampBytes, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
+	/**
+	 * This mime-type comes from the 'mimetype' file included within the container.
+	 */
+	private MimeType asicMimeType;
 
-        //        super();
-        super(new InMemoryDocument(timeStampBytes));
+	/**
+	 * This mime-type comes from the ZIP comment:<br/>
+	 * The comment field in the ZIP header may be used to identify the type of the data object within the container.
+	 * If this field is present, it should be set with "mimetype=" followed by the mime type of the data object held in
+	 * the signed data object.
+	 */
+	protected MimeType asicCommentMimeType;
 
-        try {
-            timeStampToken = new TimeStampToken(cmsSignedData);
-        } catch (TSPException e) {
-            throw new DSSException(e);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        }
-        //externalContent = new InMemoryDocument(signedContent, signedDocumentFileName);
-    }
+	/**
+	 * This mime-type comes from the "magic number".
+	 */
+	private MimeType magicNumberMimeType;
 
-    //    /**
-    //     * This method is not applicable for {@code TimeStampToken}
-    //     *
-    //     * @return
-    //     */
-    //    @Override
-    //    public List<AdvancedSignature> getSignatures() {
-    //        throw new DSSNotApplicableMethodException(ASiCTimestampDocumentValidator.class);
-    //    }
-    //
-    public void setAsicComment(final String asicComment) {
-        this.asicComment = asicComment;
-    }
+	private TimeStampToken timeStampToken;
 
-    public String getAsicComment() {
-        return asicComment;
-    }
+	/**
+	 * In case of a detached signature this is the signed document.
+	 */
+	protected DSSDocument timestampExternalContent;
 
-    public void setMagicNumberMimeType(final String magicNumberMimeType) {
-        this.magicNumberMimeType = magicNumberMimeType;
-    }
+	/**
+	 * The default constructor for ASiCXMLDocumentValidator.
+	 *
+	 * @param timeStampBytes
+	 * @param signedContent
+	 * @param signedDocumentFileName
+	 * @throws eu.europa.ec.markt.dss.exception.DSSException
+	 */
+	public ASiCTimestampDocumentValidator(final byte[] timeStampBytes, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
 
-    public String getMagicNumberMimeType() {
-        return magicNumberMimeType;
-    }
+		super(new InMemoryDocument(timeStampBytes));
+
+		try {
+			timeStampToken = new TimeStampToken(cmsSignedData);
+		} catch (TSPException e) {
+			throw new DSSException(e);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+		timestampExternalContent = new InMemoryDocument(signedContent, signedDocumentFileName);
+	}
+
+	public MimeType getAsicContainerMimeType() {
+		return asicContainerMimeType;
+	}
+
+	public void setAsicContainerMimeType(final MimeType asicContainerMimeType) {
+		this.asicContainerMimeType = asicContainerMimeType;
+	}
+
+	public MimeType getAsicMimeType() {
+		return asicMimeType;
+	}
+
+	public void setAsicMimeType(final MimeType asicMimeType) {
+		this.asicMimeType = asicMimeType;
+	}
+
+	public MimeType getAsicCommentMimeType() {
+		return asicCommentMimeType;
+	}
+
+	public void setAsicCommentMimeType(final MimeType asicCommentMimeType) {
+		this.asicCommentMimeType = asicCommentMimeType;
+	}
+
+	public MimeType getMagicNumberMimeType() {
+		return magicNumberMimeType;
+	}
+
+	public void setMagicNumberMimeType(final MimeType magicNumberMimeType) {
+		this.magicNumberMimeType = magicNumberMimeType;
+	}
+
+	/**
+	 * This method is overridden because in the case of ASiC timestamp only the document's hash is timestamped and not the external document.
+	 *
+	 * @return
+	 */
+	@Override
+	public MimeType getExternalContentMimeType() {
+
+		if (timestampExternalContent != null) {
+			return timestampExternalContent.getMimeType();
+		}
+		return null;
+	}
 }

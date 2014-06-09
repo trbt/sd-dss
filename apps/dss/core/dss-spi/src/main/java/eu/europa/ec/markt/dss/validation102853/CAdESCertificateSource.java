@@ -36,6 +36,8 @@ import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.tsp.TimeStampToken;
 import org.bouncycastle.util.StoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
@@ -48,7 +50,7 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 
 public class CAdESCertificateSource extends SignatureCertificateSource {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CAdESCertificateSource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CAdESCertificateSource.class);
 
     final private CMSSignedData cmsSignedData;
     final SignerInformation signerInformation;

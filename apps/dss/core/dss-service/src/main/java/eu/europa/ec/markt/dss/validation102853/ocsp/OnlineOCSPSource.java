@@ -30,8 +30,11 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AccessDescription;
 import org.bouncycastle.asn1.x509.AuthorityInformationAccess;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
@@ -53,166 +56,200 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 /**
  * Online OCSP repository. This implementation will contact the OCSP Responder to retrieve the OCSP response.
  *
- * @version $Revision: 3675 $ - $Date: 2014-03-31 19:59:20 +0200 (Mon, 31 Mar 2014) $
+ * @version $Revision: 3966 $ - $Date: 2014-05-25 19:32:19 +0200 (Sun, 25 May 2014) $
  */
 
 public class OnlineOCSPSource implements OCSPSource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OnlineOCSPSource.class);
+	private static final Logger LOG = LoggerFactory.getLogger(OnlineOCSPSource.class);
 
-    private DataLoader dataLoader;
+	static {
 
-    static {
+		Security.addProvider(new BouncyCastleProvider());
+	}
 
-        // TODO by meyerfr: shouldn't that be done once e.g. in an environment
-        // initializer?
-        Security.addProvider(new BouncyCastleProvider());
-    }
+	/**
+	 * In the production environment this variable must be set make more secure the revocation data retrieval. If this variable value is true then the cache system for the OCSP
+	 * responses does not work. An identifier of the response without the {@code nonce} extension must be created.
+	 */
+	public static boolean ADD_NONCE = false;
 
-    /**
-     * Create an OCSP source The default constructor for OnlineOCSPSource. The default {@code OCSPDataLoader} is set. It is possible to change it with {@code
-     * #setDataLoader}.
-     */
-    public OnlineOCSPSource() {
+	/**
+	 * This variable is used to prevent the replay attack.
+	 */
+	private DEROctetString nonce;
 
-        dataLoader = new OCSPDataLoader();
-    }
+	/**
+	 * The data loader used to retrieve the OCSP response.
+	 */
+	private DataLoader dataLoader;
 
-    /**
-     * Set the DataLoader to use for querying the OCSP server.
-     *
-     * @param dataLoader
-     */
-    public void setDataLoader(final DataLoader dataLoader) {
+	/**
+	 * Create an OCSP source The default constructor for OnlineOCSPSource. The default {@code OCSPDataLoader} is set. It is possible to change it with {@code
+	 * #setDataLoader}.
+	 */
+	public OnlineOCSPSource() {
 
-        this.dataLoader = dataLoader;
-    }
+		dataLoader = new OCSPDataLoader();
+	}
 
-    @Override
-    public BasicOCSPResp getOCSPResponse(final X509Certificate cert, final X509Certificate issuerCert) {
+	/**
+	 * Set the DataLoader to use for querying the OCSP server.
+	 *
+	 * @param dataLoader
+	 */
+	public void setDataLoader(final DataLoader dataLoader) {
 
-        if (dataLoader == null) {
+		this.dataLoader = dataLoader;
+	}
 
-            throw new DSSException("The DataLoader must be set. Use setDataLoader method first.");
-        }
-        try {
+	@Override
+	public BasicOCSPResp getOCSPResponse(final X509Certificate cert, final X509Certificate issuerCert) {
 
-            final String ocspUri = getAccessLocation(cert);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("OCSP URI: " + ocspUri);
-            }
-            if (ocspUri == null) {
+		if (dataLoader == null) {
 
-                return null;
-            }
-            final byte[] content = buildOCSPRequest(cert, issuerCert);
+			throw new DSSException("The DataLoader must be set. Use setDataLoader method first.");
+		}
+		try {
 
-            final byte[] ocspRespBytes = dataLoader.post(ocspUri, content);
+			final String ocspUri = getAccessLocation(cert);
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("OCSP URI: " + ocspUri);
+			}
+			if (ocspUri == null) {
 
-            //            System.out.println();
-            //            System.out.println(DSSUtils.toHex(ocspRespBytes));
-            //            System.out.println();
+				return null;
+			}
+			final byte[] content = buildOCSPRequest(cert, issuerCert);
 
-            final OCSPResp ocspResp = new OCSPResp(ocspRespBytes);
+			final byte[] ocspRespBytes = dataLoader.post(ocspUri, content);
+
+			//            System.out.println();
+			//            System.out.println(DSSUtils.toHex(ocspRespBytes));
+			//            System.out.println();
+
+			final OCSPResp ocspResp = new OCSPResp(ocspRespBytes);
 /*
             final int status = ocspResp.getStatus();
             System.out.println(status);
 */
-            try {
+			try {
 
-                final BasicOCSPResp responseObject = (BasicOCSPResp) ocspResp.getResponseObject();
-                return responseObject;
-            } catch (NullPointerException e) {
+				final BasicOCSPResp responseObject = (BasicOCSPResp) ocspResp.getResponseObject();
+				if (ADD_NONCE) {
 
-                LOG.error(
-                      "OCSP error: Encountered a case when the OCSPResp is initialised with a null OCSP response... (and there are no nullity checks in the OCSPResp implementation)",
-                      e);
-            }
-        } catch (OCSPException e) {
+					final Extension extension = responseObject.getExtension(OCSPObjectIdentifiers.id_pkix_ocsp_nonce);
+					final DEROctetString receivedNonce = (DEROctetString) extension.getExtnValue();
+					if (!receivedNonce.equals(nonce)) {
 
-            LOG.error("OCSP error: " + e.getMessage(), e);
-        } catch (IOException e) {
+						throw new DSSException("The OCSP request was the victim of replay attack: nonce[sent:" + nonce + ", received:" + receivedNonce);
+					}
+				}
+				return responseObject;
+			} catch (NullPointerException e) {
 
-            throw new DSSException(e);
-        }
-        return null;
-    }
+				LOG.error(
+					  "OCSP error: Encountered a case when the OCSPResp is initialised with a null OCSP response... (and there are no nullity checks in the OCSPResp implementation)",
+					  e);
+			}
+		} catch (OCSPException e) {
 
-    private byte[] buildOCSPRequest(final X509Certificate cert, final X509Certificate issuerCert) throws DSSException {
+			LOG.error("OCSP error: " + e.getMessage(), e);
+		} catch (IOException e) {
 
-        try {
+			throw new DSSException(e);
+		}
+		return null;
+	}
 
-            final CertificateID certId = DSSUtils.getOCSPCertificateID(cert, issuerCert);
-            final OCSPReqBuilder ocspReqBuilder = new OCSPReqBuilder();
-            ocspReqBuilder.addRequest(certId);
-            final OCSPReq ocspReq = ocspReqBuilder.build();
-            final byte[] ocspReqData = ocspReq.getEncoded();
-            return ocspReqData;
-        } catch (OCSPException e) {
-            throw new DSSException(e);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        }
-    }
+	private byte[] buildOCSPRequest(final X509Certificate cert, final X509Certificate issuerCert) throws DSSException {
 
-    /**
-     * Gives back the OCSP URI meta-data found within the given X509 cert.
-     *
-     * @param certificate the X509 cert.
-     * @return the OCSP URI, or <code>null</code> if the extension is not present.
-     * @throws DSSException
-     */
-    public String getAccessLocation(final X509Certificate certificate) throws DSSException {
+		try {
 
-        final ASN1ObjectIdentifier ocspAccessMethod = X509ObjectIdentifiers.ocspAccessMethod;
-        final byte[] authInfoAccessExtensionValue = certificate.getExtensionValue(X509Extension.authorityInfoAccess.getId());
-        if (null == authInfoAccessExtensionValue) {
+			final CertificateID certId = DSSUtils.getOCSPCertificateID(cert, issuerCert);
+			final OCSPReqBuilder ocspReqBuilder = new OCSPReqBuilder();
+			ocspReqBuilder.addRequest(certId);
 
-            return null;
-        }
-        ASN1InputStream ais1 = null;
-        ASN1InputStream ais2 = null;
-        try {
+	        /*
+	         * The nonce extension is used to bind a request to a response to prevent replay attacks.
+             */
+			if (ADD_NONCE) {
 
-            final ByteArrayInputStream bais = new ByteArrayInputStream(authInfoAccessExtensionValue);
-            ais1 = new ASN1InputStream(bais);
-            final DEROctetString oct = (DEROctetString) (ais1.readObject());
-            ais2 = new ASN1InputStream(oct.getOctets());
-            final AuthorityInformationAccess authorityInformationAccess = AuthorityInformationAccess.getInstance(ais2.readObject());
+				final long currentTimeNonce = System.currentTimeMillis();
 
-            final AccessDescription[] accessDescriptions = authorityInformationAccess.getAccessDescriptions();
-            for (AccessDescription accessDescription : accessDescriptions) {
+				nonce = new DEROctetString(DSSUtils.toByteArray(currentTimeNonce));
+				final Extension extension = new Extension(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, true, nonce);
+				final Extensions extensions = new Extensions(extension);
+				ocspReqBuilder.setRequestExtensions(extensions);
+			}
+			final OCSPReq ocspReq = ocspReqBuilder.build();
+			final byte[] ocspReqData = ocspReq.getEncoded();
+			return ocspReqData;
+		} catch (OCSPException e) {
+			throw new DSSException(e);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
 
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Access method: " + accessDescription.getAccessMethod());
-                }
-                final boolean correctAccessMethod = accessDescription.getAccessMethod().equals(ocspAccessMethod);
-                if (!correctAccessMethod) {
+	/**
+	 * Gives back the OCSP URI meta-data found within the given X509 cert.
+	 *
+	 * @param certificate the X509 cert.
+	 * @return the OCSP URI, or <code>null</code> if the extension is not present.
+	 * @throws DSSException
+	 */
+	public String getAccessLocation(final X509Certificate certificate) throws DSSException {
 
-                    continue;
-                }
-                final GeneralName gn = accessDescription.getAccessLocation();
-                if (gn.getTagNo() != GeneralName.uniformResourceIdentifier) {
+		final ASN1ObjectIdentifier ocspAccessMethod = X509ObjectIdentifiers.ocspAccessMethod;
+		final byte[] authInfoAccessExtensionValue = certificate.getExtensionValue(X509Extension.authorityInfoAccess.getId());
+		if (null == authInfoAccessExtensionValue) {
 
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Not a uniform resource identifier");
-                    }
-                    continue;
-                }
-                final DERIA5String str = (DERIA5String) ((DERTaggedObject) gn.toASN1Primitive()).getObject();
-                final String accessLocation = str.getString();
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Access location: " + accessLocation);
-                }
-                return accessLocation;
-            }
-            return null;
-        } catch (IOException e) {
-            throw new DSSException(e);
-        } finally {
+			return null;
+		}
+		ASN1InputStream ais1 = null;
+		ASN1InputStream ais2 = null;
+		try {
 
-            DSSUtils.closeQuietly(ais1);
-            DSSUtils.closeQuietly(ais2);
-        }
-    }
+			final ByteArrayInputStream bais = new ByteArrayInputStream(authInfoAccessExtensionValue);
+			ais1 = new ASN1InputStream(bais);
+			final DEROctetString oct = (DEROctetString) (ais1.readObject());
+			ais2 = new ASN1InputStream(oct.getOctets());
+			final AuthorityInformationAccess authorityInformationAccess = AuthorityInformationAccess.getInstance(ais2.readObject());
+
+			final AccessDescription[] accessDescriptions = authorityInformationAccess.getAccessDescriptions();
+			for (AccessDescription accessDescription : accessDescriptions) {
+
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("Access method: " + accessDescription.getAccessMethod());
+				}
+				final boolean correctAccessMethod = accessDescription.getAccessMethod().equals(ocspAccessMethod);
+				if (!correctAccessMethod) {
+
+					continue;
+				}
+				final GeneralName gn = accessDescription.getAccessLocation();
+				if (gn.getTagNo() != GeneralName.uniformResourceIdentifier) {
+
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("Not a uniform resource identifier");
+					}
+					continue;
+				}
+				final DERIA5String str = (DERIA5String) ((DERTaggedObject) gn.toASN1Primitive()).getObject();
+				final String accessLocation = str.getString();
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("Access location: " + accessLocation);
+				}
+				return accessLocation;
+			}
+			return null;
+		} catch (IOException e) {
+			throw new DSSException(e);
+		} finally {
+
+			DSSUtils.closeQuietly(ais1);
+			DSSUtils.closeQuietly(ais2);
+		}
+	}
 }

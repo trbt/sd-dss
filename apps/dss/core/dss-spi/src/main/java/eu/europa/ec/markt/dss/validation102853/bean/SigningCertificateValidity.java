@@ -19,32 +19,67 @@
  */
 package eu.europa.ec.markt.dss.validation102853.bean;
 
-import java.security.cert.X509Certificate;
+import java.security.PublicKey;
 
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
+/**
+ * This class stores the information about the validity of the signing certificate.
+ */
 public class SigningCertificateValidity {
 
-	private CertificateToken certToken;
-	private boolean digestMatch;
-	private boolean issuerSerialPresent;
-	private boolean serialNumberMatch;
-	private boolean nameMatch;
+	/**
+	 * This field is used when only the public key is available (non AdES signature)
+	 */
+	private PublicKey publicKey;
+	private CertificateToken certificateToken;
+	private boolean digestPresent;
+	private boolean digestEqual;
+	private boolean attributePresent;
+	private boolean serialNumberEqual;
+	private boolean distinguishedNameEqual;
 
-	public CertificateToken getCertToken() {
-		return certToken;
+	/**
+	 * If the {@code certificateToken} is not null then the associated {@code PublicKey} will be returned otherwise the provided {@code publicKey} is returned.
+	 *
+	 * @return the public key associated with this instance.
+	 */
+	public PublicKey getPublicKey() {
+
+		return certificateToken == null ? publicKey : certificateToken.getCertificate().getPublicKey();
 	}
 
-	public void setCertToken(final CertificateToken certToken) {
-		this.certToken = certToken;
+	/**
+	 * This method sets the public key. To be used in case of a non AdES signature.
+	 *
+	 * @param publicKey the public key to set
+	 */
+	public void setPublicKey(final PublicKey publicKey) {
+		this.publicKey = publicKey;
 	}
 
-	public boolean isDigestMatch() {
-		return digestMatch;
+	public CertificateToken getCertificateToken() {
+		return certificateToken;
 	}
 
-	public void setDigestMatch(final boolean digestMatch) {
-		this.digestMatch = digestMatch;
+	public void setCertificateToken(final CertificateToken certificateToken) {
+		this.certificateToken = certificateToken;
+	}
+
+	public boolean isDigestPresent() {
+		return digestPresent;
+	}
+
+	public void setDigestPresent(boolean digestPresent) {
+		this.digestPresent = digestPresent;
+	}
+
+	public boolean isDigestEqual() {
+		return digestEqual;
+	}
+
+	public void setDigestEqual(final boolean digestEqual) {
+		this.digestEqual = digestEqual;
 	}
 
 	/**
@@ -52,43 +87,38 @@ public class SigningCertificateValidity {
 	 *
 	 * @return
 	 */
-	public boolean isIssuerSerialPresent() {
-		return issuerSerialPresent;
+	public boolean isAttributePresent() {
+		return attributePresent;
 	}
 
-	public void setIssuerSerialPresent(boolean issuerSerialPresent) {
-		this.issuerSerialPresent = issuerSerialPresent;
+	public void setAttributePresent(boolean attributePresent) {
+		this.attributePresent = attributePresent;
 	}
 
-	public boolean isSerialNumberMatch() {
-		return serialNumberMatch;
+	public boolean isSerialNumberEqual() {
+		return serialNumberEqual;
 	}
 
-	public void setSerialNumberMatch(final boolean serialNumberMatch) {
-		this.serialNumberMatch = serialNumberMatch;
+	public void setSerialNumberEqual(final boolean serialNumberEqual) {
+		this.serialNumberEqual = serialNumberEqual;
 	}
 
-	public X509Certificate getCertificate() {
-		return certToken.getCertificate();
+	public void setDistinguishedNameEqual(final boolean distinguishedNameEqual) {
+		this.distinguishedNameEqual = distinguishedNameEqual;
 	}
 
-	public void setNameMatch(final boolean nameMatch) {
-		this.nameMatch = nameMatch;
-	}
-
-	public boolean isNameMatch() {
-		return nameMatch;
+	public boolean isDistinguishedNameEqual() {
+		return distinguishedNameEqual;
 	}
 
 	/**
-	 * This method returns {@code true} if the certificate digest matches. The signed reference (IssuerSerial/issuerAndSerialNumber) to the signing certificate is not taken into
-	 * account. The signed reference is checked following the validation policy.
+	 * This method returns {@code true} if the certificate digest or IssuerSerial/issuerAndSerialNumber matches. The signed reference is checked following the validation policy.
 	 *
 	 * @return {@code true} if the certificate digest matches.
 	 */
 	public boolean isValid() {
 
-		final boolean valid = isDigestMatch();
+		final boolean valid = isDigestEqual() || (isDistinguishedNameEqual() && isSerialNumberEqual());
 		return valid;
 	}
 }

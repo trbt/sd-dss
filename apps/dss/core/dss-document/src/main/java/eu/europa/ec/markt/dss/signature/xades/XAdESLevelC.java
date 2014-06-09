@@ -43,17 +43,17 @@ import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.OCSPToken;
 import eu.europa.ec.markt.dss.validation102853.RevocationToken;
-import eu.europa.ec.markt.dss.validation102853.SignatureValidationContext;
+import eu.europa.ec.markt.dss.validation102853.ValidationContext;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 
 /**
  * Contains XAdES-C profile aspects
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3971 $ - $Date: 2014-05-26 09:10:46 +0200 (Mon, 26 May 2014) $
  */
 
 public class XAdESLevelC extends XAdESLevelBaselineT {
@@ -212,7 +212,7 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
         // for XAdES_XL the development is not conform with the standard
         if (!xadesSignature.hasCProfile() || SignatureLevel.XAdES_C.equals(signatureLevel) || SignatureLevel.XAdES_XL.equals(signatureLevel)) {
 
-            final SignatureValidationContext valContext = xadesSignature.getSignatureValidationContext(certificateVerifier);
+            final ValidationContext validationContext = xadesSignature.getSignatureValidationContext(certificateVerifier);
 
             // XAdES-C: complete certificate references
             // <xades:CompleteCertificateRefs>
@@ -220,12 +220,13 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
             // ......<xades:Cert>
             // .........<xades:CertDigest>
 
-            final Element completeCertificateRefsDom = DSSXMLUtils.addElement(documentDom, unsignedSignaturePropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CompleteCertificateRefs");
+            final Element completeCertificateRefsDom = DSSXMLUtils.addElement(documentDom, unsignedSignaturePropertiesDom, xPathQueryHolder.XADES_NAMESPACE,
+	              "xades:CompleteCertificateRefs");
 
             final Element certRefsDom = DSSXMLUtils.addElement(documentDom, completeCertificateRefsDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CertRefs");
 
             final CertificateToken certificateToken = xadesSignature.getSigningCertificateToken();
-            final Set<CertificateToken> processedCertificateTokens = valContext.getProcessedCertificates();
+            final Set<CertificateToken> processedCertificateTokens = validationContext.getProcessedCertificates();
             final List<CertificateToken> processedCertificateTokenList = new ArrayList<CertificateToken>();
             processedCertificateTokenList.addAll(processedCertificateTokens);
             processedCertificateTokenList.remove(certificateToken);
@@ -248,8 +249,8 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 
             // <xades:CompleteRevocationRefs>
             final Element completeRevocationRefsDom = DSSXMLUtils.addElement(documentDom, unsignedSignaturePropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CompleteRevocationRefs");
-            incorporateCRLRefs(completeRevocationRefsDom, valContext.getProcessedRevocations());
-            incorporateOCSPRefs(completeRevocationRefsDom, valContext.getProcessedRevocations());
+            incorporateCRLRefs(completeRevocationRefsDom, validationContext.getProcessedRevocations());
+            incorporateOCSPRefs(completeRevocationRefsDom, validationContext.getProcessedRevocations());
         }
     }
 }

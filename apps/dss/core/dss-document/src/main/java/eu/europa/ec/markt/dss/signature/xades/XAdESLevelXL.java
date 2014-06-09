@@ -28,17 +28,17 @@ import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.OCSPToken;
 import eu.europa.ec.markt.dss.validation102853.RevocationToken;
-import eu.europa.ec.markt.dss.validation102853.SignatureValidationContext;
+import eu.europa.ec.markt.dss.validation102853.ValidationContext;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 
 /**
  * XL profile of XAdES signature
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3924 $ - $Date: 2014-05-20 10:19:38 +0200 (Tue, 20 May 2014) $
  */
 
 public class XAdESLevelXL extends XAdESLevelX {
@@ -69,7 +69,7 @@ public class XAdESLevelXL extends XAdESLevelX {
 
         if (!xadesSignature.hasXLProfile() || SignatureLevel.XAdES_XL.equals(params.getSignatureLevel())) {
 
-            final SignatureValidationContext valContext = xadesSignature.getSignatureValidationContext(certificateVerifier);
+            final ValidationContext valContext = xadesSignature.getSignatureValidationContext(certificateVerifier);
 
             removeOldCertificateValues();
             removeOldRevocationValues();
@@ -114,7 +114,7 @@ public class XAdESLevelXL extends XAdESLevelX {
      * @param parentDom
      * @param validationContext
      */
-    protected void incorporateRevocationValues(final Element parentDom, final SignatureValidationContext validationContext) {
+    protected void incorporateRevocationValues(final Element parentDom, final ValidationContext validationContext) {
 
         // <xades:RevocationValues>
 

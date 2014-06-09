@@ -20,8 +20,11 @@
 
 package eu.europa.ec.markt.dss.validation102853.asic;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
+import eu.europa.ec.markt.dss.signature.MimeType;
 import eu.europa.ec.markt.dss.validation102853.cades.CMSDocumentValidator;
 
 /**
@@ -35,36 +38,72 @@ import eu.europa.ec.markt.dss.validation102853.cades.CMSDocumentValidator;
  */
 public class ASiCCMSDocumentValidator extends CMSDocumentValidator {
 
-    protected String asicComment;
-    private String magicNumberMimeType;
+	/**
+	 * This mime-type comes from the container file name: (zip, asic...).
+	 */
+	private MimeType asicContainerMimeType;
 
-    /**
-     * The default constructor for ASiCXMLDocumentValidator.
-     *
-     * @param signature
-     * @param signedContent
-     * @param signedDocumentFileName
-     * @throws DSSException
-     */
-    public ASiCCMSDocumentValidator(final byte[] signature, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
+	/**
+	 * This mime-type comes from the 'mimetype' file included within the container.
+	 */
+	private MimeType asicMimeType;
 
-        super(new InMemoryDocument(signature));
-        externalContent = new InMemoryDocument(signedContent, signedDocumentFileName);
-    }
+	/**
+	 * This mime-type comes from the ZIP comment:<br/>
+	 * The comment field in the ZIP header may be used to identify the type of the data object within the container.
+	 * If this field is present, it should be set with "mimetype=" followed by the mime type of the data object held in
+	 * the signed data object.
+	 */
+	protected MimeType asicCommentMimeType;
 
-    public void setAsicComment(final String asicComment) {
-        this.asicComment = asicComment;
-    }
+	/**
+	 * This mime-type comes from the "magic number".
+	 */
+	private MimeType magicNumberMimeType;
 
-    public String getAsicComment() {
-        return asicComment;
-    }
+	/**
+	 * The default constructor for ASiCXMLDocumentValidator.
+	 *
+	 * @param signature
+	 * @param signedContent
+	 * @param signedDocumentFileName
+	 * @throws DSSException
+	 */
+	public ASiCCMSDocumentValidator(final byte[] signature, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
 
-    public void setMagicNumberMimeType(final String magicNumberMimeType) {
-        this.magicNumberMimeType = magicNumberMimeType;
-    }
+		super(new InMemoryDocument(signature));
+		externalContent = new InMemoryDocument(signedContent, signedDocumentFileName);
+	}
 
-    public String getMagicNumberMimeType() {
-        return magicNumberMimeType;
-    }
+	public MimeType getAsicContainerMimeType() {
+		return asicContainerMimeType;
+	}
+
+	public void setAsicContainerMimeType(final MimeType asicContainerMimeType) {
+		this.asicContainerMimeType = asicContainerMimeType;
+	}
+
+	public MimeType getAsicMimeType() {
+		return asicMimeType;
+	}
+
+	public void setAsicMimeType(final MimeType asicMimeType) {
+		this.asicMimeType = asicMimeType;
+	}
+
+	public MimeType getAsicCommentMimeType() {
+		return asicCommentMimeType;
+	}
+
+	public void setAsicCommentMimeType(final MimeType asicCommentMimeType) {
+		this.asicCommentMimeType = asicCommentMimeType;
+	}
+
+	public MimeType getMagicNumberMimeType() {
+		return magicNumberMimeType;
+	}
+
+	public void setMagicNumberMimeType(final MimeType magicNumberMimeType) {
+		this.magicNumberMimeType = magicNumberMimeType;
+	}
 }

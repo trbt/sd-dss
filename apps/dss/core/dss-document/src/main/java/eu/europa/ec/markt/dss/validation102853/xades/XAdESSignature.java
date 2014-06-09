@@ -30,8 +30,10 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
@@ -42,8 +44,10 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.xml.security.Init;
 import org.apache.xml.security.algorithms.JCEMapper;
+import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.Reference;
 import org.apache.xml.security.signature.SignedInfo;
+import org.apache.xml.security.signature.XMLSignatureException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.bouncycastle.tsp.TimeStampToken;
@@ -65,29 +69,29 @@ import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.exception.DSSNullReturnedException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLRef;
-import eu.europa.ec.markt.dss.validation102853.certificate.CertificateRef;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPRef;
-import eu.europa.ec.markt.dss.validation102853.SignatureForm;
-import eu.europa.ec.markt.dss.validation102853.SignaturePolicy;
-import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.ArchiveTimestampType;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
+import eu.europa.ec.markt.dss.validation102853.SignatureForm;
+import eu.europa.ec.markt.dss.validation102853.SignaturePolicy;
 import eu.europa.ec.markt.dss.validation102853.TimestampReference;
 import eu.europa.ec.markt.dss.validation102853.TimestampReferenceCategory;
 import eu.europa.ec.markt.dss.validation102853.TimestampToken;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
+import eu.europa.ec.markt.dss.validation102853.bean.CandidatesForSigningCertificate;
 import eu.europa.ec.markt.dss.validation102853.bean.CertifiedRole;
 import eu.europa.ec.markt.dss.validation102853.bean.CommitmentType;
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerification;
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureProductionPlace;
 import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateRef;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLRef;
+import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPRef;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 import eu.europa.ec.markt.dss.validation102853.toolbox.XPointerResourceResolver;
-import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 
 // import javax.xml.crypto.dsig.XMLSignature;
 // import javax.xml.crypto.dsig.XMLSignatureException;
@@ -218,7 +222,8 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 		recursiveNamespaceBrowser(signatureElement);
 		if (xPathQueryHolder == null) {
 
-			throw new DSSException("There is no suitable XPathQueryHolder to manage the signature.");
+			LOG.warn("There is no suitable XPathQueryHolder to manage the signature. The default one will be used.");
+			xPathQueryHolder = new XPathQueryHolder();
 		}
 	}
 
@@ -252,7 +257,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 		}
 	}
 
-	private void setXPathQueryHolder(String namespaceURI) {
+	private void setXPathQueryHolder(final String namespaceURI) {
 
 		for (final XPathQueryHolder xPathQueryHolder : xPathQueryHolders) {
 
@@ -353,11 +358,30 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	}
 
 	@Override
-	public SigningCertificateValidity getSigningCertificateValidity() {
+	public CandidatesForSigningCertificate getCandidatesForSigningCertificate() {
 
-		if (signingCertificateValidity == null) {
+		if (candidatesForSigningCertificate != null) {
 
-			signingCertificateValidity = new SigningCertificateValidity();
+			return candidatesForSigningCertificate;
+		}
+		LOG.debug("--> Searching the signing certificate...");
+		candidatesForSigningCertificate = new CandidatesForSigningCertificate();
+
+		/**
+		 * 5.1.4.1 XAdES processing<br>
+		 * <i>Candidates for the signing certificate extracted from ds:KeyInfo element</i> shall be checked
+		 * against all references present in the ds:SigningCertificate property, if present, since one of these
+		 * references shall be a reference to the signing certificate.
+		 */
+		// This Map contains the list of the references to the certificate which were already checked and which correspond to a certificate.
+		Map<Element, Boolean> alreadyProcessedElements = new HashMap<Element, Boolean>();
+		final XAdESCertificateSource certSource = getCertificateSource();
+		for (final CertificateToken certificateToken : certSource.getKeyInfoCertificates()) {
+
+			final SigningCertificateValidity signingCertificateValidity = new SigningCertificateValidity();
+			candidatesForSigningCertificate.addSigningCertificateValidityList(signingCertificateValidity);
+			signingCertificateValidity.setCertificateToken(certificateToken);
+
 			/**
 			 * The ../SignedProperties/SignedSignatureProperties/SigningCertificate element MAY contain references and
 			 * digests values of other certificates (that MAY form a chain up to the point of trust).
@@ -366,87 +390,88 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 			final NodeList list = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_SIGNING_CERTIFICATE_CERT);
 			for (int ii = 0; ii < list.getLength(); ii++) {
 
+				signingCertificateValidity.setAttributePresent(true);
 				final Element element = (Element) list.item(ii);
-
-				final Element digestMethodEl = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__DIGEST_METHOD);
-				if (digestMethodEl == null) {
+				if (alreadyProcessedElements.containsKey(element)) {
 					continue;
 				}
-				final String xmlAlgoName = digestMethodEl.getAttribute(XPathQueryHolder.XMLE_ALGORITHM);
-				final DigestAlgorithm digestAlgorithm = DigestAlgorithm.forXML(xmlAlgoName);
+				final Element certDigestElement = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__CERT_DIGEST);
+				signingCertificateValidity.setDigestPresent(certDigestElement != null);
 
-				final Element digestValueEl = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__CERT_DIGEST_DIGEST_VALUE);
-				if (digestValueEl == null) {
+				final Element digestMethodElement = DSSXMLUtils.getElement(certDigestElement, xPathQueryHolder.XPATH__DIGEST_METHOD);
+				if (digestMethodElement == null) {
 					continue;
 				}
-				final byte[] storedBase64DigestValue = DSSUtils.base64StringToBase64Binary(digestValueEl.getTextContent());
+				final String xmlAlgorithmName = digestMethodElement.getAttribute(XPathQueryHolder.XMLE_ALGORITHM);
+				// The default algorithm is used in case of bad encoded algorithm name
+				final DigestAlgorithm digestAlgorithm = DigestAlgorithm.forXML(xmlAlgorithmName, DigestAlgorithm.SHA1);
+
+				final Element digestValueElement = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__CERT_DIGEST_DIGEST_VALUE);
+				if (digestValueElement == null) {
+					continue;
+				}
+				// That must be a binary comparison
+				final byte[] storedBase64DigestValue = DSSUtils.base64StringToBase64Binary(digestValueElement.getTextContent());
+
 
 				/**
-				 * 5.1.4.1 XAdES processing<br>
-				 * <i>Candidates for the signing certificate extracted from ds:KeyInfo element</i> shall be checked
-				 * against all references present in the ds:SigningCertificate property, if present, since one of these
-				 * references shall be a reference to the signing certificate.
+				 * Step 1:<br>
+				 * Take the first child of the property and check that the content of ds:DigestValue matches the
+				 * result of digesting <i>the candidate for</i> the signing certificate with the algorithm indicated
+				 * in ds:DigestMethod. If they do not match, take the next child and repeat this step until a matching
+				 * child element has been found or all children of the element have been checked. If they do match,
+				 * continue with step 2. If the last element is reached without finding any match, the validation of
+				 * this property shall be taken as failed and INVALID/FORMAT_FAILURE is returned.
 				 */
-				final XAdESCertificateSource certSource = getCertificateSource();
-				for (final CertificateToken token : certSource.getKeyInfoCertificates()) {
+				final byte[] recalculatedBase64DigestValue;
+				if (digestAlgorithm.equals(DigestAlgorithm.RIPEMD160)) {
 
-					/**
-					 * Step 1:<br>
-					 * Take the first child of the property and check that the content of ds:DigestValue matches the
-					 * result of digesting <i>the candidate for</i> the signing certificate with the algorithm indicated
-					 * in ds:DigestMethod. If they do not match, take the next child and repeat this step until a matching
-					 * child element has been found or all children of the element have been checked. If they do match,
-					 * continue with step 2. If the last element is reached without finding any match, the validation of
-					 * this property shall be taken as failed and INVALID/FORMAT_FAILURE is returned.
-					 */
-					final byte[] recalculatedBase64DigestValue;
-					if (digestAlgorithm.equals(DigestAlgorithm.RIPEMD160)) {
+					final RIPEMD160Digest digest = new RIPEMD160Digest();
+					final byte[] message = certificateToken.getEncoded();
+					digest.update(message, 0, message.length);
+					final byte[] digestValue = new byte[digest.getDigestSize()];
+					digest.doFinal(digestValue, 0);
+					recalculatedBase64DigestValue = DSSUtils.base64BinaryEncode(digestValue);
+				} else {
 
-						final RIPEMD160Digest digest = new RIPEMD160Digest();
-						final byte[] message = token.getEncoded();
-						digest.update(message, 0, message.length);
-						final byte[] digestValue = new byte[digest.getDigestSize()];
-						digest.doFinal(digestValue, 0);
-						recalculatedBase64DigestValue = DSSUtils.base64BinaryEncode(digestValue);
-					} else {
+					final byte[] digest = DSSUtils.digest(digestAlgorithm, certificateToken.getEncoded());
+					recalculatedBase64DigestValue = DSSUtils.base64BinaryEncode(digest);
+				}
+				signingCertificateValidity.setDigestEqual(false);
+				if (Arrays.equals(recalculatedBase64DigestValue, storedBase64DigestValue)) {
 
-						final byte[] digest = DSSUtils.digest(digestAlgorithm, token.getEncoded());
-						recalculatedBase64DigestValue = DSSUtils.base64BinaryEncode(digest);
+					final Element issuerNameEl = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__X509_ISSUER_NAME);
+					// This can be allayed when the distinguished name is not correctly encoded
+					// final String textContent = DSSUtils.unescapeMultiByteUtf8Literals(issuerNameEl.getTextContent());
+					final String textContent = issuerNameEl.getTextContent();
+					final X500Principal issuerName = DSSUtils.getX500PrincipalOrNull(textContent);
+					final X500Principal candidateIssuerName = certificateToken.getIssuerX500Principal();
+
+					// final boolean issuerNameMatches = candidateIssuerName.equals(issuerName);
+					final boolean issuerNameMatches = DSSUtils.equals(candidateIssuerName, issuerName);
+					if (!issuerNameMatches) {
+
+						final String c14nCandidateIssuerName = candidateIssuerName.getName(X500Principal.CANONICAL);
+						LOG.info("candidateIssuerName: " + c14nCandidateIssuerName);
+						final String c14nIssuerName = issuerName == null ? "" : issuerName.getName(X500Principal.CANONICAL);
+						LOG.info("issuerName         : " + c14nIssuerName);
 					}
-					signingCertificateValidity.setDigestMatch(false);
-					if (Arrays.equals(recalculatedBase64DigestValue, storedBase64DigestValue)) {
 
-						final Element issuerNameEl = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__X509_ISSUER_NAME);
-						// TODO: to be changed!
-						final String textContent = DSSUtils.unescapeMultiByteUtf8Literals(issuerNameEl.getTextContent());
-						final X500Principal issuerName = new X500Principal(textContent);
-						final X500Principal candidateIssuerName = token.getIssuerX500Principal();
+					final Element serialNumberEl = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__X509_SERIAL_NUMBER);
+					final BigInteger serialNumber = new BigInteger(serialNumberEl.getTextContent());
+					final BigInteger candidateSerialNumber = certificateToken.getSerialNumber();
+					final boolean serialNumberMatches = candidateSerialNumber.equals(serialNumber);
 
-						// final boolean issuerNameMatches = candidateIssuerName.equals(issuerName);
-						final boolean issuerNameMatches = DSSUtils.equals(candidateIssuerName, issuerName);
-						if (!issuerNameMatches) {
-
-							final String c14nCandidateIssuerName = candidateIssuerName.getName(X500Principal.CANONICAL);
-							LOG.info("candidateIssuerName: " + c14nCandidateIssuerName);
-							final String c14nIssuerName = issuerName.getName(X500Principal.CANONICAL);
-							LOG.info("issuerName         : " + c14nIssuerName);
-						}
-
-						final Element serialNumberEl = DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__X509_SERIAL_NUMBER);
-						final BigInteger serialNumber = new BigInteger(serialNumberEl.getTextContent());
-						final BigInteger candidateSerialNumber = token.getSerialNumber();
-						final boolean serialNumberMatches = candidateSerialNumber.equals(serialNumber);
-
-						signingCertificateValidity.setDigestMatch(true);
-						signingCertificateValidity.setSerialNumberMatch(serialNumberMatches);
-						signingCertificateValidity.setNameMatch(issuerNameMatches);
-						signingCertificateValidity.setCertToken(token);
-						return signingCertificateValidity;
-					}
+					signingCertificateValidity.setDigestEqual(true);
+					signingCertificateValidity.setSerialNumberEqual(serialNumberMatches);
+					signingCertificateValidity.setDistinguishedNameEqual(issuerNameMatches);
+					// The certificate was identified
+					alreadyProcessedElements.put(element, true);
+					break;
 				}
 			}
 		}
-		return signingCertificateValidity;
+		return candidatesForSigningCertificate;
 	}
 
 	@Override
@@ -490,7 +515,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 				signaturePolicy.setDigestValue(digestValue);
 				return signaturePolicy;
 			} else {
-                /* Implicit policy */
+			    /* Implicit policy */
 				final Element signaturePolicyImplied = DSSXMLUtils.getElement(policyIdentifier, xPathQueryHolder.XPATH__SIGNATURE_POLICY_IMPLIED);
 				if (signaturePolicyImplied != null) {
 					return new SignaturePolicy();
@@ -754,14 +779,17 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	@Override
 	public List<TimestampToken> getContentTimestamps() {
 
-		final List<TimestampToken> contentTimestamps = new ArrayList<TimestampToken>();
-		final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_ALL_DATA_OBJECT_TIMESTAMP);
-		for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
+		if (contentTimestamps == null) {
 
-			final TimestampToken timestampToken = makeTimestampToken(ii, (Element) timestampsNodes.item(ii), TimestampType.CONTENT_TIMESTAMP);
-			if (timestampToken != null) {
+			contentTimestamps = new ArrayList<TimestampToken>();
+			final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_ALL_DATA_OBJECT_TIMESTAMP);
+			for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
 
-				contentTimestamps.add(timestampToken);
+				final TimestampToken timestampToken = makeTimestampToken(ii, (Element) timestampsNodes.item(ii), TimestampType.CONTENT_TIMESTAMP);
+				if (timestampToken != null) {
+
+					contentTimestamps.add(timestampToken);
+				}
 			}
 		}
 
@@ -776,31 +804,34 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	@Override
 	public List<TimestampToken> getSignatureTimestamps() {
 
-		final List<TimestampToken> signatureTimestamps = new ArrayList<TimestampToken>();
-		final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_SIGNATURE_TIMESTAMP);
-		for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
+		if (signatureTimestamps == null) {
 
-			final Element timestampElement = (Element) timestampsNodes.item(ii);
-			final TimestampToken timestampToken = makeTimestampToken(ii, timestampElement, TimestampType.SIGNATURE_TIMESTAMP);
-			if (timestampToken != null) {
+			signatureTimestamps = new ArrayList<TimestampToken>();
+			final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_SIGNATURE_TIMESTAMP);
+			for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
 
-				setTimestampCanonicalizationMethod(timestampElement, timestampToken);
+				final Element timestampElement = (Element) timestampsNodes.item(ii);
+				final TimestampToken timestampToken = makeTimestampToken(ii, timestampElement, TimestampType.SIGNATURE_TIMESTAMP);
+				if (timestampToken != null) {
 
-				final List<TimestampReference> references = new ArrayList<TimestampReference>();
-				final TimestampReference signatureReference = new TimestampReference();
-				signatureReference.setCategory(TimestampReferenceCategory.SIGNATURE);
-				signatureReference.setSignatureId(getId());
-				references.add(signatureReference);
-				final NodeList list = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_CERT_DIGEST);
-				for (int jj = 0; jj < list.getLength(); jj++) {
+					setTimestampCanonicalizationMethod(timestampElement, timestampToken);
 
-					final Element element = (Element) list.item(jj);
-					final TimestampReference signingCertReference = createCertificateTimestampReference(element);
-					references.add(signingCertReference);
+					final List<TimestampReference> references = new ArrayList<TimestampReference>();
+					final TimestampReference signatureReference = new TimestampReference();
+					signatureReference.setCategory(TimestampReferenceCategory.SIGNATURE);
+					signatureReference.setSignatureId(getId());
+					references.add(signatureReference);
+					final NodeList list = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_CERT_DIGEST);
+					for (int jj = 0; jj < list.getLength(); jj++) {
+
+						final Element element = (Element) list.item(jj);
+						final TimestampReference signingCertReference = createCertificateTimestampReference(element);
+						references.add(signingCertReference);
+					}
+
+					timestampToken.setTimestampedReferences(references);
+					signatureTimestamps.add(timestampToken);
 				}
-
-				timestampToken.setTimestampedReferences(references);
-				signatureTimestamps.add(timestampToken);
 			}
 		}
 		return signatureTimestamps;
@@ -809,46 +840,52 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	@Override
 	public List<TimestampToken> getTimestampsX1() {
 
-		final List<TimestampToken> signatureTimestamps = new ArrayList<TimestampToken>();
-		final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_SIG_AND_REFS_TIMESTAMP);
-		for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
+		if (sigAndRefsTimestamps == null) {
 
-			final Element timestampElement = (Element) timestampsNodes.item(ii);
-			final TimestampToken timestampToken = makeTimestampToken(ii, timestampElement, TimestampType.VALIDATION_DATA_TIMESTAMP);
-			if (timestampToken != null) {
+			sigAndRefsTimestamps = new ArrayList<TimestampToken>();
+			final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_SIG_AND_REFS_TIMESTAMP);
+			for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
 
-				setTimestampCanonicalizationMethod(timestampElement, timestampToken);
+				final Element timestampElement = (Element) timestampsNodes.item(ii);
+				final TimestampToken timestampToken = makeTimestampToken(ii, timestampElement, TimestampType.VALIDATION_DATA_TIMESTAMP);
+				if (timestampToken != null) {
 
-				final List<TimestampReference> references = getTimestampedReferences();
-				final TimestampReference signatureReference = new TimestampReference();
-				signatureReference.setCategory(TimestampReferenceCategory.SIGNATURE);
-				signatureReference.setSignatureId(getId());
-				references.add(0, signatureReference);
-				timestampToken.setTimestampedReferences(references);
-				signatureTimestamps.add(timestampToken);
+					setTimestampCanonicalizationMethod(timestampElement, timestampToken);
+
+					final List<TimestampReference> references = getTimestampedReferences();
+					final TimestampReference signatureReference = new TimestampReference();
+					signatureReference.setCategory(TimestampReferenceCategory.SIGNATURE);
+					signatureReference.setSignatureId(getId());
+					references.add(0, signatureReference);
+					timestampToken.setTimestampedReferences(references);
+					sigAndRefsTimestamps.add(timestampToken);
+				}
 			}
 		}
-		return signatureTimestamps;
+		return sigAndRefsTimestamps;
 	}
 
 	@Override
 	public List<TimestampToken> getTimestampsX2() {
 
-		final List<TimestampToken> signatureTimestamps = new ArrayList<TimestampToken>();
-		final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_REFS_ONLY_TIMESTAMP);
-		for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
+		if (refsOnlyTimestamps == null) {
 
-			final Element timestampElement = (Element) timestampsNodes.item(ii);
-			final TimestampToken timestampToken = makeTimestampToken(ii, timestampElement, TimestampType.VALIDATION_DATA_REFSONLY_TIMESTAMP);
-			if (timestampToken != null) {
+			refsOnlyTimestamps = new ArrayList<TimestampToken>();
+			final NodeList timestampsNodes = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_REFS_ONLY_TIMESTAMP);
+			for (int ii = 0; ii < timestampsNodes.getLength(); ii++) {
 
-				setTimestampCanonicalizationMethod(timestampElement, timestampToken);
+				final Element timestampElement = (Element) timestampsNodes.item(ii);
+				final TimestampToken timestampToken = makeTimestampToken(ii, timestampElement, TimestampType.VALIDATION_DATA_REFSONLY_TIMESTAMP);
+				if (timestampToken != null) {
 
-				timestampToken.setTimestampedReferences(getTimestampedReferences());
-				signatureTimestamps.add(timestampToken);
+					setTimestampCanonicalizationMethod(timestampElement, timestampToken);
+
+					timestampToken.setTimestampedReferences(getTimestampedReferences());
+					refsOnlyTimestamps.add(timestampToken);
+				}
 			}
 		}
-		return signatureTimestamps;
+		return refsOnlyTimestamps;
 	}
 
 	@Override
@@ -929,24 +966,13 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	@Override
 	public SignatureCryptographicVerification checkIntegrity(final DSSDocument detachedDocument) {
 
+		return checkIntegrity(detachedDocument, null);
+	}
+
+	@Override
+	public SignatureCryptographicVerification checkIntegrity(final DSSDocument detachedDocument, final CertificateToken providedSigningCertificate) {
+
 		final SignatureCryptographicVerification scv = new SignatureCryptographicVerification();
-
-		final CertificateToken certificateToken = getSigningCertificateToken();
-		if (certificateToken == null) {
-
-			final SigningCertificateValidity signingCertificateValidity = getSigningCertificateValidity();
-			final CertificateToken candidateCertificateToken = signingCertificateValidity.getCertToken();
-			if (candidateCertificateToken != null) {
-
-				final String subjectName = candidateCertificateToken.getSubjectX500Principal().getName();
-				scv.setErrorMessage("There is no signed reference to the found signing certificate: " + candidateCertificateToken.getAbbreviation() + ":" + subjectName);
-			} else {
-				scv.setErrorMessage("There is no signing certificate within the signature.");
-			}
-			return scv;
-		}
-		final PublicKey publicKey = certificateToken.getCertificate().getPublicKey();
-		//        final KeySelector keySelector = KeySelector.singletonKeySelector(publicKey);
 
 		final Document document = signatureElement.getOwnerDocument();
 		final Element rootElement = document.getDocumentElement();
@@ -957,214 +983,84 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 
 		DSSXMLUtils.recursiveIdBrowse(rootElement);
 
-		/**
-		 * Creating a Validation Context<br>
-		 * We create an XMLValidateContext instance containing input parameters for validating the signature. Since we
-		 * are using DOM, we instantiate a DOMValidateContext instance (a subclass of XMLValidateContext), and pass it
-		 * two parameters, a KeyValueKeySelector object and a reference to the Signature element to be validated (which
-		 * is the first entry of the NodeList we generated earlier):
-		 */
-		// final DOMValidateContext valContext = new DOMValidateContext(keySelector, signatureElement);
 		try {
 
-			// final URIDereferencer dereferencer = new ExternalFileURIDereferencer(detachedDocument);
-			// valContext.setURIDereferencer(dereferencer);
-			/**
-			 * This property controls whether or not the digested Reference objects will cache the dereferenced content
-			 * and pre-digested input for subsequent retrieval via the Reference.getDereferencedData and
-			 * Reference.getDigestInputStream methods. The default value if not specified is Boolean.FALSE.
-			 */
-			// valContext.setProperty("javax.xml.crypto.dsig.cacheReference", Boolean.TRUE);
+		    /*
+		    final Provider[] providers = Security.getProviders();
+            for (final Provider provider : providers) {
 
-			/**
-			 * Unmarshalling the XML Signature<br>
-			 * We extract the contents of the Signature element into an XMLSignature object. This process is called
-			 * unmarshalling. The Signature element is unmarshalled using an XMLSignatureFactory object. An application
-			 * can obtain a DOM implementation of XMLSignatureFactory by calling the following line of code:
-			 */
+                System.out.println("PROVIDER: " + provider.getName());
+                final Set<Provider.Service> services = provider.getServices();
+                for (final Provider.Service service : services) {
 
-			/**
-			 * These providers do not support ECDSA algorithm
-			 * factory = XMLSignatureFactory.getInstance("DOM");
-			 * factory = XMLSignatureFactory.getInstance("DOM", "XMLDSig");
-			 * factory = XMLSignatureFactory.getInstance("DOM", new org.jcp.xml.dsig.internal.dom.XMLDSigRI());
-			 * ---> org.jcp.xml.dsig.internal.dom
-			 */
-
-			// This provider support ECDSA signature
-			/**
-			 * ApacheXMLDSig / Apache Santuario XMLDSig (DOM XMLSignatureFactory; DOM KeyInfoFactory; C14N 1.0, C14N
-			 * 1.1, Exclusive C14N, Base64, Enveloped, XPath, XPath2, XSLT TransformServices)<br>
-			 * If this library is used than the same library must be used for the URIDereferencer.
-			 * ---> org.apache.jcp.xml.dsig.internal.dom
-			 */
-			//** final XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM", xmlProvider);
-
-			/**
-			 * We then invoke the unmarshalXMLSignature method of the factory to unmarshal an XMLSignature object, and
-			 * pass it the validation context we created earlier:
-			 */
-			//** final XMLSignature signature = factory.unmarshalXMLSignature(valContext);
-			//System.out.println("XMLSignature class: " + signature.getClass());
-
-			/**
-			 * This does not work for RIPEMD160
-			 * --> Some clues:
-			 *
-			 *     xmlFact.newSignatureMethod("http://www.w3.org/2007/05/xmldsig-more#ecdsa-ripemd160", MyECDSARipemd160Provider());
-			 *     http://stackoverflow.com/questions/11984025/unsupported-signaturemethod-algorithm-but-the-algorithm-is-listed-as-available
-			 *
-			 *
-			 */
-
-			/**
-			 * Austrian specific signature
-			 * org.apache.xml.security.signature.XMLSignature signature_ = null;
-			 * try {
-			 *    signature_ = new org.apache.xml.security.signature.XMLSignature(signatureElement, "");
-			 * } catch (Exception e) {
-			 *    throw new DSSException(e);
-			 * }
-			 * signature.addResourceResolver(new XPointerResourceResolver(signatureElement));
-			 * signature_.getSignedInfo().verifyReferences();*getVerificationResult(1);
-			 */
-
-			org.apache.xml.security.signature.XMLSignature signature_ = null;
-                /*
-                final Provider[] providers = Security.getProviders();
-                for (final Provider provider : providers) {
-
-                    System.out.println("PROVIDER: " + provider.getName());
-                    final Set<Provider.Service> services = provider.getServices();
-                    for (final Provider.Service service : services) {
-
-                        System.out.println("\tALGORITHM: " + service.getAlgorithm() + " / " + service.getType() + " / " + service.getClassName());
-                    }
+                    System.out.println("\tALGORITHM: " + service.getAlgorithm() + " / " + service.getType() + " / " + service.getClassName());
                 }
-                */
-			// as second parameter: f.toURI().toURL().toString();
-			signature_ = new org.apache.xml.security.signature.XMLSignature(signatureElement, "");
-
-			signature_.addResourceResolver(new XPointerResourceResolver(signatureElement));
-			signature_.addResourceResolver(new OfflineResolver(detachedDocument));
-			//signature_.addResourceResolver(new XPointerResourceResolver(signatureElement));
-			/**
-			 * In case of org.apache.jcp.xml.dsig.internal.dom.XMLDSigRI() provider, the ID attributes need to be set
-			 * manually.<br>
-			 * The DSSXMLUtils.recursiveIdBrowse(...) method do not take into account the XML outside of the Signature
-			 * tag. It prevents some signatures to be validated.<br>
-			 *
-			 * Solution: the following lines where added:
-			 */
-
-			// final Document document = signatureElement.getOwnerDocument();
-			// final Element rootElement = document.getDocumentElement();
-			// if (rootElement.hasAttribute(DSSXMLUtils.ID_ATTRIBUTE_NAME)) {
-
-			//    valContext.setIdAttributeNS(rootElement, null, DSSXMLUtils.ID_ATTRIBUTE_NAME);
-			// }
-			// DSSXMLUtils.recursiveIdBrowse(valContext, rootElement);
-
+            }
+            */
+			org.apache.xml.security.signature.XMLSignature santuarioSignature = new org.apache.xml.security.signature.XMLSignature(signatureElement, "");
+			santuarioSignature.addResourceResolver(new XPointerResourceResolver(signatureElement));
+			santuarioSignature.addResourceResolver(new OfflineResolver(detachedDocument));
 			/**
 			 * Validating the XML Signature<br>
 			 * Now we are ready to validate the signature. We do this by invoking the validate method on the
 			 * XMLSignature object, and pass it the validation context as follows:
 			 */
-			boolean coreValidity = signature_.checkSignatureValue(publicKey);
+			List<SigningCertificateValidity> signingCertificateValidityList;
+			if (providedSigningCertificate == null) {
 
-			/** OLD CODE:
-			 * try {
-			 *
-			 *    coreValidity = signature.validate(valContext);
-			 * } catch (XMLSignatureException e) {
-			 *
-			 *    scv.setErrorMessage("Signature validation: " + e.getMessage());
-			 * }
-			 */
-			boolean signatureValidity = coreValidity;
+				// To determine the signing certificate it is necessary to browse through all candidates found before.
+				signingCertificateValidityList = getSigningCertificateValidityList();
+				if (signingCertificateValidityList.size() == 0) {
 
-			/**
-			 * If the XMLSignature.validate method returns false, we can try to narrow down the cause of the failure.
-			 * There are two phases in core XML Signature validation: <br>
-			 * - Signature validation (the cryptographic verification of the signature)<br>
-			 * - Reference validation (the verification of the digest of each reference in the signature)<br>
-			 * Each phase must be successful for the signature to be valid. To check if the signature failed to
-			 * cryptographically validate, we can check the status, as follows:
-			 */
+					// The public key can also be extracted from the signature.
+					final KeyInfo extractedKeyInfo = santuarioSignature.getKeyInfo();
+					final PublicKey publicKey;
+					if (extractedKeyInfo == null || (publicKey = extractedKeyInfo.getPublicKey()) == null) {
 
-			/**
-			 * This line was commented cos of the implementation of the validation process. The signature itself can be valid even if the references are bad.
-			 * It can be amended by introducing another variable: cryptographicallyValid
-			 * signatureValidity = signature.getSignatureValue().validate(valContext);
-			 *            try {
-			 *
-			 *               signature.getSignatureValue().validate(valContext);
-			 *          } catch (XMLSignatureException e) {
-			 *
-			 *               scv.setErrorMessage(e.getMessage());
-			 *          }
-			 */
+						scv.setErrorMessage("There is no signing certificate within the signature.");
+						return scv;
+					}
+					signingCertificateValidityList = getSigningCertificateValidityList(publicKey);
+				}
+			} else {
 
-			/** OLD CODE:
-			 *
-			 * final List<Reference> references = signature.getSignedInfo().getReferences();
-			 * for (final Reference reference : references) {
-			 *
-			 *    boolean refHashValidity = false;
-			 *    try {
-			 *
-			 *       refHashValidity = reference.validate(valContext);
-			 *    } catch (XMLSignatureException e) {
-			 *
-			 *       scv.setErrorMessage(reference.getURI() + ": " + e.getMessage());
-			 *    }
-			 *    referenceDataHashValid = referenceDataHashValid && refHashValidity;
-			 *    if (LOG.isInfoEnabled()) {
-			 *       LOG.info("Reference hash validity checked: " + reference.getURI() + "=" + refHashValidity);
-			 *    }
-			 *    final Data data = reference.getDereferencedData();
-			 *    dataFound = dataFound && (data != null);
-			 *
-			 *    final InputStream digestInputStream = reference.getDigestInputStream();
-			 *    if (data != null && digestInputStream != null) {
-			 *
-			 *       // The references are saved for later treatment in -A level.
-			 *       try {
-			 *
-			 *          DSSUtils.copy(digestInputStream, referencesDigestOutputStream);
-			 *       } catch (IOException e) {
-			 *          LOG.debug(e.getMessage(), e);
-			 *       }
-			 *    }
-			 * }
-			 */
+				signingCertificateValidityList = getSigningCertificateValidityList(providedSigningCertificate);
+			}
+			boolean coreValidity = false;
+			for (final SigningCertificateValidity signingCertificateValidity : signingCertificateValidityList) {
 
-			boolean referenceDataFound = true;
-			boolean referenceDataHashValid = true;
+				candidatesForSigningCertificate.setTheSigningCertificateValidity(signingCertificateValidity);
+				final PublicKey publicKey = signingCertificateValidity.getPublicKey();
+				try {
 
-			final SignedInfo signedInfo = signature_.getSignedInfo();
+					coreValidity = santuarioSignature.checkSignatureValue(publicKey);
+					if (coreValidity) {
+
+						break;
+					}
+				} catch (XMLSignatureException e) {
+					LOG.warn("Exception when validating signature: ", e);
+					scv.setErrorMessage(e.getMessage());
+				}
+			}
+			final SignedInfo signedInfo = santuarioSignature.getSignedInfo();
 			final int length = signedInfo.getLength();
+			boolean referenceDataFound = length > 0;
+			boolean referenceDataHashValid = length > 0;
 			for (int ii = 0; ii < length; ii++) {
 
-				// referenceDataHashValid = referenceDataHashValid && signedInfo.getVerificationResult(ii);
 				final Reference reference = signedInfo.item(ii);
 				referenceDataHashValid = referenceDataHashValid && reference.verify();
 				final byte[] referencedBytes = reference.getReferencedBytes();
 				referenceDataFound = referenceDataFound && (referencedBytes != null);
-				/**
-				 * It returns null if This method only works works after a call to verify.
-				 * final XMLSignatureInput transformsOutput = reference.getTransformsOutput();
-				 * InputStream referenceOctetStream = transformsOutput.getOctetStream();
-				 * referenceOctetStream.reset(); // Must be reset!!
-				 */
 				final InputStream referencedInputStream = DSSUtils.toInputStream(referencedBytes);
 				DSSUtils.copy(referencedInputStream, referencesDigestOutputStream);
 			}
 			scv.setReferenceDataFound(referenceDataFound);
 			scv.setReferenceDataIntact(referenceDataHashValid);
-			scv.setSignatureIntact(signatureValidity);
-			//** } catch (MarshalException e) {
+			scv.setSignatureIntact(coreValidity);
 		} catch (Exception e) {
+
 			LOG.error(e.getMessage(), e);
 			StackTraceElement[] stackTrace = e.getStackTrace();
 			final String name = XAdESSignature.class.getName();
@@ -1181,6 +1077,47 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 			scv.setErrorMessage(e.getMessage() + "/ XAdESSignature/Line number/" + lineNumber);
 		}
 		return scv;
+	}
+
+	protected List<SigningCertificateValidity> getSigningCertificateValidityList() {
+
+		final List<SigningCertificateValidity> signingCertificateValidityList = getCandidatesForSigningCertificate().getSigningCertificateValidityList();
+		return signingCertificateValidityList;
+	}
+
+	/**
+	 * This method returns a {@code List} of {@code SigningCertificateValidity} base on the provided {@code providedSigningCertificate}. The field {@code
+	 * candidatesForSigningCertificate} is instantiated.
+	 *
+	 * @param providedSigningCertificate provided signing certificate: {@code CertificateToken}
+	 * @return
+	 */
+	protected List<SigningCertificateValidity> getSigningCertificateValidityList(final CertificateToken providedSigningCertificate) {
+
+		candidatesForSigningCertificate = new CandidatesForSigningCertificate();
+		final SigningCertificateValidity signingCertificateValidity = new SigningCertificateValidity();
+		signingCertificateValidity.setCertificateToken(providedSigningCertificate);
+		candidatesForSigningCertificate.addSigningCertificateValidityList(signingCertificateValidity);
+		final List<SigningCertificateValidity> signingCertificateValidityList = candidatesForSigningCertificate.getSigningCertificateValidityList();
+		return signingCertificateValidityList;
+	}
+
+
+	/**
+	 * This method returns a {@code List} of {@code SigningCertificateValidity} base on the provided {@code providedSigningCertificate}. The field {@code
+	 * candidatesForSigningCertificate} is instantiated.
+	 *
+	 * @param extractedPublicKey provided public key: {@code PublicKey}
+	 * @return
+	 */
+	protected List<SigningCertificateValidity> getSigningCertificateValidityList(final PublicKey extractedPublicKey) {
+
+		candidatesForSigningCertificate = new CandidatesForSigningCertificate();
+		final SigningCertificateValidity signingCertificateValidity = new SigningCertificateValidity();
+		signingCertificateValidity.setPublicKey(extractedPublicKey);
+		candidatesForSigningCertificate.addSigningCertificateValidityList(signingCertificateValidity);
+		final List<SigningCertificateValidity> signingCertificateValidityList = candidatesForSigningCertificate.getSigningCertificateValidityList();
+		return signingCertificateValidityList;
 	}
 
 	@Override
@@ -1261,7 +1198,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 			Element certId = (Element) certIdnodes.item(i);
 			Element issuerNameEl = DSSXMLUtils.getElement(certId, xPathQueryHolder.XPATH__X509_ISSUER_NAME);
 			Element issuerSerialEl = DSSXMLUtils.getElement(certId, xPathQueryHolder.XPATH__X509_SERIAL_NUMBER);
-			Element digestAlgorithmEl = DSSXMLUtils.getElement(certId, xPathQueryHolder.XPATH__DIGEST_METHOD);
+			Element digestAlgorithmEl = DSSXMLUtils.getElement(certId, xPathQueryHolder.XPATH__CERT_DIGEST_DIGEST_METHOD);
 			Element digestValueEl = DSSXMLUtils.getElement(certId, xPathQueryHolder.XPATH__CERT_DIGEST_DIGEST_VALUE);
 
 			CertificateRef genericCertId = new CertificateRef();
@@ -1399,13 +1336,13 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 				buffer.write(canonicalizedValue);
 			}
 			if (LOG.isTraceEnabled()) {
-				LOG.trace("X1Timestamp canonicalised string:\n" + buffer.toString());
+				LOG.trace("X1Timestamp (SigAndRefsTimeStamp) canonicalised string:\n" + buffer.toString());
 			}
 			final byte[] bytes = buffer.toByteArray();
 			return bytes;
 		} catch (IOException e) {
 
-			throw new DSSException("Error when computing the SigAndRefsTimeStamp", e);
+			throw new DSSException("Error when computing the SigAndRefsTimeStamp (X1Timestamp)", e);
 		}
 	}
 
@@ -1429,13 +1366,13 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 				buffer.write(canonicalizedValue);
 			}
 			if (LOG.isTraceEnabled()) {
-				LOG.trace("ArchiveTimestamp canonicalised string:\n" + buffer.toString());
+				LOG.trace("TimestampX2Data (RefsOnlyTimeStamp) canonicalised string:\n" + buffer.toString());
 			}
 			final byte[] bytes = buffer.toByteArray();
 			return bytes;
 		} catch (IOException e) {
 
-			throw new DSSException("Error when computing the TimestampX2Data", e);
+			throw new DSSException("Error when computing the RefsOnlyTimeStamp (TimestampX2D)", e);
 		}
 	}
 
@@ -1455,7 +1392,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 		/**
 		 * 8.2.1 Not distributed case<br>
 		 *
-		 * When xadesv141:ArchiveTimeStamp and all the unsigned properties covered by its time-stamp token have the same
+		 * When xadesv141:ArchiveTimeStamp and all the unsigned properties covered by its time-stamp certificateToken have the same
 		 * parent, this property uses the Implicit mechanism for all the time-stamped data objects. The input to the
 		 * computation of the digest value MUST be built as follows:
 		 */
@@ -1586,7 +1523,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 					 * ../..
 					 * a new xadesv141:TimeStampValidationData element SHALL be created containing the missing
 					 validation data information and it SHALL be added as a child of UnsignedSignatureProperties elements
-					 immediately after the respective time-stamp token container element.
+					 immediately after the respective time-stamp certificateToken container element.
 					 */
 
 					/**
@@ -1664,7 +1601,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 			} else {
 
 				final CertificateToken certificateToken = getSigningCertificateToken();
-				final int dssId = certificateToken == null ? 0 : certificateToken.getDSSId();
+				final int dssId = (certificateToken == null ? 0 : certificateToken.getDSSId()) + signatureCounter++;
 				signatureId = DSSUtils.getDeterministicId(getSigningTime(), dssId);
 			}
 		}
@@ -1714,21 +1651,34 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 		return references;
 	}
 
-    /**
-     * Retrieves the name of each node found under the unsignedSignatureProperties element
-     * @return an ArrayList containing the retrieved node names
-     */
-    public List<String> getUnsignedSignatureProperties() {
+	/**
+	 * Retrieves the name of each node found under the unsignedSignatureProperties element
+	 *
+	 * @return an ArrayList containing the retrieved node names
+	 */
+	public List<String> getUnsignedSignatureProperties() {
 
-	    final List<String> childrenNames = DSSXMLUtils.getChildrenNames(signatureElement, xPathQueryHolder.XPATH_UNSIGNED_SIGNATURE_PROPERTIES);
-	    return childrenNames;
-    }
+		final List<String> childrenNames = DSSXMLUtils.getChildrenNames(signatureElement, xPathQueryHolder.XPATH_UNSIGNED_SIGNATURE_PROPERTIES);
+		return childrenNames;
+	}
 
-    public List<String> getSignedSignatureProperties() {
+	public List<String> getSignedSignatureProperties() {
 
-	    final List<String> childrenNames = DSSXMLUtils.getChildrenNames(signatureElement, xPathQueryHolder.XPATH_SIGNED_SIGNATURE_PROPERTIES);
-	    return childrenNames;
-    }
+		final List<String> childrenNames = DSSXMLUtils.getChildrenNames(signatureElement, xPathQueryHolder.XPATH_SIGNED_SIGNATURE_PROPERTIES);
+		return childrenNames;
+	}
+
+	public List<String> getSignedProperties() {
+
+		final List<String> childrenNames = DSSXMLUtils.getChildrenNames(signatureElement, xPathQueryHolder.XPATH_SIGNED_PROPERTIES);
+		return childrenNames;
+	}
+
+	public List<String> getUnsignedProperties() {
+
+		final List<String> childrenNames = DSSXMLUtils.getChildrenNames(signatureElement, xPathQueryHolder.XPATH_UNSIGNED_PROPERTIES);
+		return childrenNames;
+	}
 
 	/**
 	 * @param element

@@ -49,7 +49,7 @@ public class ValidationPolicyTreeRoot extends TreeNode {
 
     public List<TreeNode> getChildren() {
         final ValidationPolicy bean = validationPolicy;
-        return getChildren(bean);
+        return getChildren(bean.getTreeResult());
     }
 
 

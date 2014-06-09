@@ -27,7 +27,6 @@ import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -48,13 +47,13 @@ abstract class PdfBoxCMSInfo implements PdfSignatureOrDocTimestampInfo {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PdfBoxCMSInfo.class);
     protected final CertificatePool validationCertPool;
-    private final PdfDict outerCatalog;
-    private final PdfDict signatureDictonary;
-    private final PdfDict documentDictonary;
+    private final PdfDssDict outerCatalog;
+    private final PdfDssDict documentDictonary;
+    private final Date signingDate;
+    private final String location;
+    private final int[] signatureByteRange;
 
     protected final byte[] cms;
-
-    protected PDSignature signature;
 
     /**
      * The original signed pdf document
@@ -72,18 +71,19 @@ abstract class PdfBoxCMSInfo implements PdfSignatureOrDocTimestampInfo {
      * @param validationCertPool
      * @param outerCatalog the PDF Dict of the outer document, if the PDFDocument in a enclosed revision. Can be null.
      * @param document     the signed PDFDocument
-     * @param signature
+     * @param cms the CMS bytes (CAdES signature)
      * @param inputStream  the stream of the whole signed document
      * @throws IOException
      */
-    PdfBoxCMSInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, InputStream inputStream) throws DSSException {
+    PdfBoxCMSInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, byte[] cms, InputStream inputStream) throws DSSException, IOException {
         this.validationCertPool = validationCertPool;
-        this.outerCatalog = outerCatalog;
-        this.signature = signature;
-        signatureDictonary = new PdfBoxDict(signature.getDictionary(), document);
-        documentDictonary = new PdfBoxDict(document.getDocumentCatalog().getCOSDictionary(), document);
+        this.outerCatalog = PdfDssDict.build(outerCatalog);
+        this.cms = cms;
+        this.location = signature.getLocation();
+        this.signingDate = signature.getSignDate() != null ? signature.getSignDate().getTime() : null;
+        this.signatureByteRange = signature.getByteRange();
+        documentDictonary = PdfDssDict.build(new PdfBoxDict(document.getDocumentCatalog().getCOSDictionary(), document));
         try {
-            cms = signatureDictonary.get("Contents");
             if (cms == null) {
                 // due to not very good revision extracting
                 throw new DssPadesNoSignatureFound();
@@ -108,12 +108,12 @@ abstract class PdfBoxCMSInfo implements PdfSignatureOrDocTimestampInfo {
 
     @Override
     public String getLocation() {
-        return signature.getLocation();
+        return location;
     }
 
     @Override
     public Date getSigningDate() {
-        return signature.getSignDate() != null ? signature.getSignDate().getTime() : null;
+        return signingDate;
     }
 
     /**
@@ -125,24 +125,19 @@ abstract class PdfBoxCMSInfo implements PdfSignatureOrDocTimestampInfo {
 
     @Override
     public byte[] getOriginalBytes() {
-        final int length = signature.getByteRange()[1];
+        final int length = signatureByteRange[1];
         final byte[] result = new byte[length];
         System.arraycopy(signedBytes, 0, result, 0, length);
         return result;
     }
 
     @Override
-    public PdfDict getSignatureDictionary() {
-        return signatureDictonary;
-    }
-
-    @Override
-    public PdfDict getDocumentDictionary() {
+    public PdfDssDict getDocumentDictionary() {
         return documentDictonary;
     }
 
     @Override
-    public PdfDict getOuterCatalog() {
+    public PdfDssDict getOuterCatalog() {
         return outerCatalog;
     }
 
@@ -177,5 +172,10 @@ abstract class PdfBoxCMSInfo implements PdfSignatureOrDocTimestampInfo {
     @Override
     public Set<PdfSignatureOrDocTimestampInfo> getOuterSignatures() {
         return Collections.unmodifiableSet(outerSignatures);
+    }
+
+    @Override
+    public int[] getSignatureByteRange() {
+        return signatureByteRange;
     }
 }

@@ -20,18 +20,12 @@
 package eu.europa.ec.markt.dss.applet.component.model.validation;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlValue;
 
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.AlgoExpirationDateList;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.Cryptographic;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.NonVisual;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicy;
 
 /**
@@ -65,6 +59,7 @@ public abstract class TreeNode {
         if (bean == null) {
             return result;
         }
+
         final List<Field> declaredFields = getDeclaredField(bean.getClass());
 
         for (Field declaredField : declaredFields) {
@@ -129,7 +124,7 @@ public abstract class TreeNode {
     }
 
     private boolean isDisplayed(Field declaredField) {
-        return declaredField.getAnnotation(NonVisual.class) == null;
+        return true;
     }
 
     public ValidationPolicy getValidationPolicy() {
@@ -143,7 +138,7 @@ public abstract class TreeNode {
 
     public String getDateFormat() {
 
-        final Cryptographic cryptographic = getValidationPolicy().getCryptographic();
+        /*final Cryptographic cryptographic = getValidationPolicy().getCryptographic();
         if (cryptographic != null) {
 
             final AlgoExpirationDateList algoExpirationDateList = cryptographic.getAlgoExpirationDateList();
@@ -155,7 +150,7 @@ public abstract class TreeNode {
                     return format;
                 }
             }
-        }
+        }*/
         return "yyyy-MM-dd";
     }
 

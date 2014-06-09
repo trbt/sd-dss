@@ -142,7 +142,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
         // Preparation of SignedInfo
         byte[] canonicalizedSignedInfo = DSSXMLUtils.canonicalizeSubtree(signedInfoCanonicalizationMethod, signedInfoDom);
         if (LOG.isInfoEnabled()) {
-            LOG.info("Canonicalized SignedInfo         -->" + new String(canonicalizedSignedInfo));
+            LOG.debug("Canonicalized SignedInfo         -->" + new String(canonicalizedSignedInfo));
         }
         built = true;
         return canonicalizedSignedInfo;

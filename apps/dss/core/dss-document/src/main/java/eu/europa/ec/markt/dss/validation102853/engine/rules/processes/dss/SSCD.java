@@ -37,80 +37,83 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
  */
 public class SSCD implements NodeName, NodeValue, AttributeName, AttributeValue, RuleConstant {
 
-    private ValidationPolicy constraintData;
+	private ValidationPolicy constraintData;
 
-    /**
-     * The default constructor with the policy object.
-     *
-     * @param constraintData
-     */
-    public SSCD(final ValidationPolicy constraintData) {
+	/**
+	 * The default constructor with the policy object.
+	 *
+	 * @param constraintData
+	 */
+	public SSCD(final ValidationPolicy constraintData) {
 
-        super();
-        this.constraintData = constraintData;
-    }
+		super();
+		this.constraintData = constraintData;
+	}
 
-    /**
-     * The SSCD constraint is to be applied to the signer's certificate of the main signature or timestamp before
-     * considering it as valid for the intended use.
-     *
-     * // @param isTimestamp indicates if this is a timestamp signing certificate or main signature signing certificate.
-     *
-     * @param cert the certificate to be processed
-     * @return
-     */
-    public boolean run(final XmlDom cert) {
+	/**
+	 * The SSCD constraint is to be applied to the signer's certificate of the main signature or timestamp before
+	 * considering it as valid for the intended use.
+	 * <p/>
+	 * // @param isTimestamp indicates if this is a timestamp signing certificate or main signature signing certificate.
+	 *
+	 * @param cert the certificate to be processed
+	 * @return
+	 */
+	public boolean run(final XmlDom cert) {
 
-        return process(cert);
-    }
+		return process(cert);
+	}
 
-    /**
-     * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
-     *
-     * @param certificate the certificate to be processed
-     * @return
-     */
-    private boolean process(final XmlDom certificate) {
+	/**
+	 * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
+	 *
+	 * @param certificate the certificate to be processed
+	 * @return
+	 */
+	private boolean process(final XmlDom certificate) {
 
-        if (certificate == null) {
-            return false;
-        }
-        /**
-         * Mandates the end user certificate used in validating the signature to be supported by a secure signature
-         * creation device (SSCD) as defined in Directive 1999/93/EC [9].
-         *
-         * This status is derived from: • QcSSCD extension being set in the signer's certificate in accordance with ETSI
-         * TS 101 862 [5];
-         */
+		if (certificate == null) {
+			return false;
+		}
+		/**
+		 * Mandates the end user certificate used in validating the signature to be supported by a secure signature
+		 * creation device (SSCD) as defined in Directive 1999/93/EC [9].
+		 *
+		 * This status is derived from: • QcSSCD extension being set in the signer's certificate in accordance with ETSI
+		 * TS 101 862 [5];
+		 */
 
-        final boolean qcSSCD = certificate.getBoolValue("./QCStatement/QCSSCD/text()");
+		final boolean qcSSCD = certificate.getBoolValue("./QCStatement/QCSSCD/text()");
 
-        /**
-         * • QCP+ certificate policy OID being indicated in the signer's certificate policies extension (i.e.
-         * 0.4.0.1456.1.1);
-         */
+		/**
+		 * • QCP+ certificate policy OID being indicated in the signer's certificate policies extension (i.e.
+		 * 0.4.0.1456.1.1);
+		 */
 
-        final boolean qcpPlus = certificate.getBoolValue("./QCStatement/QCPPlus/text()");
+		final boolean qcpPlus = certificate.getBoolValue("./QCStatement/QCPPlus/text()");
 
-        /**
-         * • The content of a Trusted service Status List;<br>
-         * • The content of a Trusted List through information provided in the Sie field of the applicable service entry;
-         * or
-         */
+		/**
+		 * • The content of a Trusted service Status List;<br>
+		 * • The content of a Trusted List through information provided in the Sie field of the applicable service entry;
+		 * or
+		 */
 
-        final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(certificate);
+		final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(certificate);
 
-        final boolean sie = qualifiers.contains(QC_WITH_SSCD) || qualifiers.contains(QCSSCD_STATUS_AS_IN_CERT) || qualifiers.contains(QC_FOR_LEGAL_PERSON);
+		final boolean sie = qualifiers.contains(QC_WITH_SSCD) || qualifiers.contains(QC_WITH_SSCD_119612) ;
+		// todo To be clarified with Olivier D.
+//		|| qualifiers.contains(QCSSCD_STATUS_AS_IN_CERT) || qualifiers
+//			  .contains(QCSSCD_STATUS_AS_IN_CERT_119612);
 
-        /**
-         * • Static configuration that provides such information in a trusted manner.
-         */
-        // --> Not implemented
+		/**
+		 * • Static configuration that provides such information in a trusted manner.
+		 */
+		// --> Not implemented
 
-        if (!(qcSSCD || qcpPlus || sie)) {
+		if (!(qcSSCD || qcpPlus || sie)) {
 
-            return false;
-        }
-        return true;
-    }
+			return false;
+		}
+		return true;
+	}
 }

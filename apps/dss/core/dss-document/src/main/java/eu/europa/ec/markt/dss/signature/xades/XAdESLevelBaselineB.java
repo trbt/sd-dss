@@ -68,8 +68,8 @@ public class XAdESLevelBaselineB {
 
         final SignatureBuilder signatureBuilder = SignatureBuilder.getSignatureBuilder(params, dssDocument);
         params.getContext().setBuilder(signatureBuilder);
-        final byte[] signedInfoBytes = signatureBuilder.build();
-        return signedInfoBytes;
+        final byte[] dataToSign = signatureBuilder.build();
+        return dataToSign;
     }
 
     /*

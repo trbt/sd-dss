@@ -29,6 +29,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -51,6 +52,8 @@ import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.exception.DSSNullReturnedException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
+import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
+import eu.europa.ec.markt.dss.validation102853.CommonCertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
@@ -244,11 +247,11 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 	 * Load a trusted list for the specified URL
 	 *
 	 * @param url
-	 * @param signerCert
+	 * @param signingCertList
 	 * @return
 	 * @throws java.io.IOException
 	 */
-	private TrustStatusList getTrustStatusList(String url, X509Certificate signerCert) {
+	private TrustStatusList getTrustStatusList(final String url, final List<X509Certificate> signingCertList) {
 
 		byte[] bytes = dataLoader.get(url);
 		if (bytes == null) {
@@ -266,10 +269,19 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 		if (checkSignature) {
 
 			coreValidity = false;
-			if (signerCert != null) {
+			if (signingCertList != null) {
 
-				DSSDocument dssDocument = new InMemoryDocument(bytes);
-				XMLDocumentValidator xmlDocumentValidator = new XMLDocumentValidator(dssDocument);
+				final CommonTrustedCertificateSource commonTrustedCertificateSource = new CommonTrustedCertificateSource();
+				for (final X509Certificate x509Certificate : signingCertList) {
+
+					commonTrustedCertificateSource.addCertificate(x509Certificate);
+				}
+				final CertificateVerifier certificateVerifier = new CommonCertificateVerifier(true);
+				certificateVerifier.setTrustedCertSource(commonTrustedCertificateSource);
+
+				final DSSDocument dssDocument = new InMemoryDocument(bytes);
+				final XMLDocumentValidator xmlDocumentValidator = new XMLDocumentValidator(dssDocument);
+				xmlDocumentValidator.setCertificateVerifier(certificateVerifier);
 				// To increase the security: the default {@code XPathQueryHolder} is used.
 				final List<XPathQueryHolder> xPathQueryHolders = xmlDocumentValidator.getXPathQueryHolder();
 				xPathQueryHolders.clear();
@@ -292,6 +304,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 				if (!coreValidity) {
 
 					LOG.info("The TSL signature validity details:\n" + simpleReport);
+					System.out.println(xmlDocumentValidator.getDiagnosticData());
 					throw new DSSException("Not ETSI compliant signature. The signature is not valid.");
 				}
 			}
@@ -356,7 +369,9 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 		try {
 
 			LOG.info("Downloading LOTL from url= {}", lotlUrl);
-			lotl = getTrustStatusList(lotlUrl, lotlCert);
+			final ArrayList<X509Certificate> x509CertificateList = new ArrayList<X509Certificate>();
+			x509CertificateList.add(lotlCert);
+			lotl = getTrustStatusList(lotlUrl, x509CertificateList);
 		} catch (DSSException e) {
 
 			LOG.error("The LOTL cannot be loaded: " + e.getMessage(), e);
@@ -372,10 +387,10 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
 			final String url = pointerToTSL.getTslLocation();
 			final String territory = pointerToTSL.getTerritory();
-			final X509Certificate signingCert = pointerToTSL.getDigitalIdentity();
+			final List<X509Certificate> signingCertList = pointerToTSL.getDigitalIdentity();
 			try {
 
-				loadTSL(url, territory, signingCert);
+				loadTSL(url, territory, signingCertList);
 			} catch (DSSException e) {
 				LOG.error("Error loading trusted list for {} at {}", new Object[]{territory, url, e});
 				// do nothing continue with the next trusted list.
@@ -397,8 +412,8 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 		//        }
 		//        LOG.info("Parallel download of Trusted list done");
 		loadAdditionalLists();
-		LOG.info("Done loading: {} trusted lists", size);
-		LOG.info("            : {} certificates", certPool.getNumberOfCertificates());
+		LOG.info("Loading completed: {} trusted lists", size);
+		LOG.info("                 : {} certificates", certPool.getNumberOfCertificates());
 	}
 
 	private X509Certificate readLOTLCertificate() throws DSSException {
@@ -439,9 +454,9 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 	/**
 	 * @param url
 	 * @param territory
-	 * @param signingCert
+	 * @param signingCertList
 	 */
-	protected void loadTSL(final String url, final String territory, final X509Certificate signingCert) {
+	protected void loadTSL(final String url, final String territory, final List<X509Certificate> signingCertList) {
 
 		if (DSSUtils.isBlank(url)) {
 
@@ -453,7 +468,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
 			diagnosticInfo.put(trimmedUrl, "Loading");
 			LOG.info("Downloading TrustStatusList for '{}' from url= {}", territory, trimmedUrl);
-			final TrustStatusList countryTSL = getTrustStatusList(trimmedUrl, signingCert);
+			final TrustStatusList countryTSL = getTrustStatusList(trimmedUrl, signingCertList);
 			loadAllCertificatesFromOneTSL(countryTSL);
 			LOG.info(".... done for '{}'", territory);
 			diagnosticInfo.put(trimmedUrl, "Loaded " + new Date().toString());

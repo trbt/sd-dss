@@ -89,13 +89,13 @@ public class SignatureModel extends Model {
     public static final String PROPERTY_CLAIMED_ROLE = "claimedRole";
     private String claimedRole;
 
-	public static final String PROPERTY_CLAIMED_CHECK = "claimedCheck";
-	private boolean claimedCheck;
+    public static final String PROPERTY_CLAIMED_CHECK = "claimedCheck";
+    private boolean claimedCheck;
 
 	public static final String PROPERTY_TSL_SIGNATURE_CHECK = "tslSignatureCheck";
 	private boolean tslSignatureCheck;
 
-	public static final String PROPERTY_SIGNATURE_POLICY_CHECK = "signaturePolicyCheck";
+    public static final String PROPERTY_SIGNATURE_POLICY_CHECK = "signaturePolicyCheck";
     private boolean signaturePolicyCheck;
 
     public boolean signaturePolicyVisible;
@@ -294,7 +294,7 @@ public class SignatureModel extends Model {
         firePropertyChange(PROPERTY_CLAIMED_ROLE, oldValue, newValue);
     }
 
-	/**
+    /**
 	 *
 	 * @return tslSignatureCheck
 	 */

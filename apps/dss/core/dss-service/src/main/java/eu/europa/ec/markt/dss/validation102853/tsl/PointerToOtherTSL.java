@@ -46,118 +46,118 @@ import eu.europa.ec.markt.tsl.jaxb.tsl.ServiceDigitalIdentityListType;
 
 class PointerToOtherTSL {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PointerToOtherTSL.class);
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PointerToOtherTSL.class);
 
-    private OtherTSLPointerType pointer;
+	private OtherTSLPointerType pointer;
 
-    /**
-     * The default constructor for PointerToOtherTSL.
-     *
-     * @param pointer
-     */
-    PointerToOtherTSL(OtherTSLPointerType pointer) {
+	/**
+	 * The default constructor for PointerToOtherTSL.
+	 *
+	 * @param pointer
+	 */
+	PointerToOtherTSL(OtherTSLPointerType pointer) {
 
-        this.pointer = pointer;
-    }
+		this.pointer = pointer;
+	}
 
-    private List<DigitalIdentityListType> getServiceDigitalIdentities() {
+	private List<DigitalIdentityListType> getServiceDigitalIdentities() {
 
-        final ServiceDigitalIdentityListType serviceDigitalIdentityList = pointer.getServiceDigitalIdentities();
-        if (serviceDigitalIdentityList != null) {
+		final ServiceDigitalIdentityListType serviceDigitalIdentityList = pointer.getServiceDigitalIdentities();
+		if (serviceDigitalIdentityList != null) {
 
-            return serviceDigitalIdentityList.getServiceDigitalIdentity();
-        }
-        return null;
-    }
+			return serviceDigitalIdentityList.getServiceDigitalIdentity();
+		}
+		return null;
+	}
 
-    /**
-     * @return
-     */
-    String getTslLocation() {
+	/**
+	 * @return
+	 */
+	String getTslLocation() {
 
-        return pointer.getTSLLocation();
-    }
+		return pointer.getTSLLocation();
+	}
 
-    private Map<String, String> getProperties() {
+	private Map<String, String> getProperties() {
 
-        final Map<String, String> properties = new HashMap<String, String>();
-        for (final Object textualOrOtherInfo : pointer.getAdditionalInformation().getTextualInformationOrOtherInformation()) {
+		final Map<String, String> properties = new HashMap<String, String>();
+		for (final Object textualOrOtherInfo : pointer.getAdditionalInformation().getTextualInformationOrOtherInformation()) {
 
-            if (textualOrOtherInfo instanceof AnyType) {
+			if (textualOrOtherInfo instanceof AnyType) {
 
-                final AnyType anyInfo = (AnyType) textualOrOtherInfo;
-                for (final Object content : anyInfo.getContent()) {
+				final AnyType anyInfo = (AnyType) textualOrOtherInfo;
+				for (final Object content : anyInfo.getContent()) {
 
-                    if (content instanceof String) {
+					if (content instanceof String) {
 
-                        if (((String) content).trim().length() > 0) {
+						if (((String) content).trim().length() > 0) {
 
-                            throw new DSSException("Unexpected String : " + content);
-                        }
-                    } else if (content instanceof JAXBElement) {
+							throw new DSSException("Unexpected String : " + content);
+						}
+					} else if (content instanceof JAXBElement) {
 
-                        @SuppressWarnings("rawtypes") JAXBElement jaxbElement = (JAXBElement) content;
-                        properties.put(jaxbElement.getName().toString(), jaxbElement.getValue().toString());
-                    } else if (content instanceof Element) {
+						@SuppressWarnings("rawtypes") JAXBElement jaxbElement = (JAXBElement) content;
+						properties.put(jaxbElement.getName().toString(), jaxbElement.getValue().toString());
+					} else if (content instanceof Element) {
 
-                        Element element = (Element) content;
-                        properties.put("{" + element.getNamespaceURI() + "}" + element.getLocalName(), element.getTextContent());
-                    } else {
+						Element element = (Element) content;
+						properties.put("{" + element.getNamespaceURI() + "}" + element.getLocalName(), element.getTextContent());
+					} else {
 
-                        throw new DSSException("Unknown element : " + content.getClass());
-                    }
-                }
-            } else {
+						throw new DSSException("Unknown element : " + content.getClass());
+					}
+				}
+			} else {
 
-                throw new DSSException("Unknown type : " + textualOrOtherInfo.getClass());
-            }
-        }
-        return properties;
-    }
+				throw new DSSException("Unknown type : " + textualOrOtherInfo.getClass());
+			}
+		}
+		return properties;
+	}
 
-    /**
-     * @return
-     */
-    String getMimeType() {
-        return getProperties().get("{http://uri.etsi.org/02231/v2/additionaltypes#}MimeType");
-    }
+	/**
+	 * @return
+	 */
+	String getMimeType() {
+		return getProperties().get("{http://uri.etsi.org/02231/v2/additionaltypes#}MimeType");
+	}
 
-    /**
-     * @return
-     */
-    String getTerritory() {
-        return getProperties().get("{http://uri.etsi.org/02231/v2#}SchemeTerritory");
-    }
+	/**
+	 * @return
+	 */
+	String getTerritory() {
+		return getProperties().get("{http://uri.etsi.org/02231/v2#}SchemeTerritory");
+	}
 
-    /**
-     * FIXME: the multiple digital identities need to be taken into account.
-     *
-     * @return
-     */
-    X509Certificate getDigitalIdentity() {
+	/**
+	 * FIXME: the multiple digital identities need to be taken into account.
+	 *
+	 * @return
+	 */
+	List<X509Certificate> getDigitalIdentity() {
 
-        if (getServiceDigitalIdentities() == null) {
+		if (getServiceDigitalIdentities() == null) {
 
-            return null;
-        }
-        final List<X509Certificate> x509DigitalIdentityList = new ArrayList<X509Certificate>();
-        for (final DigitalIdentityListType digitalIdentityList : getServiceDigitalIdentities()) {
+			return null;
+		}
+		final List<X509Certificate> x509DigitalIdentityList = new ArrayList<X509Certificate>();
+		for (final DigitalIdentityListType digitalIdentityList : getServiceDigitalIdentities()) {
 
-            final List<DigitalIdentityType> digitalIdList = digitalIdentityList.getDigitalId();
-            for (final DigitalIdentityType currentDigitalIdentity : digitalIdList) {
+			final List<DigitalIdentityType> digitalIdList = digitalIdentityList.getDigitalId();
+			for (final DigitalIdentityType currentDigitalIdentity : digitalIdList) {
 
-                if (currentDigitalIdentity.getX509Certificate() != null) {
+				if (currentDigitalIdentity.getX509Certificate() != null) {
 
-                    final X509Certificate cert = DSSUtils.loadCertificate(currentDigitalIdentity.getX509Certificate());
-                    if (LOG.isDebugEnabled()) {
+					final X509Certificate cert = DSSUtils.loadCertificate(currentDigitalIdentity.getX509Certificate());
+					if (LOG.isDebugEnabled()) {
 
-                        LOG.debug( "Territory {} signed by {}", new Object[]{getTerritory(), cert.getSubjectDN()});
-                    }
-                    x509DigitalIdentityList.add(cert);
-                    break;
-                }
-            }
-        }
-        return x509DigitalIdentityList.size() > 0 ? x509DigitalIdentityList.get(0) : null;
-    }
+						LOG.debug("Territory {} signed by {}", new Object[]{getTerritory(), cert.getSubjectDN()});
+					}
+					x509DigitalIdentityList.add(cert);
+					break;
+				}
+			}
+		}
+		return x509DigitalIdentityList.size() > 0 ? x509DigitalIdentityList : null;
+	}
 }

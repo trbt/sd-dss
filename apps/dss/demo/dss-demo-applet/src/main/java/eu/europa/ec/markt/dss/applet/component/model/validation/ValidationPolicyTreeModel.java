@@ -26,7 +26,10 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 
 import eu.europa.ec.markt.dss.applet.component.model.AbstractTreeModel;
+import eu.europa.ec.markt.dss.applet.component.model.XmlDomAdapterNode;
+import eu.europa.ec.markt.dss.applet.component.model.XmlDomTreeModelAdapter;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicy;
+import org.w3c.dom.Element;
 
 /**
  * Build the tree model of the validation policy
@@ -37,7 +40,7 @@ import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.V
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
  * @version $Revision: 1016 $ - $Date: 2011-06-17 15:30:45 +0200 (Fri, 17 Jun 2011) $
  */
-public class ValidationPolicyTreeModel extends AbstractTreeModel<ValidationPolicyTreeRoot> {
+public class ValidationPolicyTreeModel extends XmlDomTreeModelAdapter {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ValidationPolicyTreeModel.class);
 
@@ -46,28 +49,8 @@ public class ValidationPolicyTreeModel extends AbstractTreeModel<ValidationPolic
      *
      * @param validationPolicy
      */
-    public ValidationPolicyTreeModel(final ValidationPolicyTreeRoot validationPolicy) {
-        super(validationPolicy);
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see eu.europa.ec.markt.dss.applet.AbstractTreeModel#getChildren(java.lang.Object)
-     */
-    @Override
-    public List<?> getChildren(final Object object) {
-        if (object instanceof ValidationPolicy) {
-            ValidationPolicy validationPolicy = (ValidationPolicy) object;
-            final ValidationPolicyTreeRoot validationPolicyTreeRoot = new ValidationPolicyTreeRoot(validationPolicy);
-            return validationPolicyTreeRoot.getChildren();
-        }
-        if (object instanceof TreeNode) {
-            TreeNode treeNode = (TreeNode) object;
-            return treeNode.getChildren();
-        }
-        throw new RuntimeException("Not supported " + object);
+    public ValidationPolicyTreeModel(final ValidationPolicy validationPolicy) {
+        super(validationPolicy.getDocument(),validationPolicy.getTreeResult());
     }
 
     public void fireTreeNodesRemoved(TreePath parentPath, int childIndex, Object child) {

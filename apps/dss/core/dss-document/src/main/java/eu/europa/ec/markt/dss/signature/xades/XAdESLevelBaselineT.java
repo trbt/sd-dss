@@ -46,18 +46,19 @@ import eu.europa.ec.markt.dss.signature.ProfileParameters;
 import eu.europa.ec.markt.dss.signature.ProfileParameters.Operation;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
-import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
+import eu.europa.ec.markt.dss.validation102853.CertificatePoolImpl;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
-import eu.europa.ec.markt.dss.validation102853.SignatureValidationContext;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
+import eu.europa.ec.markt.dss.validation102853.ValidationContext;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 
 /**
  * -T profile of XAdES signature
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3924 $ - $Date: 2014-05-20 10:19:38 +0200 (Tue, 20 May 2014) $
  */
 
 public class XAdESLevelBaselineT extends ExtensionBuilder implements XAdESSignatureExtension {
@@ -188,7 +189,7 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements XAdESSignat
 
                 continue;
             }
-            final CertificatePool certPool = new CertificatePool();
+            final CertificatePool certPool = new CertificatePoolImpl();
             xadesSignature = new XAdESSignature(currentSignatureDom, certPool);
             extendSignatureTag();
         }
@@ -255,7 +256,7 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements XAdESSignat
      * @param parentDom
      * @param valContext
      */
-    protected void incorporateCertificateValues(Element parentDom, final SignatureValidationContext valContext) {
+    protected void incorporateCertificateValues(Element parentDom, final ValidationContext valContext) {
 
         // <xades:CertificateValues>
         // ...<xades:EncapsulatedX509Certificate>MIIC9TC...

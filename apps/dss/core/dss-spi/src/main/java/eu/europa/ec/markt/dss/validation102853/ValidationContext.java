@@ -38,17 +38,18 @@ public interface ValidationContext {
 	 */
 	public void setCurrentTime(final Date currentTime);
 
+	void initialize(CertificateVerifier certificateVerifier);
+
 	public Date getCurrentTime();
 
-	/**
-	 * This function sets the signing certificate to be validated.
-	 *
-	 * @param signingCert
-	 */
-	public void setCertificateToValidate(CertificateToken signingCert);
+	void addRevocationTokenForVerification(RevocationToken revocationToken);
+
+	void addCertificateTokenForVerification(CertificateToken certificateToken);
+
+	void addTimestampTokenForVerification(TimestampToken timestampToken);
 
 	/**
-	 * Carries out the validation process in recursive manner for not yet checked tokens and for the specific signature.
+	 * Carries out the validation process in recursive manner for not yet checked tokens.
 	 *
 	 * @throws DSSException
 	 */
@@ -75,39 +76,4 @@ public interface ValidationContext {
 	 * @return The list of CertificateToken(s)
 	 */
 	public abstract Set<TimestampToken> getProcessedTimestamps();
-
-	/**
-	 * Returns the list of content timestamps.
-	 *
-	 * @return
-	 */
-	abstract List<TimestampToken> getContentTimestamps();
-
-	/**
-	 * Returns the list of signature timestamps.
-	 *
-	 * @return
-	 */
-	public abstract List<TimestampToken> getTimestampTokens();
-
-	/**
-	 * Returns the list of SigAndRefs timestamps.
-	 *
-	 * @return
-	 */
-	public abstract List<TimestampToken> getSigAndRefsTimestamps();
-
-	/**
-	 * Returns the list of RefsOnly timestamps.
-	 *
-	 * @return
-	 */
-	public abstract List<TimestampToken> getRefsOnlyTimestamps();
-
-	/**
-	 * Returns the list of Archive timestamps.
-	 *
-	 * @return
-	 */
-	public abstract List<TimestampToken> getArchiveTimestamps();
 }

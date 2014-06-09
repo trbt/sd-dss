@@ -190,36 +190,46 @@ public class ASiCSService extends AbstractSignatureService {
 		final ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
 		final ZipOutputStream outZip = new ZipOutputStream(outBytes);
 
-		// Zip comment
-		if (specificParameters.aSiC().isAsicComment() && DSSUtils.isNotEmpty(toSignDocument.getName())) {
+		final String toSignDocumentName = toSignDocument.getName();
 
-			if (!System.getProperties().containsKey("content.types.user.table")) {
-				final URL contentTypeURL = this.getClass().getResource("/custom-content-types.properties");
-				if (contentTypeURL != null) {
-					System.setProperty("content.types.user.table", contentTypeURL.getPath());
-				}
+		if (!System.getProperties().containsKey("content.types.user.table")) {
+			final URL contentTypeURL = this.getClass().getResource("/custom-content-types.properties");
+			if (contentTypeURL != null) {
+				System.setProperty("content.types.user.table", contentTypeURL.getPath());
 			}
+		}
 
-			final FileNameMap fileNameMap = URLConnection.getFileNameMap();
-			final String containedFileMimeType = fileNameMap.getContentTypeFor(toSignDocument.getName());
-			outZip.setComment("mimetype=" + containedFileMimeType);
+		final FileNameMap fileNameMap = URLConnection.getFileNameMap();
+		final String containedFileMimeType_ = fileNameMap.getContentTypeFor(toSignDocumentName);
+
+		final MimeType containedFileMimeType = toSignDocument.getMimeType();
+		// Zip comment
+		if (specificParameters.aSiC().isZipComment() && DSSUtils.isNotEmpty(toSignDocumentName)) {
+
+			outZip.setComment("mimetype=" + containedFileMimeType.getCode());
 		}
 
 		// Stores the ASiC mime-type
-		final String aSiCMimeType = MimeType.ASICS.getCode();
+		final byte[] mimeTypeBytes;
+		final String asicParameterMimeType = specificParameters.aSiC().getMimeType();
+		if (DSSUtils.isBlank(asicParameterMimeType)) {
+			mimeTypeBytes = containedFileMimeType.getCode().getBytes();
+		} else {
+			mimeTypeBytes = asicParameterMimeType.getBytes();
+		}
 		final ZipEntry entryMimetype = new ZipEntry(ZIP_ENTRY_MIMETYPE);
 		entryMimetype.setMethod(ZipEntry.STORED);
-		entryMimetype.setSize(aSiCMimeType.getBytes().length);
-		entryMimetype.setCompressedSize(aSiCMimeType.getBytes().length);
+		entryMimetype.setSize(mimeTypeBytes.length);
+		entryMimetype.setCompressedSize(mimeTypeBytes.length);
 		final CRC32 crc = new CRC32();
-		crc.update(aSiCMimeType.getBytes());
+		crc.update(mimeTypeBytes);
 		entryMimetype.setCrc(crc.getValue());
 		try {
 			outZip.putNextEntry(entryMimetype);
-			outZip.write(aSiCMimeType.getBytes());
+			outZip.write(mimeTypeBytes);
 
 			// Stores the original toSignDocument
-			final ZipEntry entryDocument = new ZipEntry(toSignDocument.getName() != null ? toSignDocument.getName() : ZIP_ENTRY_DETACHED_FILE);
+			final ZipEntry entryDocument = new ZipEntry(toSignDocumentName != null ? toSignDocumentName : ZIP_ENTRY_DETACHED_FILE);
 			outZip.setLevel(ZipEntry.DEFLATED);
 			outZip.putNextEntry(entryDocument);
 			DSSUtils.copy(toSignDocument.openStream(), outZip);
@@ -249,7 +259,7 @@ public class ASiCSService extends AbstractSignatureService {
 
 			// return the new toSignDocument = ASiC-S
 			final byte[] documentBytes = outBytes.toByteArray();
-			final String name = toSignDocument.getName() != null ? toSignDocument.getName() + ASICS_EXTENSION : null;
+			final String name = toSignDocumentName != null ? toSignDocumentName + ASICS_EXTENSION : null;
 			final InMemoryDocument inMemoryDocument = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
 			return inMemoryDocument;
 		} catch (Exception e) {

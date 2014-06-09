@@ -38,47 +38,47 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
  */
 public class ForLegalPerson implements NodeName, NodeValue, AttributeName, AttributeValue, RuleConstant {
 
-    private ValidationPolicy constraintData;
+	private ValidationPolicy constraintData;
 
-    /**
-     * The default constructor with the policy object.
-     *
-     * @param constraintData
-     */
-    public ForLegalPerson(final ValidationPolicy constraintData) {
+	/**
+	 * The default constructor with the policy object.
+	 *
+	 * @param constraintData
+	 */
+	public ForLegalPerson(final ValidationPolicy constraintData) {
 
-        super();
-        this.constraintData = constraintData;
-    }
+		super();
+		this.constraintData = constraintData;
+	}
 
-    /**
-     * The ForLegalPerson constraint is to be applied to the signer's certificate of the main signature or of the
-     * timestamp before considering it as valid for the intended use.
-     *
-     * // @param isTimestamp indicates if this is a timestamp signing cert or main signature signing cert.
-     *
-     * @param cert the cert to be processed
-     * @return
-     */
-    public Boolean run(final XmlDom cert) {
+	/**
+	 * The ForLegalPerson constraint is to be applied to the signer's certificate of the main signature or of the
+	 * timestamp before considering it as valid for the intended use.
+	 * <p/>
+	 * // @param isTimestamp indicates if this is a timestamp signing cert or main signature signing cert.
+	 *
+	 * @param cert the cert to be processed
+	 * @return
+	 */
+	public Boolean run(final XmlDom cert) {
 
-        return process(cert);
-    }
+		return process(cert);
+	}
 
-    /**
-     * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
-     *
-     * @param cert the cert to be processed
-     * @return
-     */
-    private boolean process(final XmlDom cert) {
+	/**
+	 * Generalised implementation independent of the context (SigningCertificate or TimestampSigningCertificate).
+	 *
+	 * @param cert the cert to be processed
+	 * @return
+	 */
+	private boolean process(final XmlDom cert) {
 
-        final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(cert);
+		final List<String> qualifiers = InvolvedServiceInfo.getQualifiers(cert);
 
-        /**
-         * Mandates the signer's certificate used in validating the signature to be issued by a certificate authority
-         * issuing certificate as having been issued to a legal person.
-         */
-        return qualifiers.contains(QC_FOR_LEGAL_PERSON);
-    }
+		/**
+		 * Mandates the signer's certificate used in validating the signature to be issued by a certificate authority
+		 * issuing certificate as having been issued to a legal person.
+		 */
+		return qualifiers.contains(QC_FOR_LEGAL_PERSON) || qualifiers.contains(QC_FOR_LEGAL_PERSON_119612);
+	}
 }

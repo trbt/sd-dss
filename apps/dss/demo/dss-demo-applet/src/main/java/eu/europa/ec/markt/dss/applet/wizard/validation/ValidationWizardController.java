@@ -45,7 +45,7 @@ import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardStep;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.FileDocument;
 import eu.europa.ec.markt.dss.signature.MimeType;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicyDao;
+import eu.europa.ec.markt.dss.applet.util.ValidationPolicyDao;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.ws.validation.DSSException_Exception;
 import eu.europa.ec.markt.dss.ws.validation.ValidationService;
@@ -65,186 +65,187 @@ import eu.europa.ec.markt.dss.ws.validation.WsValidationReport;
 
 public class ValidationWizardController extends DSSWizardController<ValidationModel> {
 
-    private ReportView reportView;
+	private ReportView reportView;
 
-    private ValidationView formView;
+	private ValidationView formView;
 
-    /**
-     * The default constructor for ValidationWizardController.
-     *
-     * @param core
-     * @param model
-     */
-    public ValidationWizardController(final DSSAppletCore core, final ValidationModel model) {
+	/**
+	 * The default constructor for ValidationWizardController.
+	 *
+	 * @param core
+	 * @param model
+	 */
+	public ValidationWizardController(final DSSAppletCore core, final ValidationModel model) {
 
-        super(core, model);
-        final Parameters parameters = core.getParameters();
-    }
+		super(core, model);
+		final Parameters parameters = core.getParameters();
+	}
 
-    /**
-     *
-     */
-    public void displayFormView() {
-        formView.show();
-    }
+	/**
+	 *
+	 */
+	public void displayFormView() {
+		formView.show();
+	}
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eu.ecodex.dss.commons.swing.mvc.applet.WizardController#doCancel()
-     */
-    @Override
-    protected void doCancel() {
-        getCore().getController(ActivityController.class).display();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.ecodex.dss.commons.swing.mvc.applet.WizardController#doCancel()
+	 */
+	@Override
+	protected void doCancel() {
+		getCore().getController(ActivityController.class).display();
+	}
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#doStart()
-     */
-    @Override
-    protected Class<? extends WizardStep<ValidationModel, ? extends WizardController<ValidationModel>>> doStart() {
-        return FormStep.class;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#doStart()
+	 */
+	@Override
+	protected Class<? extends WizardStep<ValidationModel, ? extends WizardController<ValidationModel>>> doStart() {
+		return FormStep.class;
+	}
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerViews()
-     */
-    @Override
-    protected void registerViews() {
-        formView = new ValidationView(getCore(), this, getModel());
-        reportView = new ReportView(getCore(), this, getModel());
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerViews()
+	 */
+	@Override
+	protected void registerViews() {
+		formView = new ValidationView(getCore(), this, getModel());
+		reportView = new ReportView(getCore(), this, getModel());
+	}
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerWizardStep()
-     */
-    @Override
-    protected Map<Class<? extends WizardStep<ValidationModel, ? extends WizardController<ValidationModel>>>, ? extends WizardStep<ValidationModel, ? extends WizardController<ValidationModel>>> registerWizardStep() {
-        final Map steps = new HashMap();
-        steps.put(FormStep.class, new FormStep(getModel(), formView, this));
-        steps.put(ReportStep.class, new ReportStep(getModel(), reportView, this));
-        return steps;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardController#registerWizardStep()
+	 */
+	@Override
+	protected Map<Class<? extends WizardStep<ValidationModel, ? extends WizardController<ValidationModel>>>, ? extends WizardStep<ValidationModel, ? extends WizardController<ValidationModel>>> registerWizardStep() {
+		final Map steps = new HashMap();
+		steps.put(FormStep.class, new FormStep(getModel(), formView, this));
+		steps.put(ReportStep.class, new ReportStep(getModel(), reportView, this));
+		return steps;
+	}
 
-    /**
-     * Validate the document with the 102853 validation policy
-     *
-     * @throws IOException
-     */
-    public void validateDocument() throws DSSException {
+	/**
+	 * Validate the document with the 102853 validation policy
+	 *
+	 * @throws IOException
+	 */
+	public void validateDocument() throws DSSException {
 
-        System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory");
+		System.setProperty("javax.xml.bind.JAXBContext", "com.sun.xml.internal.bind.v2.ContextFactory");
 
-        final ValidationModel model = getModel();
+		final ValidationModel model = getModel();
 
-        final File signedFile = model.getSignedFile();
-        final WsDocument wsSignedDocument = toWsDocument(signedFile);
+		final File signedFile = model.getSignedFile();
+		final WsDocument wsSignedDocument = toWsDocument(signedFile);
 
-        final File detachedFile = model.getOriginalFile();
-        final WsDocument wsDetachedDocument = detachedFile != null ? toWsDocument(detachedFile) : null;
+		final File detachedFile = model.getOriginalFile();
+		final WsDocument wsDetachedDocument = detachedFile != null ? toWsDocument(detachedFile) : null;
 
-        WsDocument wsPolicyDocument = null;
-        if (!model.isDefaultPolicy() && model.getSelectedPolicyFile() != null) {
+		WsDocument wsPolicyDocument = null;
+		if (!model.isDefaultPolicy() && model.getSelectedPolicyFile() != null) {
 
-            final File policyFile = new File(model.getSelectedPolicyFile().getAbsolutePath());
-            final InputStream inputStream = DSSUtils.toInputStream(policyFile);
-            wsPolicyDocument = new WsDocument();
-            wsPolicyDocument.setBytes(DSSUtils.toByteArray(inputStream));
-        }
+			final File policyFile = new File(model.getSelectedPolicyFile().getAbsolutePath());
+			final InputStream inputStream = DSSUtils.toInputStream(policyFile);
+			wsPolicyDocument = new WsDocument();
+			wsPolicyDocument.setBytes(DSSUtils.toByteArray(inputStream));
+		}
 
-        //assertValidationPolicyFileValid(validationPolicyURL);
+		//assertValidationPolicyFileValid(validationPolicyURL);
 
-        ValidationService_Service.setROOT_SERVICE_URL(serviceURL);
-        final ValidationService_Service validationService_service = new ValidationService_Service();
-        final ValidationService validationServiceImplPort = validationService_service.getValidationServiceImplPort();
-        final WsValidationReport wsValidationReport;
-        try {
-            wsValidationReport = validationServiceImplPort.validateDocument(wsSignedDocument, wsDetachedDocument, wsPolicyDocument, true);
-        } catch (DSSException_Exception e) {
-            throw new DSSException(e);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            throw new DSSException(e);
-        }
+		ValidationService_Service.setROOT_SERVICE_URL(serviceURL);
+		final ValidationService_Service validationService_service = new ValidationService_Service();
+		final ValidationService validationServiceImplPort = validationService_service.getValidationServiceImplPort();
+		final WsValidationReport wsValidationReport;
+		try {
+			wsValidationReport = validationServiceImplPort.validateDocument(wsSignedDocument, wsDetachedDocument, wsPolicyDocument, true);
+		} catch (DSSException_Exception e) {
+			throw new DSSException(e);
+		} catch (Throwable e) {
+			e.printStackTrace();
+			throw new DSSException(e);
+		}
 
-        String xmlData = "";
-        try {
+		String xmlData = "";
+		try {
 
-            // In case of some signatures, the returned data are not UTF-8 encoded. The conversion is forced.
+			// In case of some signatures, the returned data are not UTF-8 encoded. The conversion is forced.
 
-            xmlData = wsValidationReport.getXmlDiagnosticData();
-            final String xmlDiagnosticData = DSSUtils.getUtf8String(xmlData);
-            final XmlDom diagnosticDataXmlDom = getXmlDomReport(xmlDiagnosticData);
-            model.setDiagnosticData(diagnosticDataXmlDom);
+			xmlData = wsValidationReport.getXmlDiagnosticData();
+			// final String xmlDiagnosticData = DSSUtils.getUtf8String(xmlData);
+			final XmlDom diagnosticDataXmlDom = getXmlDomReport(xmlData);
+			model.setDiagnosticData(diagnosticDataXmlDom);
 
-            xmlData = "";
-            xmlData = wsValidationReport.getXmlDetailedReport();
-            final String xmlDetailedReport = DSSUtils.getUtf8String(xmlData);
-            final XmlDom detailedReportXmlDom = getXmlDomReport(xmlDetailedReport);
-            model.setDetailedReport(detailedReportXmlDom);
+			xmlData = "";
+			xmlData = wsValidationReport.getXmlDetailedReport();
+			// final String xmlDetailedReport = DSSUtils.getUtf8String(xmlData);
+			final XmlDom detailedReportXmlDom = getXmlDomReport(xmlData);
+			model.setDetailedReport(detailedReportXmlDom);
 
-            xmlData = "";
-            xmlData = wsValidationReport.getXmlSimpleReport();
-            final String xmlSimpleReport = DSSUtils.getUtf8String(xmlData);
-            final XmlDom simpleReportXmlDom = getXmlDomReport(xmlSimpleReport);
-            model.setSimpleReport(simpleReportXmlDom);
-        } catch (Exception e) {
+			xmlData = "";
+			xmlData = wsValidationReport.getXmlSimpleReport();
+			// final String xmlSimpleReport = DSSUtils.getUtf8String(xmlData);
+			final XmlDom simpleReportXmlDom = getXmlDomReport(xmlData);
+			model.setSimpleReport(simpleReportXmlDom);
+		} catch (Exception e) {
 
-            final String base64Encode = DSSUtils.base64Encode(xmlData.getBytes());
-            LOG.error("Erroneous data: " + base64Encode);
-            if (e instanceof DSSException) {
-                throw (DSSException) e;
-            }
-            throw new DSSException(e);
-        }
-    }
+			final String base64Encode = DSSUtils.base64Encode(xmlData.getBytes());
+			LOG.error("Erroneous data: " + base64Encode);
+			if (e instanceof DSSException) {
+				throw (DSSException) e;
+			}
+			throw new DSSException(e);
+		}
+	}
 
-    private WsDocument toWsDocument(final File detachedFile) {
+	private WsDocument toWsDocument(final File detachedFile) {
 
-        final FileDocument dssDocument = new FileDocument(detachedFile);
+		final FileDocument dssDocument = new FileDocument(detachedFile);
 
-        final WsDocument wsDocument = new WsDocument();
-        wsDocument.setBytes(dssDocument.getBytes());
-        wsDocument.setName(dssDocument.getName());
-        wsDocument.setAbsolutePath(dssDocument.getAbsolutePath());
-        final MimeType mimeType = dssDocument.getMimeType();
-        if (mimeType != null) {
+		final WsDocument wsDocument = new WsDocument();
+		wsDocument.setBytes(dssDocument.getBytes());
+		wsDocument.setName(dssDocument.getName());
+		wsDocument.setAbsolutePath(dssDocument.getAbsolutePath());
+		final MimeType mimeType = dssDocument.getMimeType();
+		if (mimeType != null) {
 
-            wsDocument.setMimeTypeString(mimeType.getCode());
-        }
-        return wsDocument;
-    }
+			wsDocument.setMimeTypeString(mimeType.getCode());
+		}
+		return wsDocument;
+	}
 
-    private XmlDom getXmlDomReport(final String report) {
+	private XmlDom getXmlDomReport(final String report) {
 
-        final Document reportDom = DSSXMLUtils.buildDOM(report);
-        return new XmlDom(reportDom);
-    }
+		// System.out.println("############################ 2");
+		final Document reportDom = DSSXMLUtils.buildDOM(report);
+		return new XmlDom(reportDom);
+	}
 
-    private void assertValidationPolicyFileValid(URL validationPolicyURL) {
-        try {
-            new ValidationPolicyDao().load(validationPolicyURL);
-        } catch (Exception e) {
-            throw new DSSException("The selected Validation Policy is not valid.");
-        }
-    }
+	private void assertValidationPolicyFileValid(URL validationPolicyURL, URL xsdUrl) {
+		try {
+			new ValidationPolicyDao().load(validationPolicyURL.openStream(), xsdUrl.openStream());
+		} catch (Exception e) {
+			throw new DSSException("The selected Validation Policy is not valid.");
+		}
+	}
 
-    public Document renderSimpleReportAsHtml() {
-        final XmlDom simpleReport = getModel().getSimpleReport();
-        final SimpleReportConverter simpleReportConverter = new SimpleReportConverter();
-        return simpleReportConverter.renderAsHtml(simpleReport);
-    }
+	public Document renderSimpleReportAsHtml() {
+		final XmlDom simpleReport = getModel().getSimpleReport();
+		final SimpleReportConverter simpleReportConverter = new SimpleReportConverter();
+		return simpleReportConverter.renderAsHtml(simpleReport);
+	}
 
-    public Document renderValidationReportAsHtml() {
-        final XmlDom detailedReport = getModel().getDetailedReport();
-        final ValidationReportConverter validationReportConverter = new ValidationReportConverter();
-        return validationReportConverter.renderAsHtml(detailedReport);
-    }
+	public Document renderValidationReportAsHtml() {
+		final XmlDom detailedReport = getModel().getDetailedReport();
+		final ValidationReportConverter validationReportConverter = new ValidationReportConverter();
+		return validationReportConverter.renderAsHtml(detailedReport);
+	}
 
 }

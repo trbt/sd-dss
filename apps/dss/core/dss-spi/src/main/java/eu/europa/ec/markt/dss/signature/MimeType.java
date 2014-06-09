@@ -23,8 +23,8 @@
  * Contractor: ARHS-Developments
  *
  * $HeadURL: http://forge.aris-lux.lan/svn/dgmarktdss/trunk/apps/dss/core/dss-spi/src/main/java/eu/europa/ec/markt/dss/signature/MimeType.java $
- * $Revision: 3697 $
- * $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
+ * $Revision: 4058 $
+ * $Date: 2014-06-07 20:31:53 +0200 (Sat, 07 Jun 2014) $
  * $Author: bielecro $
  */
 package eu.europa.ec.markt.dss.signature;
@@ -33,79 +33,79 @@ import java.io.File;
 
 /**
  * TODO
- *
+ * <p/>
  * <p> DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
- * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
+ * @version $Revision: 4058 $ - $Date: 2014-06-07 20:31:53 +0200 (Sat, 07 Jun 2014) $
  */
 public enum MimeType {
 
-    BINARY("application/octet-stream"), XML("text/xml"), PDF("application/pdf"), PKCS7("application/pkcs7-signature"), ASICS("application/vnd.etsi.asic-s+zip"), TEXT("text/plain");
+	BINARY("application/octet-stream"), XML("text/xml"), PDF("application/pdf"), PKCS7("application/pkcs7-signature"), ASICS("application/vnd.etsi.asic-s+zip"), TEXT("text/plain");
 
-    private String code;
+	private String code;
 
-    /**
-     * The default constructor for MimeTypes.
-     */
-    private MimeType(final String code) {
-        this.code = code;
-    }
+	/**
+	 * The default constructor for MimeTypes.
+	 */
+	private MimeType(final String code) {
+		this.code = code;
+	}
 
-    /**
-     * @return the code
-     */
-    public String getCode() {
-        return code;
-    }
+	/**
+	 * @return the code
+	 */
+	public String getCode() {
+		return code;
+	}
 
-    public static MimeType fromFileName(final String name) {
+	public static MimeType fromFileName(final String name) {
 
-        final String lowerCaseName = name.toLowerCase();
-        if (lowerCaseName.endsWith(".xml")) {
-            return XML;
-        } else if (lowerCaseName.endsWith(".pdf")) {
-            return PDF;
-        } else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs") || lowerCaseName.endsWith(".zip") || lowerCaseName.endsWith(".7z")) {
-            return ASICS;
-        } else if (lowerCaseName.endsWith(".txt")) {
-            return TEXT;
-        } else {
-            return BINARY;
-        }
-    }
+		final String lowerCaseName = name.toLowerCase();
+		if (lowerCaseName.endsWith(".xml")) {
+			return XML;
+		} else if (lowerCaseName.endsWith(".pdf")) {
+			return PDF;
+		} else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs")) {
+			return ASICS;
+		} else if (lowerCaseName.endsWith(".txt")) {
+			return TEXT;
+		} else {
+			return BINARY;
+		}
+	}
 
-    /**
-     * This method returns the mime-type extrapolated from the file name. In case of a zip container its content is analysed to determinate if it is an ASiC signature.
-     *
-     * @param file the file to be analysed
-     * @return the extrapolated mime-type of the file
-     */
-    public static MimeType fromFile(final File file) {
+	/**
+	 * This method returns the mime-type extrapolated from the file name. In case of a zip container its content is analysed to determinate if it is an ASiC signature.
+	 *
+	 * @param file the file to be analysed
+	 * @return the extrapolated mime-type of the file
+	 */
+	public static MimeType fromFile(final File file) {
 
-        final String lowerCaseName = file.getName().toLowerCase();
-        if (lowerCaseName.endsWith(".xml")) {
-            return XML;
-        } else if (lowerCaseName.endsWith(".pdf")) {
-            return PDF;
-        } else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs") || lowerCaseName.endsWith(".zip") || lowerCaseName.endsWith(".7z")) {
+		final String lowerCaseName = file.getName().toLowerCase();
+		if (lowerCaseName.endsWith(".xml")) {
+			return XML;
+		} else if (lowerCaseName.endsWith(".pdf")) {
+			return PDF;
+		} else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs") || lowerCaseName.endsWith(".zip") || lowerCaseName.endsWith(".7z")) {
 
-            return ASICS;
-        } else if (lowerCaseName.endsWith(".txt")) {
-            return TEXT;
-        } else {
-            return BINARY;
-        }
-    }
+			return ASICS;
+		} else if (lowerCaseName.endsWith(".txt")) {
+			return TEXT;
+		} else {
+			return BINARY;
+		}
+	}
 
-    public static MimeType fromCode(final String mimeTypeString) {
+	public static MimeType fromCode(final String mimeTypeString) {
 
-        for (final MimeType mimeType : values()) {
+		for (final MimeType mimeType : values()) {
 
-            if (mimeType.code.equals(mimeTypeString)) {
-                return mimeType;
-            }
-        }
-        return null;
-    }
+			if (mimeType.code.equals(mimeTypeString)) {
+				return mimeType;
+			}
+		}
+		return null;
+	}
 }

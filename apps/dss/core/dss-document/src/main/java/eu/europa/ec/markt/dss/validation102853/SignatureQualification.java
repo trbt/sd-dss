@@ -47,6 +47,7 @@ public class SignatureQualification {
         QCPs[QCP][0][QCC][0] = Q1;
         QCPs[0][0][QCC][0] = Q1;
 
+	    QCPs[0][0][QCC][QCSSCD] = Q2;
         QCPs[QCP][0][QCC][QCSSCD] = Q2;
         QCPs[0][QCPP][0][0] = Q2;
         QCPs[0][QCPP][QCC][0] = Q2;

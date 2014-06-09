@@ -20,15 +20,13 @@
 
 package eu.europa.ec.markt.dss.validation102853.pades;
 
-import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.signature.pdf.PdfArray;
-import eu.europa.ec.markt.dss.signature.pdf.PdfDict;
+import eu.europa.ec.markt.dss.signature.pdf.pdfbox.PdfDssDict;
 import eu.europa.ec.markt.dss.validation102853.CAdESCertificateSource;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
@@ -44,19 +42,19 @@ public class PAdESCertificateSource extends SignatureCertificateSource {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PAdESCertificateSource.class.getName());
 
-    private final PdfDict catalog;
+    private final PdfDssDict dssCatalog;
 
     /**
      * The default constructor for PAdESCertificateSource.
      *
-     * @param catalog
+     * @param dssCatalog
      * @param cadesCertSource
      * @param certPool        The pool of certificates to be used. Can be null.
      */
-    public PAdESCertificateSource(final PdfDict catalog, final CAdESCertificateSource cadesCertSource, final CertificatePool certPool) {
+    public PAdESCertificateSource(final PdfDssDict dssCatalog, final CAdESCertificateSource cadesCertSource, final CertificatePool certPool) {
 
         super(certPool);
-        this.catalog = catalog;
+        this.dssCatalog = dssCatalog;
         extract();
         if (cadesCertSource != null) {
 
@@ -77,27 +75,14 @@ public class PAdESCertificateSource extends SignatureCertificateSource {
         /**
          * TODO: (Bob) Is there any other container within the PAdES signature with embedded certificate? (ie: timestamp)
          */
-        try {
 
-            certificateTokens = new ArrayList<CertificateToken>();
-            final PdfDict dss = catalog.getAsDict("DSS");
-            if (dss != null) {
+        certificateTokens = new ArrayList<CertificateToken>();
+        if (dssCatalog != null) {
 
-                final PdfArray certsArray = dss.getAsArray("Certs");
-                if (certsArray != null) {
-
-                    LOG.debug("There is {} in this certsArray", certsArray.size());
-                    for (int ii = 0; ii < certsArray.size(); ii++) {
-
-                        final byte[] stream = certsArray.getBytes(ii);
-                        final X509Certificate cert = DSSUtils.loadCertificate(stream);
-                        addCertificate(cert);
-                    }
-                }
+            final Set<X509Certificate> certList = dssCatalog.getCertList();
+            for (final X509Certificate x509Certificate : certList) {
+                addCertificate(x509Certificate);
             }
-        } catch (IOException ex) {
-
-            throw new DSSException(ex);
         }
     }
 

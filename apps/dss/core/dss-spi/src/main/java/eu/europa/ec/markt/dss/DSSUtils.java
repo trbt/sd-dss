@@ -39,6 +39,7 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -65,7 +66,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-import java.util.logging.Level;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -173,6 +173,11 @@ public final class DSSUtils {
 
 	private static final CertificateFactory certificateFactory;
 	public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
+	/**
+	 * This date is used in the deterministic identifier computation when the signing time is unknown.
+	 */
+	private static final Date deterministicDate = DSSUtils.getUtcDate(1970, 04, 23);
 
 	private static MessageDigest sha1Digester;
 
@@ -1542,7 +1547,7 @@ public final class DSSUtils {
 	}
 
 	public static void saveToFile(final byte[] bytes, final File file) throws DSSException {
-            file.getParentFile().mkdirs();
+		file.getParentFile().mkdirs();
 		try {
 
 			final FileOutputStream fos = new FileOutputStream(file);
@@ -1638,7 +1643,7 @@ public final class DSSUtils {
 		Date signingTime_ = signingTime;
 		if (signingTime_ == null) {
 
-			signingTime_ = new Date();
+			signingTime_ = deterministicDate;
 		}
 		calendar.setTime(signingTime_);
 
@@ -1665,9 +1670,10 @@ public final class DSSUtils {
 
 	public static long toLong(final byte[] bytes) {
 
+		// Long.valueOf(new String(bytes)).longValue();
 		ByteBuffer buffer = ByteBuffer.allocate(8);
 		buffer.put(bytes, 0, Long.SIZE / 8);
-		// TODO: (Bob: 2014 Jan 22) To be checked if it is nit platform dependent?
+		// TODO: (Bob: 2014 Jan 22) To be checked if it is not platform dependent?
 		buffer.flip();//need flip
 		return buffer.getLong();
 	}
@@ -2328,6 +2334,23 @@ public final class DSSUtils {
 	}
 
 	/**
+	 * This method returns the {@code X500Principal} corresponding to the given string or {@code null} if the conversion is not possible.
+	 *
+	 * @param x500PrincipalString  a {@code String} representation of the {@code X500Principal}
+	 * @return {@code X500Principal} or null
+	 */
+	public static  X500Principal getX500PrincipalOrNull(final String x500PrincipalString) {
+
+		try {
+			final X500Principal x500Principal = new X500Principal(x500PrincipalString);
+			return x500Principal;
+		} catch (Exception e) {
+			LOG.warn(e.getMessage());
+		}
+		return null;
+	}
+
+	/**
 	 * This method compares two {@code X500Principal}s. {@code X500Principal.CANONICAL} and {@code X500Principal.RFC2253} forms are compared.
 	 * TODO: (Bob: 2014 Feb 20) To be investigated why the standard equals does not work!?
 	 *
@@ -2389,6 +2412,8 @@ public final class DSSUtils {
 	}
 
 	/**
+	 * The distinguished name is regenerated to avoid problems related to the {@code X500Principal} encoding.
+	 *
 	 * @param x509Certificate
 	 * @return
 	 */
@@ -2796,4 +2821,35 @@ public final class DSSUtils {
 		// return byte array, not string. Callers can convert to string.
 		return result;
 	}
+
+	public static void copyFile(final String path, final File sourceFile, final File destinationFile) throws IOException {
+
+		final File destinationPath = new File(path);
+		if (!destinationPath.exists()) {
+			destinationPath.mkdirs();
+			destinationFile.createNewFile();
+		}
+
+		FileChannel source = null;
+		FileChannel destination = null;
+
+		try {
+			source = new FileInputStream(sourceFile).getChannel();
+			destination = new FileOutputStream(destinationFile).getChannel();
+			destination.transferFrom(source, 0, source.size());
+		} finally {
+			if (source != null) {
+				source.close();
+			}
+			if (destination != null) {
+				destination.close();
+			}
+		}
+	}
+
+	public static byte[] toByteArray(final long longValue) {
+
+		return String.valueOf(longValue).getBytes();
+	}
 }
+

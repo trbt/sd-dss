@@ -19,6 +19,7 @@
  */
 package eu.europa.ec.markt.dss.applet.view.validationpolicy;
 
+import com.jgoodies.binding.value.ValueModel;
 import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
@@ -28,13 +29,27 @@ import eu.europa.ec.markt.dss.applet.util.ResourceUtils;
 import eu.europa.ec.markt.dss.applet.wizard.validationpolicy.ValidationPolicyWizardController;
 import eu.europa.ec.markt.dss.commons.swing.mvc.applet.AppletCore;
 import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardView;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicy;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import javax.swing.*;
+import javax.xml.transform.Source;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  *
@@ -53,8 +68,10 @@ public class SaveView extends WizardView<ValidationPolicyModel, ValidationPolicy
     private static final String I18N_BROWSE = ResourceUtils.getI18n("BROWSE");
 
 
+    private final JTextArea validationArea;
     private final JLabel fileTargetLabel;
     private final JButton selectFileTarget;
+    private final JScrollPane scrollPane;
 
 
     /**
@@ -66,6 +83,13 @@ public class SaveView extends WizardView<ValidationPolicyModel, ValidationPolicy
      */
     public SaveView(AppletCore core, ValidationPolicyWizardController controller, ValidationPolicyModel model) {
         super(core, controller, model);
+
+        validationArea = new JTextArea();
+        validationArea.setColumns(10);
+        validationArea.setRows(10);
+        scrollPane = new JScrollPane(validationArea);
+        validationArea.setForeground(Color.ORANGE);
+        validationArea.setEditable(false);
         fileTargetLabel = ComponentFactory.createLabel(I18N_NO_FILE_SELECTED);
         selectFileTarget = ComponentFactory.createFileChooser(I18N_BROWSE, true, new SelectFileAEventListener());
     }
@@ -132,6 +156,27 @@ public class SaveView extends WizardView<ValidationPolicyModel, ValidationPolicy
     public void doInit() {
         final File targetFile = getModel().getTargetFile();
         fileTargetLabel.setText(targetFile != null ? targetFile.getName() : I18N_NO_FILE_SELECTED);
+        SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema") ;
+
+        String validationErrors = "";
+        final ValidationPolicy validationPolicy = getModel().getValidationPolicy();
+        Document document = validationPolicy.getDocument();
+        try {
+            InputStream stream = validationPolicy.getSourceXSD().openStream();
+            InputSource sourceentree = new InputSource(stream);
+            SAXSource sourceXsd = new SAXSource(sourceentree);
+
+            Schema schema = factory.newSchema(sourceXsd);
+            Validator validator = schema.newValidator() ;
+            Source input = new DOMSource(document);
+            validator.validate(input);
+        } catch (SAXException e) {
+            validationErrors = e.getMessage();
+        } catch (IOException e) {
+            validationErrors = e.getMessage();
+        }
+        validationArea.setText(validationErrors);
+        scrollPane.setVisible(!validationErrors.equals(""));
     }
 
     /*
@@ -141,13 +186,14 @@ public class SaveView extends WizardView<ValidationPolicyModel, ValidationPolicy
      */
     @Override
     protected Container doLayout() {
-        final FormLayout layout = new FormLayout("5dlu, pref, 5dlu, pref, 5dlu ,pref:grow ,5dlu", "5dlu, pref, 5dlu, pref, 5dlu");
+        final FormLayout layout = new FormLayout("5dlu, pref, 5dlu, pref, 5dlu ,pref:grow ,5dlu, fill:default:grow, 5dlu", "5dlu, pref, 5dlu, pref, 5dlu, fill:default:grow, 5dlu");
         final PanelBuilder builder = ComponentFactory.createBuilder(layout);
         final CellConstraints cc = new CellConstraints();
 
         builder.addSeparator(I18N_SAVE_TO_FILE, cc.xyw(2, 2, 5));
         builder.add(selectFileTarget, cc.xy(2, 4));
         builder.add(fileTargetLabel, cc.xyw(4, 4, 3));
+        builder.add(scrollPane, cc.xywh(2,5,8,3));
         return ComponentFactory.createPanel(builder);
     }
 

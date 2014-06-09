@@ -38,17 +38,15 @@ public class ValidationResourceManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ValidationResourceManager.class);
 
-    private static Marshaller marshaller;
-
     public static String defaultPolicyConstraintsLocation = "/102853/policy/constraint.xml";
+    public static String defaultPolicyXsdLocation = "/102853/policy/policy.xsd";
+
+    private static JAXBContext jaxbContext;
 
     static {
 
         try {
-
-            final JAXBContext jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
-            marshaller = jaxbContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+        	  jaxbContext = JAXBContext.newInstance(ObjectFactory.class);
         } catch (JAXBException e) {
             throw new DSSException(e);
         }
@@ -139,6 +137,8 @@ public class ValidationResourceManager {
         try {
 
             final Document diagnosticData = DSSXMLUtils.buildDOM();
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
             marshaller.marshal(diagnosticDataJB, diagnosticData);
             return diagnosticData;
         } catch (JAXBException e) {

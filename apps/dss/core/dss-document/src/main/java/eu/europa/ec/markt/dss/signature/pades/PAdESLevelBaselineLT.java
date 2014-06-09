@@ -43,17 +43,17 @@ import eu.europa.ec.markt.dss.signature.pdf.PdfArray;
 import eu.europa.ec.markt.dss.signature.pdf.PdfDict;
 import eu.europa.ec.markt.dss.signature.pdf.PdfObjFactory;
 import eu.europa.ec.markt.dss.signature.pdf.PdfStream;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
-import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.OCSPToken;
-import eu.europa.ec.markt.dss.validation102853.SignatureValidationContext;
+import eu.europa.ec.markt.dss.validation102853.ValidationContext;
 import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 import eu.europa.ec.markt.dss.validation102853.pades.PAdESSignature;
 import eu.europa.ec.markt.dss.validation102853.pades.PDFDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 
 /**
  * Extend a PAdES extension up to LTV.
@@ -189,7 +189,7 @@ class PAdESLevelBaselineLT implements SignatureExtension {
 
         try {
             final CAdESSignature cadesSignature = pAdESSignature.getCAdESSignature();
-            final SignatureValidationContext validationContext = cadesSignature.getSignatureValidationContext(certificateVerifier);
+            final ValidationContext validationContext = cadesSignature.getSignatureValidationContext(certificateVerifier);
             final DefaultAdvancedSignature.RevocationDataForInclusion revocationsForInclusionInProfileLT = cadesSignature.getRevocationDataForInclusion(validationContext);
 
             for (final CRLToken crlToken : revocationsForInclusionInProfileLT.crlTokens) {

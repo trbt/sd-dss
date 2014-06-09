@@ -36,7 +36,7 @@ import eu.europa.ec.markt.dss.DSSUtils;
 /**
  * Abstract class that helps to implement an OCSPSource with an already loaded list of BasicOCSPResp
  *
- * @version $Revision: 3573 $ - $Date: 2014-03-07 06:56:00 +0100 (Fri, 07 Mar 2014) $
+ * @version $Revision: 3966 $ - $Date: 2014-05-25 19:32:19 +0200 (Sun, 25 May 2014) $
  */
 
 public abstract class OfflineOCSPSource implements OCSPSource {
@@ -51,8 +51,8 @@ public abstract class OfflineOCSPSource implements OCSPSource {
          * RFC 2560:<br>
          * CertID ::= SEQUENCE {<br>
          * hashAlgorithm AlgorithmIdentifier,<br>
-         * issuerNameHash OCTET STRING, -- Hash of Issuer’s DN<br>
-         * issuerKeyHash OCTET STRING, -- Hash of Issuers public key<br>
+         * issuerNameHash OCTET STRING, -- Hash of Issuer's DN<br>
+         * issuerKeyHash OCTET STRING, -- Hash of Issuer's public key<br>
          * serialNumber CertificateSerialNumber }<br>
          *
          * ... The hash algorithm used for both these hashes, is identified in hashAlgorithm. serialNumber is the

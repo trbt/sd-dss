@@ -34,6 +34,8 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinder;
+import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinderFactory;
 
 /**
  * Validator of XML Signed document
@@ -43,72 +45,84 @@ import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
 
 public class XMLDocumentValidator extends SignedDocumentValidator {
 
-    /**
-     * This variable contains the list of {@code XPathQueryHolder} adapted to the specific signature schema.
-     */
-    protected List<XPathQueryHolder> xPathQueryHolders;
+	/**
+	 * This variable contains the list of {@code XPathQueryHolder} adapted to the specific signature schema.
+	 */
+	protected List<XPathQueryHolder> xPathQueryHolders;
 
-    protected Document rootElement;
+	protected Document rootElement;
 
-    /**
-     * The default constructor for XMLDocumentValidator. The created instance is initialised with default {@code XPathQueryHolder} and {@code XAdES111XPathQueryHolder}.
-     *
-     * @param dssDocument The instance of {@code DSSDocument} to validate
-     * @throws DSSException
-     */
-    public XMLDocumentValidator(final DSSDocument dssDocument) throws DSSException {
+	/**
+	 * The default constructor for XMLDocumentValidator. The created instance is initialised with default {@code XPathQueryHolder} and {@code XAdES111XPathQueryHolder}.
+	 *
+	 * @param dssDocument The instance of {@code DSSDocument} to validate
+	 * @throws DSSException
+	 */
+	public XMLDocumentValidator(final DSSDocument dssDocument) throws DSSException {
 
-        this.document = dssDocument;
-        this.rootElement = DSSXMLUtils.buildDOM(dssDocument);
+		xadesSignatureScopeFinder = SignatureScopeFinderFactory.geInstance(XAdESSignature.class);
+		this.document = dssDocument;
+		this.rootElement = DSSXMLUtils.buildDOM(dssDocument);
 
-        xPathQueryHolders = new ArrayList<XPathQueryHolder>();
-        final XAdES111XPathQueryHolder xades111xPathQueryHolder = new XAdES111XPathQueryHolder();
-        xPathQueryHolders.add(xades111xPathQueryHolder);
-        final XPathQueryHolder xPathQueryHolder = new XPathQueryHolder();
-        xPathQueryHolders.add(xPathQueryHolder);
-    }
+		xPathQueryHolders = new ArrayList<XPathQueryHolder>();
 
-    @Override
-    public List<AdvancedSignature> getSignatures() {
+		final XAdES111XPathQueryHolder xades111xPathQueryHolder = new XAdES111XPathQueryHolder();
+		xPathQueryHolders.add(xades111xPathQueryHolder);
 
-        if (signatures != null) {
-            return signatures;
-        }
-        signatures = new ArrayList<AdvancedSignature>();
-        final NodeList signatureNodeList = rootElement.getElementsByTagNameNS(XMLSignature.XMLNS, XPathQueryHolder.XMLE_SIGNATURE);
-        for (int ii = 0; ii < signatureNodeList.getLength(); ii++) {
+		final XPathQueryHolder xades122XPathQueryHolder = new XAdES122XPathQueryHolder();
+		xPathQueryHolders.add(xades122XPathQueryHolder);
 
-            final Element signatureEl = (Element) signatureNodeList.item(ii);
-            final XAdESSignature xadesSignature = new XAdESSignature(signatureEl, xPathQueryHolders, validationCertPool);
-            signatures.add(xadesSignature);
-        }
-        return signatures;
-    }
+		final XPathQueryHolder xPathQueryHolder = new XPathQueryHolder();
+		xPathQueryHolders.add(xPathQueryHolder);
+	}
 
-    /**
-     * This getter returns the {@code XPathQueryHolder}
-     *
-     * @return
-     */
-    public List<XPathQueryHolder> getXPathQueryHolder() {
-        return xPathQueryHolders;
-    }
+	@Override
+	public List<AdvancedSignature> getSignatures() {
 
-    /**
-     * This adds a {@code XPathQueryHolder}. This is useful when the signature follows a particular schema.
-     *
-     * @param xPathQueryHolder
-     */
-    public void addXPathQueryHolder(final XPathQueryHolder xPathQueryHolder) {
+		if (signatures != null) {
+			return signatures;
+		}
+		signatures = new ArrayList<AdvancedSignature>();
+		final NodeList signatureNodeList = rootElement.getElementsByTagNameNS(XMLSignature.XMLNS, XPathQueryHolder.XMLE_SIGNATURE);
+		for (int ii = 0; ii < signatureNodeList.getLength(); ii++) {
 
-        xPathQueryHolders.add(xPathQueryHolder);
-    }
+			final Element signatureEl = (Element) signatureNodeList.item(ii);
+			final XAdESSignature xadesSignature = new XAdESSignature(signatureEl, xPathQueryHolders, validationCertPool);
+			signatures.add(xadesSignature);
+		}
+		return signatures;
+	}
 
-    /**
-     * Removes all of the elements from the list of query holders. The list will be empty after this call returns.
-     */
-    public void clearQueryHolders() {
+	/**
+	 * This getter returns the {@code XPathQueryHolder}
+	 *
+	 * @return
+	 */
+	public List<XPathQueryHolder> getXPathQueryHolder() {
+		return xPathQueryHolders;
+	}
 
-        xPathQueryHolders.clear();
-    }
+	/**
+	 * This adds a {@code XPathQueryHolder}. This is useful when the signature follows a particular schema.
+	 *
+	 * @param xPathQueryHolder
+	 */
+	public void addXPathQueryHolder(final XPathQueryHolder xPathQueryHolder) {
+
+		xPathQueryHolders.add(xPathQueryHolder);
+	}
+
+	/**
+	 * Removes all of the elements from the list of query holders. The list will be empty after this call returns.
+	 */
+	public void clearQueryHolders() {
+
+		xPathQueryHolders.clear();
+	}
+
+	@Override
+	protected SignatureScopeFinder getSignatureScopeFinder() {
+		return xadesSignatureScopeFinder;
+	}
+
 }

@@ -56,7 +56,7 @@ public class CommonCertificateSource implements CertificateSource {
      */
     public CommonCertificateSource() {
 
-        certPool = new CertificatePool();
+        certPool = new CertificatePoolImpl();
     }
 
     /**

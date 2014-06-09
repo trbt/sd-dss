@@ -31,6 +31,8 @@ import eu.europa.ec.markt.dss.signature.pdf.PdfSignatureInfo;
 import eu.europa.ec.markt.dss.signature.pdf.PdfSignatureValidationCallback;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinder;
+import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinderFactory;
 
 /**
  * Validation of PDF document.
@@ -40,43 +42,48 @@ import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
 
 public class PDFDocumentValidator extends SignedDocumentValidator {
 
-    // private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PDFDocumentValidator.class.getName());
+	// private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PDFDocumentValidator.class.getName());
 
-    final PDFSignatureService pdfSignatureService;
+	final PDFSignatureService pdfSignatureService;
 
-    /**
-     * The default constructor for PDFDocumentValidator.
-     */
-    public PDFDocumentValidator(final DSSDocument document) {
+	/**
+	 * The default constructor for PDFDocumentValidator.
+	 */
+	public PDFDocumentValidator(final DSSDocument document) {
 
-        this.document = document;
-        pdfSignatureService = PdfObjFactory.getInstance().newPAdESSignatureService();
-    }
+		padesSignatureScopeFinder = SignatureScopeFinderFactory.geInstance(PAdESSignature.class);
+		this.document = document;
+		pdfSignatureService = PdfObjFactory.getInstance().newPAdESSignatureService();
+	}
 
-    @Override
-    public List<AdvancedSignature> getSignatures() {
+	@Override
+	public List<AdvancedSignature> getSignatures() {
 
-        if (signatures != null) {
-            return signatures;
-        }
-        signatures = new ArrayList<AdvancedSignature>();
-        // TODO: (Bob: 2014 Feb 27) to be replaced document.openStream() by document
-        pdfSignatureService.validateSignatures(validationCertPool, document.openStream(), new PdfSignatureValidationCallback() {
+		if (signatures != null) {
+			return signatures;
+		}
+		signatures = new ArrayList<AdvancedSignature>();
+		// TODO: (Bob: 2014 Feb 27) to be replaced document.openStream() by document
+		pdfSignatureService.validateSignatures(validationCertPool, document.openStream(), new PdfSignatureValidationCallback() {
 
-            @Override
-            public void validate(final PdfSignatureInfo pdfSignatureInfo) {
-                try {
-                    if (pdfSignatureInfo.getSignatureDictionary() != null) {
-                        // TODO: (Bob: 2014 Feb 27) to be replaced: new PAdESSignature(document, ... by new PAdESSignature(document,pdfSignatureInfo,validationCertPool)
-                        final PAdESSignature padesSignature = new PAdESSignature(document, pdfSignatureInfo.getDocumentDictionary(), pdfSignatureInfo.getOuterCatalog(),
-                              pdfSignatureInfo.getSignatureDictionary(), pdfSignatureInfo, validationCertPool);
-                        signatures.add(padesSignature);
-                    }
-                } catch (Exception e) {
-                    throw new DSSException(e);
-                }
-            }
-        });
-        return signatures;
-    }
+			@Override
+			public void validate(final PdfSignatureInfo pdfSignatureInfo) {
+				try {
+					if (pdfSignatureInfo.getCades() != null) {
+						final PAdESSignature padesSignature = new PAdESSignature(document, pdfSignatureInfo, validationCertPool);
+						signatures.add(padesSignature);
+					}
+				} catch (Exception e) {
+					throw new DSSException(e);
+				}
+			}
+		});
+		return signatures;
+	}
+
+	@Override
+	protected SignatureScopeFinder getSignatureScopeFinder() {
+		return padesSignatureScopeFinder;
+	}
+
 }

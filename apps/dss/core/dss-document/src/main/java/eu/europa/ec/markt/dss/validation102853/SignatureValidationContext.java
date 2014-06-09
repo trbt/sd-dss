@@ -29,6 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -37,15 +42,18 @@ import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
+import eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo;
 import eu.europa.ec.markt.dss.validation102853.crl.CRLSource;
 import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
-import eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo;
 
 /**
  * During the validation of a signature, the software retrieves different X509 artifacts like Certificate, CRL and OCSP Response. The SignatureValidationContext is a "cache" for
  * one validation request that contains every object retrieved so far.
+ * <p/>
+ * The validate method is multi-threaded, using an CachedThreadPool from ExecutorService, to parallelize fetching Certificates from AIA and online revocation information.
  *
  * @version $Revision: 1839 $ - $Date: 2013-04-04 17:40:51 +0200 (Thu, 04 Apr 2013) $
  */
@@ -54,9 +62,17 @@ public class SignatureValidationContext implements ValidationContext {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SignatureValidationContext.class);
 
+	/**
+	 * Each unit is approximately 5 seconds
+	 */
+	private final int MAX_TIMEOUT = 4;
+
 	private final Set<CertificateToken> processedCertificates = new HashSet<CertificateToken>();
 	private final Set<RevocationToken> processedRevocations = new HashSet<RevocationToken>();
+
 	private final Set<TimestampToken> processedTimestamps = new HashSet<TimestampToken>();
+
+	static int threadCount = 0;
 
 	/**
 	 * The data loader used to access AIA certificate source.
@@ -66,9 +82,7 @@ public class SignatureValidationContext implements ValidationContext {
 	/**
 	 * The certificate pool which encapsulates all certificates used during the validation process and extracted from all used sources
 	 */
-	protected CertificatePool validationCertPool;
-
-	protected AdvancedSignature signature;
+	protected CertificatePool validationCertificatePool;
 
 	private final Map<Token, Boolean> tokensToProcess = new HashMap<Token, Boolean>();
 
@@ -79,25 +93,10 @@ public class SignatureValidationContext implements ValidationContext {
 	private CRLSource crlSource;
 
 	// CRLs from the signature.
-	private CRLSource signCRLSource;
+	private CRLSource signatureCRLSource;
 
 	// OCSP from the signature.
-	private OCSPSource signOCSPSource;
-
-	// Enclosed content timestamps.
-	private List<TimestampToken> contentTimestamps;
-
-	// Enclosed signature timestamps.
-	private List<TimestampToken> signatureTimestamps;
-
-	// Enclosed SignAndRefs timestamps.
-	private List<TimestampToken> sigAndRefsTimestamps;
-
-	// Enclosed RefsOnly timestamps.
-	private List<TimestampToken> refsOnlyTimestamps;
-
-	// Enclosed Archive timestamps.
-	private List<TimestampToken> archiveTimestamps;
+	private OCSPSource signatureOCSPSource;
 
 	// The digest value of the certification path references and the revocation status references.
 	private List<TimestampReference> timestampedReferences;
@@ -107,96 +106,63 @@ public class SignatureValidationContext implements ValidationContext {
 	 */
 	protected Date currentTime = new Date();
 
+
 	/**
-	 * This constructor is used when the whole signature need to be validated.
-	 *
-	 * @param signature          The signature to be validated
-	 * @param certVerifier       The trusted certificates verifier (using the TSL as list of trusted certificates).
-	 * @param validationCertPool The pool of certificates used during the validation process
+	 * A unique thread can be used to disable the parallel fetching:
+	 * final ExecutorService executorService = Executors.newFixedThreadPool(1);
 	 */
-	public SignatureValidationContext(final AdvancedSignature signature, final CertificateVerifier certVerifier, final CertificatePool validationCertPool) {
+	private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-		if (signature == null) {
+	/**
+	 * This constructor is used during the signature creation process. The certificate pool is created within initialize method.
+	 */
+	public SignatureValidationContext() {
 
-			throw new DSSException("The signature to validate cannot be null.");
+	}
+
+	/**
+	 * This constructor is used when a signature need to be validated.
+	 *
+	 * @param validationCertificatePool The pool of certificates used during the validation process
+	 */
+	public SignatureValidationContext(final CertificatePool validationCertificatePool) {
+
+		if (validationCertificatePool == null) {
+			throw new DSSNullException(CertificatePool.class);
 		}
-		if (certVerifier == null) {
+		this.validationCertificatePool = validationCertificatePool;
+	}
 
-			throw new DSSException("The certificate verifier cannot be null.");
+	/**
+	 * @param certificateVerifier The certificates verifier (eg: using the TSL as list of trusted certificates).
+	 */
+	@Override
+	public void initialize(final CertificateVerifier certificateVerifier) {
+
+		if (certificateVerifier == null) {
+			throw new DSSNullException(CertificateVerifier.class);
 		}
-		if (validationCertPool == null) {
+		if (validationCertificatePool == null) {
 
-			throw new DSSException("The certificate pool cannot be null.");
+			validationCertificatePool = certificateVerifier.createValidationPool();
 		}
-
-		// this variable need to be preserved for timestamp data computation.
-		this.signature = signature;
-
-		this.crlSource = certVerifier.getCrlSource();
-		this.ocspSource = certVerifier.getOcspSource();
-		this.dataLoader = certVerifier.getDataLoader();
-
-		this.signCRLSource = signature.getCRLSource();
-		this.signOCSPSource = signature.getOCSPSource();
-
-		contentTimestamps = signature.getContentTimestamps();
-
-		signatureTimestamps = signature.getSignatureTimestamps();
-
-		sigAndRefsTimestamps = signature.getTimestampsX1();
-
-		refsOnlyTimestamps = signature.getTimestampsX2();
-
-		this.timestampedReferences = signature.getTimestampedReferences();
-
-		this.archiveTimestamps = signature.getArchiveTimestamps();
-
-		this.validationCertPool = validationCertPool;
-		if (LOG.isInfoEnabled()) {
-
-			LOG.info("+ New ValidationContext created.");
-		}
+		this.crlSource = certificateVerifier.getCrlSource();
+		this.ocspSource = certificateVerifier.getOcspSource();
+		this.dataLoader = certificateVerifier.getDataLoader();
+		this.signatureCRLSource = certificateVerifier.getSignatureCRLSource();
+		this.signatureOCSPSource = certificateVerifier.getSignatureOCSPSource();
 	}
 
 	public Date getCurrentTime() {
 		return currentTime;
 	}
 
-	public void setCurrentTime(final Date currentTime) {
+	public void setCurrentTime(final Date currentTime) throws DSSException {
+
+		if (currentTime == null) {
+			throw new DSSNullException(Date.class, "currentTime");
+		}
 		this.currentTime = currentTime;
-	}
-
-	/**
-	 * This constructor is used when only a certificate need to be validated.
-	 *
-	 * @param certificateVerifier The certificates verifier (eg: using the TSL as list of trusted certificates).
-	 */
-	public SignatureValidationContext(final CertificateVerifier certificateVerifier) {
-
-		if (certificateVerifier == null) {
-
-			throw new DSSException("The certificate verifier cannot be null.");
-		}
-
-		this.crlSource = certificateVerifier.getCrlSource();
-		this.ocspSource = certificateVerifier.getOcspSource();
-		this.dataLoader = certificateVerifier.getDataLoader();
-		this.validationCertPool = SignedDocumentValidator.createValidationPool(certificateVerifier);
-		if (LOG.isInfoEnabled()) {
-
-			LOG.info("+ New ValidationContext created for a certificate.");
-		}
-	}
-
-	/**
-	 * This function sets the signing certificate to validate.
-	 *
-	 * @param certificateToValidate certificate to validate
-	 */
-	@Override
-	public void setCertificateToValidate(final CertificateToken certificateToValidate) {
-
-		addCertificateTokenForVerification(certificateToValidate);
 	}
 
 	/**
@@ -205,16 +171,20 @@ public class SignatureValidationContext implements ValidationContext {
 	 * @return token to verify or null
 	 */
 	private Token getNotYetVerifiedToken() {
+		//		LOG.debug("getNotYetVerifiedToken: trying to acquire synchronized block");
+		synchronized (tokensToProcess) {
+			//			LOG.debug("getNotYetVerifiedToken: acquired synchronized block");
+			for (final Entry<Token, Boolean> entry : tokensToProcess.entrySet()) {
 
-		for (final Entry<Token, Boolean> entry : tokensToProcess.entrySet()) {
+				if (entry.getValue() == null) {
 
-			if (entry.getValue() == null) {
-
-				entry.setValue(true);
-				return entry.getKey();
+					entry.setValue(true);
+					return entry.getKey();
+				}
 			}
+			//			LOG.debug("getNotYetVerifiedToken: almost left synchronized block");
+			return null;
 		}
-		return null;
 	}
 
 	/**
@@ -274,7 +244,7 @@ public class SignatureValidationContext implements ValidationContext {
 			issuerCert = DSSUtils.loadIssuerCertificate(token.getCertificate(), dataLoader);
 			if (issuerCert != null) {
 
-				final CertificateToken issuerCertToken = validationCertPool.getInstance(issuerCert, CertificateSourceType.AIA);
+				final CertificateToken issuerCertToken = validationCertificatePool.getInstance(issuerCert, CertificateSourceType.AIA);
 				if (token.isSignedBy(issuerCertToken)) {
 
 					return issuerCertToken;
@@ -301,7 +271,7 @@ public class SignatureValidationContext implements ValidationContext {
 	 */
 	private CertificateToken getIssuerFromPool(final Token token, final X500Principal issuerX500Principal) {
 
-		final List<CertificateToken> issuerCertList = validationCertPool.get(issuerX500Principal);
+		final List<CertificateToken> issuerCertList = validationCertificatePool.get(issuerX500Principal);
 		for (final CertificateToken issuerCertToken : issuerCertList) {
 
 			// We keep the first issuer that signs the certificate
@@ -321,18 +291,35 @@ public class SignatureValidationContext implements ValidationContext {
 	 */
 	private boolean addTokenForVerification(final Token token) {
 
-		if (token == null) {
+		final boolean traceEnabled = LOG.isTraceEnabled();
+		synchronized (tokensToProcess) {
 
-			return false;
-		}
-		if (tokensToProcess.containsKey(token)) {
+			if (traceEnabled) {
+				LOG.trace("addTokenForVerification: trying to acquire synchronized block");
+			}
+			try {
 
-			LOG.debug("Token was already in the list {}:{}", new Object[]{token.getClass().getSimpleName(), token.getAbbreviation()});
-			return false;
+				if (token == null) {
+					return false;
+				}
+				if (tokensToProcess.containsKey(token)) {
+
+					if (traceEnabled) {
+						LOG.trace("Token was already in the list {}:{}", new Object[]{token.getClass().getSimpleName(), token.getAbbreviation()});
+					}
+					return false;
+				}
+				tokensToProcess.put(token, null);
+				if (traceEnabled) {
+					LOG.trace("+ New {} to check: {}", new Object[]{token.getClass().getSimpleName(), token.getAbbreviation()});
+				}
+				return true;
+			} finally {
+				if (traceEnabled) {
+					LOG.trace("addTokenForVerification: almost left synchronized block");
+				}
+			}
 		}
-		tokensToProcess.put(token, null);
-		LOG.debug("+ New {} to check: {}", new Object[]{token.getClass().getSimpleName(), token.getAbbreviation()});
-		return true;
 	}
 
 	/**
@@ -340,7 +327,8 @@ public class SignatureValidationContext implements ValidationContext {
 	 *
 	 * @param revocationToken revocation token to verify
 	 */
-	private void addRevocationTokenForVerification(final RevocationToken revocationToken) {
+	@Override
+	public void addRevocationTokenForVerification(final RevocationToken revocationToken) {
 
 		if (addTokenForVerification(revocationToken)) {
 
@@ -360,7 +348,8 @@ public class SignatureValidationContext implements ValidationContext {
 	 *
 	 * @param certificateToken certificate token to verify
 	 */
-	private void addCertificateTokenForVerification(final CertificateToken certificateToken) {
+	@Override
+	public void addCertificateTokenForVerification(final CertificateToken certificateToken) {
 
 		if (addTokenForVerification(certificateToken)) {
 
@@ -380,7 +369,8 @@ public class SignatureValidationContext implements ValidationContext {
 	 *
 	 * @param timestampToken
 	 */
-	private void addTimestampTokenForVerification(final TimestampToken timestampToken) {
+	@Override
+	public void addTimestampTokenForVerification(final TimestampToken timestampToken) {
 
 		if (addTokenForVerification(timestampToken)) {
 
@@ -398,103 +388,105 @@ public class SignatureValidationContext implements ValidationContext {
 	@Override
 	public void validate() throws DSSException {
 
-		runValidation();
+		validateLoop();
+		try {
 
-		if (signature == null) {
-
-			// Only a certificate is validated
-			return;
-		}
-
-        /*
-         * This validates the signature timestamp tokensToProcess present in the signature.
-         */
-		for (final TimestampToken timestampToken : contentTimestamps) {
-
-			final byte[] timestampBytes = signature.getContentTimestampData(timestampToken);
-			timestampToken.matchData(timestampBytes);
-
-			addTimestampTokenForVerification(timestampToken);
-			runValidation();
-		}
-
-        /*
-         * This validates the signature timestamp tokensToProcess present in the signature.
-         */
-		for (final TimestampToken timestampToken : signatureTimestamps) {
-
-			final byte[] timestampBytes = signature.getSignatureTimestampData(timestampToken);
-			timestampToken.matchData(timestampBytes);
-
-			addTimestampTokenForVerification(timestampToken);
-			runValidation();
-		}
-
-        /*
-         * This validates the SigAndRefs timestamp tokensToProcess present in the signature.
-         */
-		for (final TimestampToken timestampToken : sigAndRefsTimestamps) {
-
-			final byte[] timestampBytes = signature.getTimestampX1Data(timestampToken);
-			timestampToken.matchData(timestampBytes);
-
-			addTimestampTokenForVerification(timestampToken);
-			runValidation();
-		}
-
-        /*
-         * This validates the RefsOnly timestamp tokensToProcess present in the signature.
-         */
-		for (final TimestampToken timestampToken : refsOnlyTimestamps) {
-
-			final byte[] timestampBytes = signature.getTimestampX2Data(timestampToken);
-			timestampToken.matchData(timestampBytes);
-
-			addTimestampTokenForVerification(timestampToken);
-			runValidation();
-		}
-
-      /*
-       * This validates the archive timestamp tokensToProcess present in the signature.
-       */
-		for (final TimestampToken timestampToken : archiveTimestamps) {
-
-			final byte[] timestampData = signature.getArchiveTimestampData(timestampToken);
-			timestampToken.matchData(timestampData);
-
-			addTimestampTokenForVerification(timestampToken);
-			runValidation();
+			LOG.debug(">>> MT ***DONE***");
+			executorService.shutdown();
+			executorService.awaitTermination(5, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
-	/*
-	 * Executes the validation process for not yet validated tokensToProcess.
-	 */
-	private void runValidation() throws DSSException {
+	private void validateLoop() {
 
-		final Token token = getNotYetVerifiedToken();
-		if (token == null) {
+		int threshold = 0;
+		int max_timeout = 0;
+		final ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executorService;
+		boolean exit = false;
+		boolean checkAgain = true;
+		do {
 
-			return;
+			final Token token = getNotYetVerifiedToken();
+			if (token != null) {
+
+				checkAgain = true;
+				try {
+
+					//					System.out.println("----------------------------------------------------");
+					//					System.out.println(" DSS_ID: " + token.getDSSId());
+					//					System.out.println("----------------------------------------------------");
+					final Task task = new Task(token);
+					executorService.submit(task);
+				} catch (RejectedExecutionException e) {
+					LOG.error(e.getMessage(), e);
+					throw new DSSException(e);
+				}
+			} else {
+
+				try {
+
+					Thread.sleep(5);
+					threshold++;
+					if (threshold > 1000) {
+
+						LOG.warn("{} active threads", threadPoolExecutor.getActiveCount());
+						LOG.warn("{} completed tasks", threadPoolExecutor.getCompletedTaskCount());
+						LOG.warn("{} waiting tasks", threadPoolExecutor.getQueue());
+						max_timeout++;
+						if (max_timeout == MAX_TIMEOUT) {
+							throw new DSSException("Operation aborted, the retrieval of the validation data takes too long.");
+						}
+						threshold = 0;
+					}
+				} catch (InterruptedException e) {
+					throw new DSSException(e);
+				}
+				final boolean threadPoolExecutorEmpty = !(threadPoolExecutor.getActiveCount() > 0 || threadPoolExecutor.getQueue().size() > 0);
+				exit = threadPoolExecutorEmpty && !checkAgain;
+				if (threadPoolExecutorEmpty) {
+					checkAgain = false;
+				}
+			}
+		} while (!exit);
+
+	}
+
+	class Task implements Runnable {
+
+		private final Token token;
+
+		public Task(final Token token) {
+
+			this.token = token;
 		}
-	  /*
-	   * Gets the issuer certificate of the Token and checks its signature
-       */
-		final CertificateToken issuerCertToken = getIssuerCertificate(token);
-		if (issuerCertToken != null) {
 
-			addCertificateTokenForVerification(issuerCertToken);
-		}
-		if (token instanceof CertificateToken) {
+		@Override
+		public void run() {
 
-			final RevocationToken revocationToken = getRevocationData((CertificateToken) token);
-			addRevocationTokenForVerification(revocationToken);
+			final int threadCount_ = threadCount++;
+			LOG.debug(">>> MT IN  [" + threadCount_ + "] DSS_ID: " + token.getDSSId());
+			/**
+			 * Gets the issuer certificate of the Token and checks its signature
+			 */
+			final CertificateToken issuerCertToken = getIssuerCertificate(token);
+			if (issuerCertToken != null) {
+
+				addCertificateTokenForVerification(issuerCertToken);
+			}
+			if (token instanceof CertificateToken) {
+
+				final RevocationToken revocationToken = getRevocationData((CertificateToken) token);
+				addRevocationTokenForVerification(revocationToken);
+			}
+			LOG.debug(">>> MT END [" + threadCount_ + "] DSS_ID: " + token.getDSSId());
 		}
-		runValidation();
 	}
 
 	/**
-	 * Retrieves the revocation data from signature (if exists) or from the online sources.
+	 * Retrieves the revocation data from signature (if exists) or from the online sources. The issuer certificate must be provided, the underlining library (bouncy castle) needs
+	 * it to build the request. This feature has an impact on the multi-threaded data retrieval.
 	 *
 	 * @param certToken
 	 * @return
@@ -503,7 +495,8 @@ public class SignatureValidationContext implements ValidationContext {
 
 		if (certToken.isSelfSigned() || certToken.isTrusted() || certToken.getIssuerToken() == null) {
 
-			// It is not possible to check the revocation data without its signing certificate or this is not needed for the trust anchor.
+			// It is not possible to check the revocation data without its signing certificate;
+			// This check is not needed for the trust anchor.
 			return null;
 		}
 		if (certToken.isOCSPSigning() && certToken.hasIdPkixOcspNoCheckExtension()) {
@@ -511,28 +504,24 @@ public class SignatureValidationContext implements ValidationContext {
 			certToken.extraInfo().add("OCSP check not needed: id-pkix-ocsp-nocheck extension present.");
 			return null;
 		}
-		//certToken.isOCSPSigning() &&
 
 		boolean checkOnLine = shouldCheckOnLine(certToken);
 		if (checkOnLine) {
 
-			final OCSPAndCRLCertificateVerifier onlineVerifier = new OCSPAndCRLCertificateVerifier(crlSource, ocspSource, validationCertPool);
+			final OCSPAndCRLCertificateVerifier onlineVerifier = new OCSPAndCRLCertificateVerifier(crlSource, ocspSource, validationCertificatePool);
 			final RevocationToken revocationToken = onlineVerifier.check(certToken);
 			if (revocationToken != null) {
 
 				return revocationToken;
 			}
 		}
-		final OCSPAndCRLCertificateVerifier offlineVerifier = new OCSPAndCRLCertificateVerifier(signCRLSource, signOCSPSource, validationCertPool);
+		final OCSPAndCRLCertificateVerifier offlineVerifier = new OCSPAndCRLCertificateVerifier(signatureCRLSource, signatureOCSPSource, validationCertificatePool);
 		final RevocationToken revocationToken = offlineVerifier.check(certToken);
 		return revocationToken;
 	}
 
 	private boolean shouldCheckOnLine(final CertificateToken certificateToken) {
 
-		if (currentTime == null) {
-			currentTime = new Date();
-		}
 		final boolean expired = certificateToken.isExpiredOn(currentTime);
 		if (!expired) {
 
@@ -600,35 +589,6 @@ public class SignatureValidationContext implements ValidationContext {
 	public Set<TimestampToken> getProcessedTimestamps() {
 
 		return Collections.unmodifiableSet(processedTimestamps);
-	}
-
-	@Override
-	public List<TimestampToken> getContentTimestamps() {
-		return Collections.unmodifiableList(contentTimestamps);
-	}
-
-	@Override
-	public List<TimestampToken> getTimestampTokens() {
-
-		return Collections.unmodifiableList(signatureTimestamps);
-	}
-
-	@Override
-	public List<TimestampToken> getSigAndRefsTimestamps() {
-
-		return Collections.unmodifiableList(sigAndRefsTimestamps);
-	}
-
-	@Override
-	public List<TimestampToken> getRefsOnlyTimestamps() {
-
-		return Collections.unmodifiableList(refsOnlyTimestamps);
-	}
-
-	@Override
-	public List<TimestampToken> getArchiveTimestamps() {
-
-		return Collections.unmodifiableList(archiveTimestamps);
 	}
 
 	/**

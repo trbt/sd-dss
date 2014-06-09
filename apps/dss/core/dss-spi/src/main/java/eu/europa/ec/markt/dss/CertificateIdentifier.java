@@ -45,6 +45,12 @@ public final class CertificateIdentifier {
      */
     private static int nextCertificateIdentifier = 1;
 
+
+    /**
+     * This boolean is used in testing context, to keep consistent ids for certificates between various test launches
+     */
+    private static boolean UNIQUE_IDENTIFIER = false;
+
     /**
      * This {@link LinkedHashMap} represents the association between the certificate unique identifier (certificate's
      * issuer distinguished name + "|" + certificate's serial number) and the DSS certificate's id.
@@ -54,6 +60,17 @@ public final class CertificateIdentifier {
     private CertificateIdentifier() {
     }
 
+    public static boolean isUniqueIdentifier() {
+        return UNIQUE_IDENTIFIER;
+    }
+
+    /**
+     * This method is used to keep consistent ids for certificates between various test launches
+     * @param uniqueIdentifier
+     */
+    public static void setUniqueIdentifier(boolean uniqueIdentifier) {
+        UNIQUE_IDENTIFIER = uniqueIdentifier;
+    }
     /**
      * Return the DSS certificate's unique id for a given {@link X509Certificate}. If the {@code cert} parameter is
      * null 0 is returned.
@@ -85,10 +102,14 @@ public final class CertificateIdentifier {
 
         Integer id = ids.get(key);
         if (id == null) {
-
-            id = nextCertificateIdentifier;
-            ids.put(key, id);
-            nextCertificateIdentifier++;
+            if (UNIQUE_IDENTIFIER) {
+                id = key.hashCode();
+                ids.put(key, id);
+            } else {
+                id = nextCertificateIdentifier;
+                ids.put(key, id);
+                nextCertificateIdentifier++;
+            }
         }
         return id;
     }

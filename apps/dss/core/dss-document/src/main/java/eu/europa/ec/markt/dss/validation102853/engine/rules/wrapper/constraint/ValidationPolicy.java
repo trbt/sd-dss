@@ -19,14 +19,20 @@
  */
 package eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint;
 
+import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
+import org.w3c.dom.Document;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.transform.sax.SAXSource;
+import java.net.URL;
+import java.util.HashMap;
 
 /**
- * In memory representation on the XML Validation Policy Constraint document
+ * In memory representation on the XML Validation Policy Constraint document and XSD
  * <p/>
  * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
@@ -34,135 +40,37 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
  * @version $Revision: 1016 $ - $Date: 2011-06-17 15:30:45 +0200 (Fri, 17 Jun 2011) $
  */
-@XmlAccessorType(XmlAccessType.NONE)
-@XmlRootElement(name = "ConstraintsParameters")
+
 public class ValidationPolicy {
+    private Document document;
+    XmlDom xmlDom;
+    HashMap<String, Object> treeResult;
+    private final URL sourceXSD;
 
-    @XmlAttribute(name = "Name", required = false)
-    private String name;
-
-    @XmlElement(name = "Description", required = false)
-    private String description;
-
-    @XmlElement(name = "RevocationFreshness", required = false)
-    private DurationValue revocationFreshness;
-
-    @XmlElement(name = "TimestampDelay", required = false)
-    private DurationValue timestampDelay;
-
-    @XmlElement(name = "AcceptablePolicies", required = false)
-    private AcceptablePolicies acceptablePolicies;
-
-    @XmlElement(name = "Cryptographic", required = false)
-    private Cryptographic cryptographic;
-
-    @XmlElement(name = "SigningCertificateChain", required = false)
-    @NonVisual
-    private SigningCertificateChain signingCertificateChain;
-
-    @XmlElement(name = "MandatedSignedQProperties", required = false)
-    private MandatedSignedQProperties mandatedSignedQProperties;
-
-    @XmlElement(name = "MandatedUnsignedQProperties", required = false)
-    private MandatedUnsignedQProperties mandatedUnsignedQProperties;
-
-    @XmlElement(name = "OnRoles", required = false)
-    @NonVisual
-    private OnRoles onRoles;
-
-    public String getName() {
-        return name;
+    public ValidationPolicy(XmlDom xmlDom, URL sourceXSD, HashMap<String, Object> treeResult, Document document) {
+        this.xmlDom = xmlDom;
+        this.treeResult = treeResult;
+        this.document = document;
+        this.sourceXSD = sourceXSD;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public Document getDocument() {
+        return document;
     }
 
-    public DurationValue getRevocationFreshness() {
-        return revocationFreshness;
+    public XmlDom getXmlDom() {
+        return xmlDom;
     }
 
-    public void setRevocationFreshness(DurationValue revocationFreshness) {
-        this.revocationFreshness = revocationFreshness;
+    public void setXmlDom(XmlDom xmlDom) {
+        this.xmlDom = xmlDom;
     }
 
-    public DurationValue getTimestampDelay() {
-        return timestampDelay;
+    public HashMap<String, Object> getTreeResult() {
+        return treeResult;
     }
 
-    public void setTimestampDelay(DurationValue timestampDelay) {
-        this.timestampDelay = timestampDelay;
-    }
-
-    public AcceptablePolicies getAcceptablePolicies() {
-        return acceptablePolicies;
-    }
-
-    public void setAcceptablePolicies(AcceptablePolicies acceptablePolicies) {
-        this.acceptablePolicies = acceptablePolicies;
-    }
-
-    public Cryptographic getCryptographic() {
-        return cryptographic;
-    }
-
-    public void setCryptographic(Cryptographic cryptographic) {
-        this.cryptographic = cryptographic;
-    }
-
-    public OnRoles getOnRoles() {
-        return onRoles;
-    }
-
-    public void setOnRoles(OnRoles onRoles) {
-        this.onRoles = onRoles;
-    }
-
-    public MandatedUnsignedQProperties getMandatedUnsignedQProperties() {
-        return mandatedUnsignedQProperties;
-    }
-
-    public void setMandatedUnsignedQProperties(MandatedUnsignedQProperties mandatedUnsignedQProperties) {
-        this.mandatedUnsignedQProperties = mandatedUnsignedQProperties;
-    }
-
-    public MandatedSignedQProperties getMandatedSignedQProperties() {
-        return mandatedSignedQProperties;
-    }
-
-    public void setMandatedSignedQProperties(MandatedSignedQProperties mandatedSignedQProperties) {
-        this.mandatedSignedQProperties = mandatedSignedQProperties;
-    }
-
-    public SigningCertificateChain getSigningCertificateChain() {
-        return signingCertificateChain;
-    }
-
-    public void setSigningCertificateChain(SigningCertificateChain signingCertificateChain) {
-        this.signingCertificateChain = signingCertificateChain;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    @Override
-    public String toString() {
-        return "ValidationPolicy{" +
-              "acceptablePolicies=" + acceptablePolicies +
-              ", name='" + name + '\'' +
-              ", description='" + description + '\'' +
-              ", revocationFreshness=" + revocationFreshness +
-              ", timestampDelay=" + timestampDelay +
-              ", cryptographic=" + cryptographic +
-              ", signingCertificateChain=" + signingCertificateChain +
-              ", mandatedSignedQProperties=" + mandatedSignedQProperties +
-              ", mandatedUnsignedQProperties=" + mandatedUnsignedQProperties +
-              ", onRoles=" + onRoles +
-              '}';
+    public URL getSourceXSD() {
+        return sourceXSD;
     }
 }

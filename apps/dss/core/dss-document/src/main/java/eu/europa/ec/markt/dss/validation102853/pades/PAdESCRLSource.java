@@ -23,24 +23,22 @@ package eu.europa.ec.markt.dss.validation102853.pades;
 import java.security.cert.X509CRL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-import eu.europa.ec.markt.dss.DSSPDFUtils;
-import eu.europa.ec.markt.dss.DSSUtils;
-import eu.europa.ec.markt.dss.signature.pdf.PdfArray;
-import eu.europa.ec.markt.dss.signature.pdf.PdfDict;
-import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
+import eu.europa.ec.markt.dss.signature.pdf.pdfbox.PdfDssDict;
 import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
+import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
 
 /**
  * CRLSource that will retrieve the CRL from a PAdES Signature
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3964 $ - $Date: 2014-05-23 17:19:22 +0200 (Fri, 23 May 2014) $
  */
 
 public class PAdESCRLSource extends OfflineCRLSource {
 
     private final CAdESSignature cadesSignature;
-    private final PdfDict dssCatalog;
+    private final PdfDssDict dssCatalog;
 
     /**
      * The default constructor for PAdESCRLSource.
@@ -48,7 +46,7 @@ public class PAdESCRLSource extends OfflineCRLSource {
      * @param cadesSignature
      * @param dssCatalog
      */
-    public PAdESCRLSource(final CAdESSignature cadesSignature, final PdfDict dssCatalog) {
+    public PAdESCRLSource(final CAdESSignature cadesSignature, final PdfDssDict dssCatalog) {
         this.cadesSignature = cadesSignature;
         this.dssCatalog = dssCatalog;
         extract();
@@ -66,17 +64,12 @@ public class PAdESCRLSource extends OfflineCRLSource {
             return;
         }
 
-        final PdfArray crlArray = dssCatalog.getAsArray("CRLs");
-        if (crlArray != null) {
-
-            for (int ii = 0; ii < crlArray.size(); ii++) {
-
-                final byte[] bytes = DSSPDFUtils.getBytes(crlArray, ii);
-                final X509CRL x509CRL = DSSUtils.loadCRL(bytes);
-                if (!x509CRLList.contains(x509CRL)) {
-                    x509CRLList.add(x509CRL);
-                }
+        final Set<X509CRL> crlList = dssCatalog.getCrlList();
+        for (final X509CRL x509CRL : crlList) {
+            if (!x509CRLList.contains(x509CRL)) {
+                x509CRLList.add(x509CRL);
             }
         }
+
     }
 }

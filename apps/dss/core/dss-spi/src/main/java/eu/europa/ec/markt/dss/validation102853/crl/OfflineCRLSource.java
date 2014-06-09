@@ -38,88 +38,88 @@ import eu.europa.ec.markt.dss.validation102853.CertificateToken;
  * This class if a basic skeleton that is able to retrieve the needed CRL data from a list. The child need to retrieve
  * the list of wrapped CRLs.
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 3966 $ - $Date: 2014-05-25 19:32:19 +0200 (Sun, 25 May 2014) $
  */
 
 public abstract class OfflineCRLSource extends CommonCRLSource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OfflineCRLSource.class);
+	private static final Logger LOG = LoggerFactory.getLogger(OfflineCRLSource.class);
 
-    /**
-     * List of contained {@code X509CRL}s. One CRL list contains many CRLToken(s).
-     */
-    protected List<X509CRL> x509CRLList;
+	/**
+	 * List of contained {@code X509CRL}s. One CRL list contains many CRLToken(s).
+	 */
+	protected List<X509CRL> x509CRLList;
 
-    protected HashMap<CertificateToken, CRLToken> validCRLTokenList = new HashMap<CertificateToken, CRLToken>();
+	protected HashMap<CertificateToken, CRLToken> validCRLTokenList = new HashMap<CertificateToken, CRLToken>();
 
-    protected HashMap<X509CRL, CRLValidity> crlIssuers = new HashMap<X509CRL, CRLValidity>();
+	protected HashMap<X509CRL, CRLValidity> crlIssuers = new HashMap<X509CRL, CRLValidity>();
 
-    @Override
-    final public CRLToken findCrl(final CertificateToken certificateToken) {
+	@Override
+	final public CRLToken findCrl(final CertificateToken certificateToken) {
 
-        final CRLToken validCRLToken = validCRLTokenList.get(certificateToken);
-        if (validCRLToken != null) {
+		final CRLToken validCRLToken = validCRLTokenList.get(certificateToken);
+		if (validCRLToken != null) {
 
-            return validCRLToken;
-        }
-        final CertificateToken issuerToken = certificateToken.getIssuerToken();
-        if (issuerToken == null) {
+			return validCRLToken;
+		}
+		final CertificateToken issuerToken = certificateToken.getIssuerToken();
+		if (issuerToken == null) {
 
-            throw new DSSNullException(CertificateToken.class, "issuerToken");
-        }
+			throw new DSSNullException(CertificateToken.class, "issuerToken");
+		}
 
-        CRLValidity bestCRLValidity = null;
-        Date bestX509UpdateDate = null;
+		CRLValidity bestCRLValidity = null;
+		Date bestX509UpdateDate = null;
 
-        for (final X509CRL x509CRL : x509CRLList) {
+		for (final X509CRL x509CRL : x509CRLList) {
 
-            CRLValidity crlValidity = crlIssuers.get(x509CRL);
-            if (crlValidity == null) {
+			CRLValidity crlValidity = crlIssuers.get(x509CRL);
+			if (crlValidity == null) {
 
-                crlValidity = isValidCRL(x509CRL, issuerToken);
-                if (crlValidity.isValid()) {
+				crlValidity = isValidCRL(x509CRL, issuerToken);
+				if (crlValidity.isValid()) {
 
-                    crlIssuers.put(x509CRL, crlValidity);
-                }
-            }
-            if (crlValidity != null) {
+					crlIssuers.put(x509CRL, crlValidity);
+				}
+			}
+			if (crlValidity != null) {
 
-                if (issuerToken.equals(crlValidity.issuerToken) && crlValidity.isValid()) {
+				if (issuerToken.equals(crlValidity.issuerToken) && crlValidity.isValid()) {
 
-                    final Date thisUpdate = x509CRL.getThisUpdate();
-                    if (bestX509UpdateDate == null || thisUpdate.after(bestX509UpdateDate)) {
+					final Date thisUpdate = x509CRL.getThisUpdate();
+					if (bestX509UpdateDate == null || thisUpdate.after(bestX509UpdateDate)) {
 
-                        bestCRLValidity = crlValidity;
-                        bestX509UpdateDate = thisUpdate;
-                    }
-                }
-            }
-        }
-        if (bestCRLValidity == null) {
-            return null;
-        }
-        final CRLToken crlToken = new CRLToken(certificateToken, bestCRLValidity);
-        validCRLTokenList.put(certificateToken, crlToken);
-        return crlToken;
-    }
+						bestCRLValidity = crlValidity;
+						bestX509UpdateDate = thisUpdate;
+					}
+				}
+			}
+		}
+		if (bestCRLValidity == null) {
+			return null;
+		}
+		final CRLToken crlToken = new CRLToken(certificateToken, bestCRLValidity);
+		validCRLTokenList.put(certificateToken, crlToken);
+		return crlToken;
+	}
 
-    /**
-     * Retrieves the list of CRLTokens contained in the source. If this method is implemented for a signature source than the
-     * list of encapsulated CRLTokens in this signature is returned.<br>
-     * 102 853: Null is returned if there is no CRL data in the signature.
-     *
-     * @return
-     */
-    public List<CRLToken> getContainedCRLTokens() {
+	/**
+	 * Retrieves the list of CRLTokens contained in the source. If this method is implemented for a signature source than the
+	 * list of encapsulated CRLTokens in this signature is returned.<br>
+	 * 102 853: Null is returned if there is no CRL data in the signature.
+	 *
+	 * @return
+	 */
+	public List<CRLToken> getContainedCRLTokens() {
 
-        final Collection<CRLToken> values = validCRLTokenList.values();
-        final ArrayList<CRLToken> crlTokenArrayList = new ArrayList<CRLToken>(values);
-        return crlTokenArrayList;
-    }
+		final Collection<CRLToken> values = validCRLTokenList.values();
+		final ArrayList<CRLToken> crlTokenArrayList = new ArrayList<CRLToken>(values);
+		return crlTokenArrayList;
+	}
 
-    public List<X509CRL> getContainedX509CRLs() {
+	public List<X509CRL> getContainedX509CRLs() {
 
-        final List<X509CRL> x509CRLs = Collections.unmodifiableList(x509CRLList);
-        return x509CRLs;
-    }
+		final List<X509CRL> x509CRLs = Collections.unmodifiableList(x509CRLList);
+		return x509CRLs;
+	}
 }

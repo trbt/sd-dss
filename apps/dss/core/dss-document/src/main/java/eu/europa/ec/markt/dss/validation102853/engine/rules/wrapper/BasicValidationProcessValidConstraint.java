@@ -27,8 +27,8 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 
 /**
  * This class represents the basic validation process validity constraints.
- *
- * <p>
+ * <p/>
+ * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
@@ -36,44 +36,46 @@ import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
  */
 public class BasicValidationProcessValidConstraint extends Constraint {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BasicValidationProcessValidConstraint.class);
-    private XmlDom basicValidationProcessConclusionNode;
+	private static final Logger LOG = LoggerFactory.getLogger(BasicValidationProcessValidConstraint.class);
+	private XmlDom basicValidationProcessConclusionNode;
 
-    /**
-     * This is the default constructor. It takes a level of the constraint as parameter. The string representing the level is trimmed and capitalized. If there is no corresponding
-     * {@code Level} then the {@code Level.IGNORE} is set and a warning is logged.
-     *
-     * @param level the constraint level string.
-     */
-    public BasicValidationProcessValidConstraint(final String level) {
+	/**
+	 * This is the default constructor. It takes a level of the constraint as parameter. The string representing the level is trimmed and capitalized. If there is no corresponding
+	 * {@code Level} then the {@code Level.IGNORE} is set and a warning is logged.
+	 *
+	 * @param level the constraint level string.
+	 */
+	public BasicValidationProcessValidConstraint(final String level) {
 
-        super(level);
-    }
+		super(level);
+	}
 
-    /**
-     * This method carry out the validation of the constraint. This constraint has a constant {@code Level} FAIL.
-     *
-     * @return true if the constraint is met, false otherwise.
-     */
-    @Override
-    public boolean check() {
+	/**
+	 * This method carry out the validation of the constraint. This constraint has a constant {@code Level} FAIL.
+	 *
+	 * @return true if the constraint is met, false otherwise.
+	 */
+	@Override
+	public boolean check() {
 
-        if (!value.equals(expectedValue)) {
+		if (!value.equals(expectedValue)) {
 
-            node.addChild(STATUS, KO);
-            conclusion.copyConclusion(basicValidationProcessConclusionNode);
-            return false;
-        }
-        node.addChild(STATUS, OK);
-        return true;
-    }
+			node.addChild(STATUS, KO);
+			conclusion.copyConclusion(basicValidationProcessConclusionNode);
+			return false;
+		}
+		node.addChild(STATUS, OK);
+		// The consolidation of the warning is made in the SimpleReportBuilder
+		// conclusion.copyWarnings(basicValidationProcessConclusionNode);
+		return true;
+	}
 
-    public void setBasicValidationProcessConclusionNode(final XmlDom basicValidationProcessConclusionNode) {
-        this.basicValidationProcessConclusionNode = basicValidationProcessConclusionNode;
-    }
+	public void setBasicValidationProcessConclusionNode(final XmlDom basicValidationProcessConclusionNode) {
+		this.basicValidationProcessConclusionNode = basicValidationProcessConclusionNode;
+	}
 
-    public XmlDom getBasicValidationProcessConclusionNode() {
-        return basicValidationProcessConclusionNode;
-    }
+	public XmlDom getBasicValidationProcessConclusionNode() {
+		return basicValidationProcessConclusionNode;
+	}
 }
 

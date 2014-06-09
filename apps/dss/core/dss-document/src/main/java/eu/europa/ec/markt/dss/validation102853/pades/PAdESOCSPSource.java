@@ -20,27 +20,22 @@
 
 package eu.europa.ec.markt.dss.validation102853.pades;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
-import org.bouncycastle.cert.ocsp.OCSPException;
-import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.europa.ec.markt.dss.DSSUtils;
-import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.signature.pdf.PdfArray;
-import eu.europa.ec.markt.dss.signature.pdf.PdfDict;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
+import eu.europa.ec.markt.dss.signature.pdf.pdfbox.PdfDssDict;
 import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 
 /**
  * OCSPSource that retrieves the OCSPResp from a PAdES Signature
  *
- * @version $Revision: 3659 $ - $Date: 2014-03-25 12:27:11 +0100 (Tue, 25 Mar 2014) $
+ * @version $Revision: 3964 $ - $Date: 2014-05-23 17:19:22 +0200 (Fri, 23 May 2014) $
  */
 
 public class PAdESOCSPSource extends OfflineOCSPSource {
@@ -48,7 +43,7 @@ public class PAdESOCSPSource extends OfflineOCSPSource {
     private static final Logger LOG = LoggerFactory.getLogger(PAdESOCSPSource.class);
 
     private final CAdESSignature cadesSignature;
-    private PdfDict dssCatalog;
+    private PdfDssDict dssCatalog;
 
     /**
      * The default constructor for PAdESOCSPSource.
@@ -56,7 +51,7 @@ public class PAdESOCSPSource extends OfflineOCSPSource {
      * @param cadesSignature
      * @param dssCatalog
      */
-    public PAdESOCSPSource(CAdESSignature cadesSignature, PdfDict dssCatalog) {
+    public PAdESOCSPSource(CAdESSignature cadesSignature, PdfDssDict dssCatalog) {
         this.cadesSignature = cadesSignature;
         this.dssCatalog = dssCatalog;
     }
@@ -71,31 +66,14 @@ public class PAdESOCSPSource extends OfflineOCSPSource {
             result.addAll(containedOCSPResponses);
         }
 
-        try {
-            if (dssCatalog != null) {
-                // Add OSCPs from DSS catalog (LT level)
-                PdfArray ocspArray = dssCatalog.getAsArray("OCSPs");
-                if (ocspArray != null) {
-                    LOG.debug("Found oscpArray of size {}", ocspArray.size());
+        if (dssCatalog != null) {
+            // Add OSCPs from DSS catalog (LT level)
 
-                    for (int ii = 0; ii < ocspArray.size(); ii++) {
-                        final byte[] stream = ocspArray.getBytes(ii);
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("OSCP {} data = {}", ii, DSSUtils.encodeHexString(stream));
-                        }
-                        final OCSPResp ocspResp = new OCSPResp(stream);
-                        final BasicOCSPResp responseObject = (BasicOCSPResp) ocspResp.getResponseObject();
-                        result.add(responseObject);
-                    }
-                } else {
-                    LOG.debug("oscpArray is null");
-                }
+            final Set<BasicOCSPResp> ocspList = dssCatalog.getOcspList();
+            for (final BasicOCSPResp basicOCSPResp : ocspList) {
+                result.add(basicOCSPResp);
             }
-            return result;
-        } catch (IOException e) {
-            throw new DSSException(e);
-        } catch (OCSPException e) {
-            throw new DSSException(e);
         }
+        return result;
     }
 }

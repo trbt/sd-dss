@@ -43,16 +43,16 @@ import eu.europa.ec.markt.dss.validation102853.CertificatePool;
  */
 public class PdfSignatureFactory {
 
-    //TODO (pdfbox) should remove dependency to pdfbox/PDDocument
-    public static PdfSignatureInfo createPdfSignatureInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument doc, PDSignature signature,
+    // dependency to pdfbox/PDDocument is just for building inner object and pdf object can be closed after
+    public static PdfSignatureInfo createPdfSignatureInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument doc, PDSignature signature, byte[] cms,
                                                           ByteArrayOutputStream buffer) throws IOException {
-        return new PdfBoxSignatureInfo(validationCertPool, outerCatalog, doc, signature, new ByteArrayInputStream(buffer.toByteArray()));
+        return new PdfBoxSignatureInfo(validationCertPool, outerCatalog, doc, signature, cms, new ByteArrayInputStream(buffer.toByteArray()));
     }
 
-    //TODO (pdfbox) should remove dependency to pdfbox/PDDocument
-    public static PdfDocTimestampInfo createPdfTimestampInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument doc, PDSignature signature,
+    // dependency to pdfbox/PDDocument is just for building inner object and pdf object can be closed after
+    public static PdfDocTimestampInfo createPdfTimestampInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument doc, PDSignature signature, byte[] cms,
                                                              ByteArrayOutputStream buffer) throws IOException {
-        return new PdfBoxDocTimestampInfo(validationCertPool, outerCatalog, doc, signature, new ByteArrayInputStream(buffer.toByteArray()));
+        return new PdfBoxDocTimestampInfo(validationCertPool, outerCatalog, doc, signature, cms, new ByteArrayInputStream(buffer.toByteArray()));
     }
 
 }

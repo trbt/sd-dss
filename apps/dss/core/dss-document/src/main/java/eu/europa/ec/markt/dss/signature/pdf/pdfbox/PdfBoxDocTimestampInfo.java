@@ -62,12 +62,12 @@ class PdfBoxDocTimestampInfo extends PdfBoxCMSInfo implements PdfDocTimestampInf
      * @param validationCertPool
      * @param outerCatalog       the PDF Dict of the outer document, if the PDFDocument in a enclosed revision. Can be null.
      * @param document           the signed PDFDocument
-     * @param signature
+     * @param cms                the CMS (CAdES) bytes
      * @param inputStream        the stream of the whole signed document
      * @throws IOException
      */
-    PdfBoxDocTimestampInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, InputStream inputStream) throws DSSException {
-        super(validationCertPool, outerCatalog, document, signature, inputStream);
+    PdfBoxDocTimestampInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, byte[] cms, InputStream inputStream) throws DSSException, IOException {
+        super(validationCertPool, outerCatalog, document, signature, cms, inputStream);
         try {
             TimeStampToken timeStampToken = new TimeStampToken(new CMSSignedData(cms));
 

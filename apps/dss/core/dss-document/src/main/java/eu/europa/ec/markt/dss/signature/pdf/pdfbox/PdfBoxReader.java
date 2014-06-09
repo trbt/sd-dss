@@ -25,6 +25,7 @@ import java.io.InputStream;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 
+import eu.europa.ec.markt.dss.DSSPDFUtils;
 import eu.europa.ec.markt.dss.signature.pdf.PdfReader;
 
 class PdfBoxReader implements PdfReader {
@@ -39,6 +40,11 @@ class PdfBoxReader implements PdfReader {
 	public PdfBoxDict getCatalog() {
 		return new PdfBoxDict(wrapped.getDocumentCatalog().getCOSDictionary(), wrapped);
 	}
+
+    @Override
+    public void finalize() {
+        DSSPDFUtils.close(wrapped);
+    }
 
 	PDDocument getPDDocument() {
 		return wrapped;

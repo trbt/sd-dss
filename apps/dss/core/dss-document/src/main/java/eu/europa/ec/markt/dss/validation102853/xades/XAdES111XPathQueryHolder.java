@@ -24,11 +24,16 @@ public class XAdES111XPathQueryHolder extends XPathQueryHolder {
         XPATH_SIGNATURE_POLICY_IDENTIFIER = XPATH_SIGNED_SIGNATURE_PROPERTIES + "/xades111:SignaturePolicyIdentifier";
         XPATH__SIGNATURE_POLICY_IMPLIED = "./xades111:SignaturePolicyImplied";
 
-        XPATH_ALL_DATA_OBJECT_TIMESTAMP = XPATH_SIGNED_PROPERTIES + "/xades111:SignedDataObjectProperties/xades111:AllDataObjectsTimeStamp";
+	    XPATH_QUALIFYING_PROPERTIES = XPATH_OBJECT + "/xades111:QualifyingProperties";
+	    XPATH_UNSIGNED_PROPERTIES = XPATH_QUALIFYING_PROPERTIES + "/xades111:UnsignedProperties";
+	    XPATH_UNSIGNED_SIGNATURE_PROPERTIES = XPATH_UNSIGNED_PROPERTIES + "/xades111:UnsignedSignatureProperties";
+
+
+	    XPATH_ALL_DATA_OBJECT_TIMESTAMP = XPATH_SIGNED_PROPERTIES + "/xades111:SignedDataObjectProperties/xades111:AllDataObjectsTimeStamp";
 
         XPATH__X509_ISSUER_NAME = "./xades111:IssuerSerial/ds:X509IssuerName";
         XPATH__X509_SERIAL_NUMBER = "./xades111:IssuerSerial/ds:X509SerialNumber";
-        XPATH__DIGEST_METHOD = "./xades111:CertDigest/xades111:DigestMethod";
+        XPATH__CERT_DIGEST_DIGEST_METHOD = "./xades111:CertDigest/xades111:DigestMethod";
         XPATH__DIGEST_VALUE = "./xades111:DigestValue";
         XPATH__CERT_DIGEST_DIGEST_VALUE = "./xades111:CertDigest/xades111:DigestValue";
 

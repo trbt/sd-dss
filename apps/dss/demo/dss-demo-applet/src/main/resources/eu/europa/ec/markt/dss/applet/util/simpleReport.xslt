@@ -184,6 +184,19 @@
                 <xsl:value-of select="count(ancestor::*/dss:Signature)"/>
             </td>
         </tr>
+        <xsl:for-each select="./dss:SignatureScopes/dss:SignatureScope">
+          <tr>
+            <th>Signature scope:</th>
+            <td>
+              <div>
+                <xsl:value-of select="@name"/> (<xsl:value-of select="@scope"/>)
+              </div>
+              <div>
+                <xsl:value-of select="."/>
+              </div>
+            </td>
+          </tr>
+        </xsl:for-each>
     </xsl:template>
 
     <xsl:template match="dss:SubIndication|dss:Info">

@@ -20,16 +20,19 @@
 
 package eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subprocesses;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.TSLConstant;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.ValidationXPathQueryHolder;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.ForLegalPerson;
+import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.InvolvedServiceInfo;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.QualifiedCertificate;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.SSCD;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.CertificateExpirationConstraint;
@@ -74,8 +77,12 @@ import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_I
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ISCOH_ANS;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ISCR;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_XCV_ISCR_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_IIDOCWVPOTS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_IIDOCWVPOTS_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_ITACBT_ANS;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_WITSS;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_WITSS_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.CTS_ITACBT;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.EMPTY;
 
 public class X509CertificateValidation implements Indication, SubIndication, NodeName, NodeValue, AttributeName, AttributeValue, ExceptionMessage, RuleConstant, ValidationXPathQueryHolder {
@@ -335,7 +342,15 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
 					return conclusion;
 				}
 
+				if (!checkSigningCertificateTSLValidityConstraint(conclusion, certificateId, certificateXmlDom)) {
+					return conclusion;
+				}
+
 				if (!checkSigningCertificateTSLStatusConstraint(conclusion, certificateId, certificateXmlDom)) {
+					return conclusion;
+				}
+
+				if (!checkSigningCertificateTSLStatusAndValidityConstraint(conclusion, certificateId, certificateXmlDom)) {
 					return conclusion;
 				}
 				// There is not need to check the revocation data for trusted and self-signed certificates
@@ -574,7 +589,7 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
 		if (constraint == null) {
 			return true;
 		}
-		constraint.create(validationDataXmlNode, BBB_XCV_IRDTFC, certificateId);
+		constraint.create(validationDataXmlNode, BBB_XCV_IRDTFC);
 		final String anchorSource = certificateXmlDom.getValue("./Revocation/CertificateChain/ChainCertificate[last()]/Source/text()");
 		final CertificateSourceType anchorSourceType = DSSUtils.isBlank(anchorSource) ? CertificateSourceType.UNKNOWN : CertificateSourceType.valueOf(anchorSource);
 		constraint.setValue(isRevocationDataTrusted(anchorSourceType));
@@ -593,7 +608,7 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
 	}
 
 	/**
-	 * This method checks if the revocation data is fresh for the given certificate.
+	 * This method checks if the revocation data is fresh for the given certificate. If the revocation data does not exist then this check is ignored.
 	 *
 	 * @param conclusion                  the conclusion to use to add the result of the check.
 	 * @param certificateId
@@ -606,11 +621,16 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
 	private boolean checkRevocationFreshnessConstraint(final Conclusion conclusion, final String certificateId, final boolean revocationFresh, final String revocationNextUpdate,
 	                                                   final String revocationIssuingTimeString, String subContext) {
 
+		// If the revocation data does not exist then this check is ignored.
+		if (DSSUtils.isBlank(revocationIssuingTimeString)) {
+			return true;
+		}
+
 		final Constraint constraint = constraintData.getRevocationDataFreshnessConstraint(contextName, subContext);
 		if (constraint == null) {
 			return true;
 		}
-		constraint.create(validationDataXmlNode, BBB_XCV_IRIF, certificateId);
+		constraint.create(validationDataXmlNode, BBB_XCV_IRIF);
 		constraint.setValue(String.valueOf(revocationFresh));
 		constraint.setIndications(INDETERMINATE, TRY_LATER, BBB_XCV_IRIF_ANS);
 		constraint.setAttribute(CERTIFICATE_ID, certificateId);
@@ -700,6 +720,53 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
 	}
 
 	/**
+	 * This method checks if the TSL validity is in concordance with the signing certificate .
+	 *
+	 * @param conclusion        the conclusion to use to add the result of the check.
+	 * @param certificateId
+	 * @param certificateXmlDom @return
+	 */
+	private boolean checkSigningCertificateTSLValidityConstraint(final Conclusion conclusion, String certificateId, final XmlDom certificateXmlDom) {
+
+		final String trustedSource = certificateXmlDom.getValue("./CertificateChain/ChainCertificate[last()]/Source/text()");
+		if (CertificateSourceType.TRUSTED_STORE.name().equals(trustedSource)) {
+			return true;
+		}
+
+		final Constraint constraint = constraintData.getSigningCertificateTSLValidityConstraint(contextName);
+		if (constraint == null) {
+			return true;
+		}
+
+		constraint.create(validationDataXmlNode, CTS_IIDOCWVPOTS);
+
+		final Date certificateValidFrom = certificateXmlDom.getTimeValueOrNull("./NotBefore/text()");
+		final List<XmlDom> tspList = certificateXmlDom.getElements("./TrustedServiceProvider");
+		boolean found = false;
+		for (final XmlDom trustedServiceProviderXmlDom : tspList) {
+
+			final String serviceTypeIdentifier = trustedServiceProviderXmlDom.getValue("./TSPServiceType/text()");
+			if (!TSLConstant.CA_QC.equals(serviceTypeIdentifier)) {
+				continue;
+			}
+			final Date statusStartDate = trustedServiceProviderXmlDom.getTimeValueOrNull("./StartDate/text()");
+			final Date statusEndDate = trustedServiceProviderXmlDom.getTimeValueOrNull("./EndDate/text()");
+			// The issuing time of the certificate should be into the validity period of the associated service
+			if (certificateValidFrom.after(statusStartDate) && (statusEndDate == null || certificateValidFrom.before(statusEndDate))) {
+
+				found = true;
+			}
+		}
+
+		constraint.setValue(found);
+		constraint.setIndications(INDETERMINATE, TRY_LATER, CTS_IIDOCWVPOTS_ANS);
+		constraint.setAttribute(CERTIFICATE_ID, certificateId);
+		constraint.setConclusionReceiver(conclusion);
+
+		return constraint.check();
+	}
+
+	/**
 	 * This method checks if the TSL status of the signing certificate.
 	 *
 	 * @param conclusion        the conclusion to use to add the result of the check.
@@ -718,33 +785,77 @@ public class X509CertificateValidation implements Indication, SubIndication, Nod
 			return true;
 		}
 		constraint.create(validationDataXmlNode, CTS_WITSS);
-		final XmlDom trustedServiceProvider = certificateXmlDom.getElement("./TrustedServiceProvider");
-		final String status = trustedServiceProvider == null ? "" : trustedServiceProvider.getValue("./Status/text()");
-		boolean acceptableStatus = SERVICE_STATUS_UNDERSUPERVISION.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION.equals(status) || SERVICE_STATUS_ACCREDITED
-			  .equals(status) || SERVICE_STATUS_UNDERSUPERVISION_119612.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION_119612
-			  .equals(status) || SERVICE_STATUS_ACCREDITED_119612.equals(status);
+		final List<XmlDom> tspList = certificateXmlDom.getElements("./TrustedServiceProvider");
+		boolean acceptableStatus = false;
+		String status = DSSUtils.EMPTY;
+		for (final XmlDom trustedServiceProviderXmlDom : tspList) {
 
-		if (acceptableStatus) {
-
-			/**
-			 * NOTE 1: In step 1, initializing control-time with current date/time assumes that the trust anchor is still trusted at the
-			 * current date/time. The algorithm can capture the very exotic case where the trust anchor is broken (or
-			 * becomes untrusted for any other reason) at a known date by initializing control-time to this date/time.
-			 */
-			if (status.isEmpty()) {
-
-				// Trusted service is unknown
-				// TODO: continue
-			} else {
-
-				final Date statusDate = trustedServiceProvider.getTimeValue("./StartDate/text()");
-				// TODO: continue
+			status = trustedServiceProviderXmlDom == null ? "" : trustedServiceProviderXmlDom.getValue("./Status/text()");
+			acceptableStatus = SERVICE_STATUS_UNDERSUPERVISION.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION.equals(status) || SERVICE_STATUS_ACCREDITED
+				  .equals(status) || SERVICE_STATUS_UNDERSUPERVISION_119612.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION_119612
+				  .equals(status) || SERVICE_STATUS_ACCREDITED_119612.equals(status);
+			if (acceptableStatus) {
+				break;
 			}
 		}
+
 		constraint.setValue(acceptableStatus);
 		constraint.setIndications(INDETERMINATE, TRY_LATER, CTS_WITSS_ANS);
 		constraint.setAttribute(CERTIFICATE_ID, certificateId);
 		constraint.setAttribute(TRUSTED_SERVICE_STATUS, status);
+		constraint.setConclusionReceiver(conclusion);
+
+		return constraint.check();
+	}
+
+
+	/**
+	 * This method checks if the TSL status of the signing certificate.
+	 *
+	 * @param conclusion        the conclusion to use to add the result of the check.
+	 * @param certificateId
+	 * @param certificateXmlDom @return
+	 */
+	private boolean checkSigningCertificateTSLStatusAndValidityConstraint(final Conclusion conclusion, String certificateId, final XmlDom certificateXmlDom) {
+
+		final String trustedSource = certificateXmlDom.getValue("./CertificateChain/ChainCertificate[last()]/Source/text()");
+		if (CertificateSourceType.TRUSTED_STORE.name().equals(trustedSource)) {
+			return true;
+		}
+
+		final Constraint constraint = constraintData.getSigningCertificateTSLStatusAndValidityConstraint(contextName);
+		if (constraint == null) {
+			return true;
+		}
+
+		constraint.create(validationDataXmlNode, CTS_ITACBT);
+
+		final Date certificateValidFrom = certificateXmlDom.getTimeValueOrNull("./NotBefore/text()");
+		final List<XmlDom> tspList = certificateXmlDom.getElements("./TrustedServiceProvider");
+		boolean found = false;
+		for (final XmlDom trustedServiceProviderXmlDom : tspList) {
+
+			final String serviceTypeIdentifier = trustedServiceProviderXmlDom.getValue("./TSPServiceType/text()");
+			if (!TSLConstant.CA_QC.equals(serviceTypeIdentifier)) {
+				continue;
+			}
+			final Date statusStartDate = trustedServiceProviderXmlDom.getTimeValueOrNull("./StartDate/text()");
+			final Date statusEndDate = trustedServiceProviderXmlDom.getTimeValueOrNull("./EndDate/text()");
+			if (certificateValidFrom.after(statusStartDate) && (statusEndDate == null || certificateValidFrom.before(statusEndDate))) {
+
+				final String status = trustedServiceProviderXmlDom == null ? "" : trustedServiceProviderXmlDom.getValue("./Status/text()");
+				found = SERVICE_STATUS_UNDERSUPERVISION.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION.equals(status) || SERVICE_STATUS_ACCREDITED
+					  .equals(status) || SERVICE_STATUS_UNDERSUPERVISION_119612.equals(status) || SERVICE_STATUS_SUPERVISIONINCESSATION_119612
+					  .equals(status) || SERVICE_STATUS_ACCREDITED_119612.equals(status);
+				if (found) {
+					break;
+				}
+			}
+		}
+
+		constraint.setValue(found);
+		constraint.setIndications(INDETERMINATE, TRY_LATER, CTS_ITACBT_ANS);
+		constraint.setAttribute(CERTIFICATE_ID, certificateId);
 		constraint.setConclusionReceiver(conclusion);
 
 		return constraint.check();

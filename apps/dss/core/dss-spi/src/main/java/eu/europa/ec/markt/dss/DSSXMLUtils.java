@@ -369,7 +369,7 @@ public final class DSSXMLUtils {
 	 */
 	public static Document buildDOM(final String xmlString) throws DSSException {
 
-		final InputStream input = new ByteArrayInputStream(xmlString.getBytes());
+		final InputStream input = new ByteArrayInputStream(DSSUtils.getUtf8Bytes(xmlString));
 		return buildDOM(input);
 	}
 

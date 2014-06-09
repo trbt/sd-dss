@@ -282,6 +282,8 @@ abstract class AbstractTrustService {
 				} else {
 
 					String id = identifier.getValue();
+					// ES TSL
+					// <ns4:Identifier Qualifier="OIDAsURN">urn:oid:1.3.6.1.4.1.36035.1.3.1</ns4:Identifier>
 					if (id.indexOf(':') >= 0) {
 
 						id = id.substring(id.lastIndexOf(':') + 1);

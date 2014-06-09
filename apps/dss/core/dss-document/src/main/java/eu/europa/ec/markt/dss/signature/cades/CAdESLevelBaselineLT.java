@@ -34,20 +34,22 @@ import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.util.CollectionStore;
 import org.bouncycastle.util.Store;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSASN1Utils;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
-import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.OCSPToken;
-import eu.europa.ec.markt.dss.validation102853.SignatureValidationContext;
+import eu.europa.ec.markt.dss.validation102853.ValidationContext;
 import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 
 /**
  * This class holds the CAdES-LT signature profiles
@@ -57,7 +59,7 @@ import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
 
 public class CAdESLevelBaselineLT extends CAdESSignatureExtension {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CAdESLevelBaselineLT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CAdESLevelBaselineLT.class);
 
     private final CertificateVerifier certificateVerifier;
     private final CAdESLevelBaselineT cadesProfileT;
@@ -83,7 +85,7 @@ public class CAdESLevelBaselineLT extends CAdESSignatureExtension {
 
     protected CMSSignedData postExtendCMSSignedData(CMSSignedData cmsSignedData, SignerInformation signerInformation, SignatureParameters parameters) {
         CAdESSignature cadesSignature = new CAdESSignature(cmsSignedData, signerInformation, parameters.getOriginalDocument());
-        final SignatureValidationContext validationContext = cadesSignature.getSignatureValidationContext(certificateVerifier);
+        final ValidationContext validationContext = cadesSignature.getSignatureValidationContext(certificateVerifier);
 
         Store certificatesStore = cmsSignedData.getCertificates();
         final Store attributeCertificatesStore = cmsSignedData.getAttributeCertificates();

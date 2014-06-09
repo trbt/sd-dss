@@ -512,11 +512,29 @@ public class ValidationPolicy extends XmlDom implements RuleConstant, AttributeN
 	}
 
 	/**
+	 * @return {@code Constraint} if the TSLValidity for a given context element is present in the constraint file, null otherwise.
+	 */
+	public Constraint getSigningCertificateTSLValidityConstraint(final String context) {
+
+		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/TSLValidity", context);
+		return getBasicConstraint(XP_ROOT, true);
+	}
+
+	/**
 	 * @return {@code Constraint} if TSLStatus for a given context element is present in the constraint file, null otherwise.
 	 */
 	public Constraint getSigningCertificateTSLStatusConstraint(final String context) {
 
 		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/TSLStatus", context);
+		return getBasicConstraint(XP_ROOT, true);
+	}
+
+	/**
+	 * @return {@code Constraint} if the TSLValidity for a given context element is present in the constraint file, null otherwise.
+	 */
+	public Constraint getSigningCertificateTSLStatusAndValidityConstraint(final String context) {
+
+		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/TSLStatusAndValidity", context);
 		return getBasicConstraint(XP_ROOT, true);
 	}
 
@@ -580,6 +598,25 @@ public class ValidationPolicy extends XmlDom implements RuleConstant, AttributeN
 	public Constraint getSigningCertificateRecognitionConstraint(final String context) {
 
 		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/Recognition", context);
+		return getBasicConstraint(XP_ROOT, true);
+	}
+
+	/**
+	 * @return {@code Constraint} if SigningCertificateAttribute for a given context element is present in the constraint file, null otherwise.
+	 */
+	public Constraint getSigningCertificateAttributePresentConstraint(final String context) {
+
+		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/AttributePresent", context);
+		return getBasicConstraint(XP_ROOT, true);
+	}
+
+
+	/**
+	 * @return {@code Constraint} if DigestValuePresent for a given context element is present in the constraint file, null otherwise.
+	 */
+	public Constraint getSigningCertificateDigestValuePresentConstraint(final String context) {
+
+		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/DigestValuePresent", context);
 		return getBasicConstraint(XP_ROOT, true);
 	}
 

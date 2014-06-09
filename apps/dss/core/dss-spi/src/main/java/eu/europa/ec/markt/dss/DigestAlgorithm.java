@@ -33,185 +33,201 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Supported Algorithms
  *
- * @version $Revision: 3447 $ - $Date: 2014-02-13 15:50:09 +0100 (Thu, 13 Feb 2014) $
+ * @version $Revision: 3966 $ - $Date: 2014-05-25 19:32:19 +0200 (Sun, 25 May 2014) $
  */
 public enum DigestAlgorithm {
 
-    // see DEPRECATED http://www.w3.org/TR/2012/WD-xmlsec-algorithms-20120105/
-    // see http://www.w3.org/TR/2013/NOTE-xmlsec-algorithms-20130411/
-    //@formatter:off
-    SHA1("SHA1", "1.3.14.3.2.26", DigestMethod.SHA1),
-    SHA224("SHA224", "2.16.840.1.101.3.4.2.4", "http://www.w3.org/2001/04/xmldsig-more#sha224"),
-    SHA256("SHA256", "2.16.840.1.101.3.4.2.1", DigestMethod.SHA256),
-    SHA384("SHA384", "2.16.840.1.101.3.4.2.2", "http://www.w3.org/2001/04/xmldsig-more#sha384"),
-    SHA512("SHA512", "2.16.840.1.101.3.4.2.3", DigestMethod.SHA512),
-    RIPEMD160("RIPEMD160", "1.3.36.3.2.1", DigestMethod.RIPEMD160),
-    MD2("MD2", "1.2.840.113549.1.1.2", "http://www.w3.org/2001/04/xmldsig-more#md2"),
-    MD5("MD5", "1.2.840.113549.2.5", "http://www.w3.org/2001/04/xmldsig-more#md5");
-    /**
-     * RFC 2313
-     * "MD2", "1.2.840.113549.2.2"
-     * "MD4", "1.2.840.113549.2.4"
-     * "MD5", "1.2.840.113549.2.5"
-     */
-    //@formatter:on
+	// see DEPRECATED http://www.w3.org/TR/2012/WD-xmlsec-algorithms-20120105/
+	// see http://www.w3.org/TR/2013/NOTE-xmlsec-algorithms-20130411/
+	//@formatter:off
+	SHA1("SHA1", "1.3.14.3.2.26", DigestMethod.SHA1),
+	SHA224("SHA224", "2.16.840.1.101.3.4.2.4", "http://www.w3.org/2001/04/xmldsig-more#sha224"),
+	SHA256("SHA256", "2.16.840.1.101.3.4.2.1", DigestMethod.SHA256),
+	SHA384("SHA384", "2.16.840.1.101.3.4.2.2", "http://www.w3.org/2001/04/xmldsig-more#sha384"),
+	SHA512("SHA512", "2.16.840.1.101.3.4.2.3", DigestMethod.SHA512),
+	RIPEMD160("RIPEMD160", "1.3.36.3.2.1", DigestMethod.RIPEMD160),
+	MD2("MD2", "1.2.840.113549.1.1.2", "http://www.w3.org/2001/04/xmldsig-more#md2"),
+	MD5("MD5", "1.2.840.113549.2.5", "http://www.w3.org/2001/04/xmldsig-more#md5");
+	/**
+	 * RFC 2313
+	 * "MD2", "1.2.840.113549.2.2"
+	 * "MD4", "1.2.840.113549.2.4"
+	 * "MD5", "1.2.840.113549.2.5"
+	 */
+	//@formatter:on
 
-    private String name;
-    private ASN1ObjectIdentifier oid;
-    private String xmlId;
+	private String name;
+	private ASN1ObjectIdentifier oid;
+	private String xmlId;
 
-    private static class Registry {
+	private static class Registry {
 
-        private final static Map<ASN1ObjectIdentifier, DigestAlgorithm> OID_ALGORITHMS = registerOIDAlgorithms();
-        private final static Map<String, DigestAlgorithm> XML_ALGORITHMS = registerXMLAlgorithms();
-        private final static Map<String, DigestAlgorithm> ALGORITHMS = registerAlgorithms();
+		private final static Map<ASN1ObjectIdentifier, DigestAlgorithm> OID_ALGORITHMS = registerOIDAlgorithms();
+		private final static Map<String, DigestAlgorithm> XML_ALGORITHMS = registerXMLAlgorithms();
+		private final static Map<String, DigestAlgorithm> ALGORITHMS = registerAlgorithms();
 
-        private static Map<ASN1ObjectIdentifier, DigestAlgorithm> registerOIDAlgorithms() {
-            final Map<ASN1ObjectIdentifier, DigestAlgorithm> map = new HashMap<ASN1ObjectIdentifier, DigestAlgorithm>();
+		private static Map<ASN1ObjectIdentifier, DigestAlgorithm> registerOIDAlgorithms() {
+			final Map<ASN1ObjectIdentifier, DigestAlgorithm> map = new HashMap<ASN1ObjectIdentifier, DigestAlgorithm>();
 
-            for (final DigestAlgorithm digestAlgo : values()) {
-                map.put(digestAlgo.oid, digestAlgo);
-            }
+			for (final DigestAlgorithm digestAlgo : values()) {
+				map.put(digestAlgo.oid, digestAlgo);
+			}
 
-            return map;
-        }
+			return map;
+		}
 
-        private static Map<String, DigestAlgorithm> registerXMLAlgorithms() {
-            final Map<String, DigestAlgorithm> map = new HashMap<String, DigestAlgorithm>();
+		private static Map<String, DigestAlgorithm> registerXMLAlgorithms() {
+			final Map<String, DigestAlgorithm> map = new HashMap<String, DigestAlgorithm>();
 
-            for (final DigestAlgorithm digestAlgo : values()) {
-                map.put(digestAlgo.xmlId, digestAlgo);
-            }
+			for (final DigestAlgorithm digestAlgo : values()) {
+				map.put(digestAlgo.xmlId, digestAlgo);
+			}
 
-            return map;
-        }
+			return map;
+		}
 
-        private static Map<String, DigestAlgorithm> registerAlgorithms() {
-            final Map<String, DigestAlgorithm> map = new HashMap<String, DigestAlgorithm>();
+		private static Map<String, DigestAlgorithm> registerAlgorithms() {
+			final Map<String, DigestAlgorithm> map = new HashMap<String, DigestAlgorithm>();
 
-            for (final DigestAlgorithm digestAlgo : values()) {
-                map.put(digestAlgo.name, digestAlgo);
-            }
+			for (final DigestAlgorithm digestAlgo : values()) {
+				map.put(digestAlgo.name, digestAlgo);
+			}
 
-            return map;
-        }
-    }
+			return map;
+		}
+	}
 
-    /**
-     * Returns the digest algorithm associated to the given JCE name.
-     *
-     * @param name
-     * @return
-     */
-    public static DigestAlgorithm forName(final String name) {
-        final String c14nName = DSSUtils.replaceStrStr(name, "-", "");
-        final DigestAlgorithm algorithm = Registry.ALGORITHMS.get(c14nName);
-        if (algorithm == null) {
-            throw new DSSException("Unsupported algorithm: " + name + "/" + c14nName);
-        }
-        return algorithm;
-    }
+	/**
+	 * Returns the digest algorithm associated to the given JCE name.
+	 *
+	 * @param name
+	 * @return
+	 */
+	public static DigestAlgorithm forName(final String name) {
+		final String c14nName = DSSUtils.replaceStrStr(name, "-", "");
+		final DigestAlgorithm algorithm = Registry.ALGORITHMS.get(c14nName);
+		if (algorithm == null) {
+			throw new DSSException("Unsupported algorithm: " + name + "/" + c14nName);
+		}
+		return algorithm;
+	}
 
-    /**
-     * Returns the digest algorithm associated to the given JCE name.
-     *
-     * @param name
-     * @param defaultValue
-     * @return
-     */
-    public static DigestAlgorithm forName(final String name, final DigestAlgorithm defaultValue) {
+	/**
+	 * Returns the digest algorithm associated to the given JCE name.
+	 *
+	 * @param name
+	 * @param defaultValue
+	 * @return
+	 */
+	public static DigestAlgorithm forName(final String name, final DigestAlgorithm defaultValue) {
 
-        final String c14nName = DSSUtils.replaceStrStr(name, "-", "");
-        final DigestAlgorithm algorithm = Registry.ALGORITHMS.get(c14nName);
-        if (algorithm == null) {
+		final String c14nName = DSSUtils.replaceStrStr(name, "-", "");
+		final DigestAlgorithm algorithm = Registry.ALGORITHMS.get(c14nName);
+		if (algorithm == null) {
 
-            return defaultValue;
-        }
-        return algorithm;
-    }
+			return defaultValue;
+		}
+		return algorithm;
+	}
 
-    /**
-     * Returns the digest algorithm associated to the given OID.
-     *
-     * @param oid
-     * @return
-     */
-    public static DigestAlgorithm forOID(final String oid) {
+	/**
+	 * Returns the digest algorithm associated to the given OID.
+	 *
+	 * @param oid
+	 * @return
+	 */
+	public static DigestAlgorithm forOID(final String oid) {
 
-        ASN1ObjectIdentifier asn1ObjectIdentifier = new ASN1ObjectIdentifier(oid);
-        final DigestAlgorithm algorithm = forOID(asn1ObjectIdentifier);
-        return algorithm;
-    }
+		ASN1ObjectIdentifier asn1ObjectIdentifier = new ASN1ObjectIdentifier(oid);
+		final DigestAlgorithm algorithm = forOID(asn1ObjectIdentifier);
+		return algorithm;
+	}
 
-    /**
-     * Returns the digest algorithm associated to the given OID.
-     *
-     * @param oid
-     * @return
-     */
-    public static DigestAlgorithm forOID(final ASN1ObjectIdentifier oid) throws DSSException {
+	/**
+	 * Returns the digest algorithm associated to the given OID.
+	 *
+	 * @param oid
+	 * @return
+	 */
+	public static DigestAlgorithm forOID(final ASN1ObjectIdentifier oid) throws DSSException {
 
-        final DigestAlgorithm algorithm = Registry.OID_ALGORITHMS.get(oid);
-        if (algorithm == null) {
-            throw new DSSException("Unsupported algorithm: " + oid);
-        }
-        return algorithm;
-    }
+		final DigestAlgorithm algorithm = Registry.OID_ALGORITHMS.get(oid);
+		if (algorithm == null) {
+			throw new DSSException("Unsupported algorithm: " + oid);
+		}
+		return algorithm;
+	}
 
-    /**
-     * Returns the digest algorithm associated to the given XML url.
-     *
-     * @param xmlName
-     * @return
-     */
-    public static DigestAlgorithm forXML(final String xmlName) {
-        final DigestAlgorithm algorithm = Registry.XML_ALGORITHMS.get(xmlName);
-        if (algorithm == null) {
-            throw new DSSException("Unsupported algorithm: " + xmlName);
-        }
-        return algorithm;
-    }
+	/**
+	 * Returns the digest algorithm associated to the given XML url.
+	 *
+	 * @param xmlName
+	 * @return
+	 */
+	public static DigestAlgorithm forXML(final String xmlName) {
+		final DigestAlgorithm algorithm = Registry.XML_ALGORITHMS.get(xmlName);
+		if (algorithm == null) {
+			throw new DSSException("Unsupported algorithm: " + xmlName);
+		}
+		return algorithm;
+	}
 
-    private DigestAlgorithm(final String name, final String oid, final String xmlId) {
-        this.name = name;
-        this.oid = new ASN1ObjectIdentifier(oid);
-        this.xmlId = xmlId;
-    }
+	/**
+	 * Returns the digest algorithm associated to the given XML url or the default one if the algorithm does not exist.
+	 *
+	 * @param xmlName
+	 * @param defaultValue
+	 * @return
+	 */
+	public static DigestAlgorithm forXML(final String xmlName, final DigestAlgorithm defaultValue) {
 
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
+		final DigestAlgorithm algorithm = Registry.XML_ALGORITHMS.get(xmlName);
+		if (algorithm == null) {
+			return defaultValue;
+		}
+		return algorithm;
+	}
 
-    /**
-     * @return the OID
-     */
-    public ASN1ObjectIdentifier getOid() {
-        return oid;
-    }
+	private DigestAlgorithm(final String name, final String oid, final String xmlId) {
+		this.name = name;
+		this.oid = new ASN1ObjectIdentifier(oid);
+		this.xmlId = xmlId;
+	}
 
-    /**
-     * @return the xmlId
-     */
-    public String getXmlId() {
-        return xmlId;
-    }
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
 
-    /**
-     * Gets the ASN.1 algorithm identifier structure corresponding to this digest algorithm
-     *
-     * @return the AlgorithmIdentifier
-     */
-    public AlgorithmIdentifier getAlgorithmIdentifier() {
-        /*
-         * The recommendation (cf. RFC 3380 section 2.1) is to omit the parameter for SHA-1, but some implementations still expect a
+	/**
+	 * @return the OID
+	 */
+	public ASN1ObjectIdentifier getOid() {
+		return oid;
+	}
+
+	/**
+	 * @return the xmlId
+	 */
+	public String getXmlId() {
+		return xmlId;
+	}
+
+	/**
+	 * Gets the ASN.1 algorithm identifier structure corresponding to this digest algorithm
+	 *
+	 * @return the AlgorithmIdentifier
+	 */
+	public AlgorithmIdentifier getAlgorithmIdentifier() {
+	    /*
+	     * The recommendation (cf. RFC 3380 section 2.1) is to omit the parameter for SHA-1, but some implementations still expect a
 		 * NULL there. Therefore we always include a NULL parameter even with SHA-1, despite the recommendation, because the RFC
 		 * states that implementations SHOULD support it as well anyway
 		 */
-        final ASN1ObjectIdentifier asn1ObjectIdentifier = this.getOid();
-        final AlgorithmIdentifier algorithmIdentifier = new AlgorithmIdentifier(asn1ObjectIdentifier, DERNull.INSTANCE);
-        return algorithmIdentifier;
-    }
+		final ASN1ObjectIdentifier asn1ObjectIdentifier = this.getOid();
+		final AlgorithmIdentifier algorithmIdentifier = new AlgorithmIdentifier(asn1ObjectIdentifier, DERNull.INSTANCE);
+		return algorithmIdentifier;
+	}
 }

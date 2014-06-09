@@ -20,7 +20,6 @@
 
 package eu.europa.ec.markt.dss.validation102853.pades;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -28,7 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.bouncycastle.cms.CMSException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,31 +36,31 @@ import eu.europa.ec.markt.dss.EncryptionAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
-import eu.europa.ec.markt.dss.signature.pdf.PdfDict;
 import eu.europa.ec.markt.dss.signature.pdf.PdfDocTimestampInfo;
 import eu.europa.ec.markt.dss.signature.pdf.PdfSignatureInfo;
 import eu.europa.ec.markt.dss.signature.pdf.PdfSignatureOrDocTimestampInfo;
-import eu.europa.ec.markt.dss.validation102853.crl.CRLRef;
-import eu.europa.ec.markt.dss.validation102853.certificate.CertificateRef;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPRef;
-import eu.europa.ec.markt.dss.validation102853.SignatureForm;
-import eu.europa.ec.markt.dss.validation102853.SignaturePolicy;
-import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
-import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
+import eu.europa.ec.markt.dss.signature.pdf.pdfbox.PdfDssDict;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.CAdESCertificateSource;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
+import eu.europa.ec.markt.dss.validation102853.SignatureForm;
+import eu.europa.ec.markt.dss.validation102853.SignaturePolicy;
 import eu.europa.ec.markt.dss.validation102853.TimestampReference;
 import eu.europa.ec.markt.dss.validation102853.TimestampToken;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
+import eu.europa.ec.markt.dss.validation102853.bean.CandidatesForSigningCertificate;
 import eu.europa.ec.markt.dss.validation102853.bean.CertifiedRole;
 import eu.europa.ec.markt.dss.validation102853.bean.CommitmentType;
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerification;
 import eu.europa.ec.markt.dss.validation102853.bean.SignatureProductionPlace;
-import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
 import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateRef;
+import eu.europa.ec.markt.dss.validation102853.crl.CRLRef;
+import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPRef;
+import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 
 /**
  * Implementation of AdvancedSignature for PAdES
@@ -74,11 +72,9 @@ public class PAdESSignature extends DefaultAdvancedSignature {
     private static final Logger LOG = LoggerFactory.getLogger(PAdESSignature.class);
 
     private final DSSDocument document;
-    private final PdfDict pdfCatalog;
+    private final PdfDssDict pdfCatalog;
 
-    private final PdfDict outerCatalog;
-
-    private final PdfDict signatureDictionary;
+    private final PdfDssDict outerCatalog;
 
     private final CAdESSignature cadesSignature;
     private final List<TimestampToken> cadesTimestamps;
@@ -103,31 +99,18 @@ public class PAdESSignature extends DefaultAdvancedSignature {
      * The default constructor for PAdESSignature.
      *
      * @param document
-     * @param pdfCatalog                     The catalogue of the PDF that enable to access the document that contains the PAdES signature.
-     * @param outerCatalog
-     * @param signatureDictionary
-     * @param pdfSignatureOrDocTimestampInfo
+     * @param pdfSignatureInfo
      * @throws eu.europa.ec.markt.dss.exception.DSSException
      */
-    public PAdESSignature(DSSDocument document, final PdfDict pdfCatalog, final PdfDict outerCatalog, final PdfDict signatureDictionary,
-                          final PdfSignatureInfo pdfSignatureOrDocTimestampInfo, final CertificatePool certPool) throws DSSException {
-        try {
-
-            this.document = document;
-            this.pdfCatalog = pdfCatalog;
-            this.outerCatalog = outerCatalog;
-            this.signatureDictionary = signatureDictionary;
-            this.certPool = certPool;
-            final byte[] contents = signatureDictionary.get("Contents");
-            this.cadesSignature = new CAdESSignature(contents, certPool);
-            this.cadesTimestamps = cadesSignature.getSignatureTimestamps();
-            this.cadesArchiveTimestamps = cadesSignature.getArchiveTimestamps();
-            this.pdfSignature = pdfSignatureOrDocTimestampInfo;
-        } catch (IOException e) {
-            throw new DSSException(e);
-        } catch (CMSException e) {
-            throw new DSSException(e);
-        }
+    protected PAdESSignature(DSSDocument document, final PdfSignatureInfo pdfSignatureInfo, final CertificatePool certPool) throws DSSException {
+        this.document = document;
+        this.pdfCatalog = pdfSignatureInfo.getDocumentDictionary();
+        this.outerCatalog = pdfSignatureInfo.getOuterCatalog();
+        this.certPool = certPool;
+        this.cadesSignature = pdfSignatureInfo.getCades();
+        this.cadesTimestamps = cadesSignature.getSignatureTimestamps();
+        this.cadesArchiveTimestamps = cadesSignature.getArchiveTimestamps();
+        this.pdfSignature = pdfSignatureInfo;
     }
 
     @Override
@@ -154,22 +137,21 @@ public class PAdESSignature extends DefaultAdvancedSignature {
         if (padesCertSources == null) {
 
             CAdESCertificateSource cadesCertSource = cadesSignature.getCertificateSource();
-            PdfDict dico = outerCatalog != null ? outerCatalog : pdfCatalog;
-            padesCertSources = new PAdESCertificateSource(dico, cadesCertSource, certPool);
+            padesCertSources = new PAdESCertificateSource(getDSSDictionary(), cadesCertSource, certPool);
         }
         return padesCertSources;
     }
 
-    private PdfDict getDSSDictionary() {
+    private PdfDssDict getDSSDictionary() {
 
-        PdfDict catalog = outerCatalog != null ? outerCatalog : pdfCatalog;
-        return catalog.getAsDict("DSS");
+        PdfDssDict catalog = outerCatalog != null ? outerCatalog : pdfCatalog;
+        return catalog;
     }
 
     @Override
     public OfflineCRLSource getCRLSource() {
 
-        final PdfDict dssDictionary = getDSSDictionary();
+        final PdfDssDict dssDictionary = getDSSDictionary();
         final PAdESCRLSource padesCRLSource = new PAdESCRLSource(cadesSignature, dssDictionary);
         return padesCRLSource;
     }
@@ -177,15 +159,15 @@ public class PAdESSignature extends DefaultAdvancedSignature {
     @Override
     public OfflineOCSPSource getOCSPSource() {
 
-        final PdfDict dssDictionary = getDSSDictionary();
+        final PdfDssDict dssDictionary = getDSSDictionary();
         final PAdESOCSPSource padesOCSPSource = new PAdESOCSPSource(cadesSignature, dssDictionary);
         return padesOCSPSource;
     }
 
     @Override
-    public SigningCertificateValidity getSigningCertificateValidity() {
+    public CandidatesForSigningCertificate getCandidatesForSigningCertificate() {
 
-        return cadesSignature.getSigningCertificateValidity();
+        return cadesSignature.getCandidatesForSigningCertificate();
     }
 
     @Override
@@ -320,9 +302,15 @@ public class PAdESSignature extends DefaultAdvancedSignature {
         return getCertificateSource().getCertificates();
     }
 
+	@Override
+	public SignatureCryptographicVerification checkIntegrity(final DSSDocument detachedDocument) {
+
+		return checkIntegrity(detachedDocument, null);
+	}
     @Override
-    public SignatureCryptographicVerification checkIntegrity(DSSDocument document) {
-        SignatureCryptographicVerification scv = new SignatureCryptographicVerification();
+    public SignatureCryptographicVerification checkIntegrity(final DSSDocument document, final CertificateToken providedSigningCertificate) {
+
+	    SignatureCryptographicVerification scv = new SignatureCryptographicVerification();
         try {
             scv = pdfSignature.checkIntegrity();
         } catch (Exception e) {
@@ -387,35 +375,11 @@ public class PAdESSignature extends DefaultAdvancedSignature {
     }
 
     /**
-     * @return the pdfReader catalogue corresponding to the revision of the document covered by the signature
-     */
-    public PdfDict getPdfCatalog() {
-
-        return pdfCatalog;
-    }
-
-    /**
      * @return the CAdES signature underlying this PAdES signature
      */
     public CAdESSignature getCAdESSignature() {
 
         return cadesSignature;
-    }
-
-    /**
-     * @return the "outer" catalogue outside the document covered by this signature
-     */
-    public PdfDict getOuterCatalog() {
-
-        return outerCatalog;
-    }
-
-    /**
-     * @return the signature dictionary containing the bytes
-     */
-    public PdfDict getSignatureDictionary() {
-
-        return signatureDictionary;
     }
 
     @Override
@@ -505,7 +469,7 @@ public class PAdESSignature extends DefaultAdvancedSignature {
 
     private boolean hasDSSDictionary() {
         for (final PdfSignatureOrDocTimestampInfo outerSignature : pdfSignature.getOuterSignatures()) {
-            if (outerSignature.getDocumentDictionary().hasAName("DSS")) {
+            if (outerSignature.getDocumentDictionary() != null) {
                 return true;
             }
         }
@@ -514,7 +478,7 @@ public class PAdESSignature extends DefaultAdvancedSignature {
 
     private boolean hasDocumentTimestampOnTopOfDSSDict() {
         for (final PdfSignatureOrDocTimestampInfo outerSignature : pdfSignature.getOuterSignatures()) {
-            if (outerSignature.getDocumentDictionary().hasAName("DSS")) {
+            if (outerSignature.getDocumentDictionary() != null) {
                 if (outerSignature.isTimestamp()) {
                     return true;
                 }
@@ -526,5 +490,13 @@ public class PAdESSignature extends DefaultAdvancedSignature {
     @Override
     public CommitmentType getCommitmentTypeIndication() {
         return cadesSignature.getCommitmentTypeIndication();
+    }
+
+    public boolean hasOuterSignatures() {
+        return !pdfSignature.getOuterSignatures().isEmpty();
+    }
+
+    public PdfSignatureInfo getPdfSignature() {
+        return pdfSignature;
     }
 }

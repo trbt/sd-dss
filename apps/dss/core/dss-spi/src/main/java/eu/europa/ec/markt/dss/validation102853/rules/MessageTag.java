@@ -30,12 +30,16 @@ public enum MessageTag {
 	BBB_CV_ISI("Is the signature intact?"),
 	BBB_CV_ISI_ANS("The signature is not intact!"),
 
+	BBB_ICS_ISCI("Is there an identified candidate for the signing certificate?"),
+	BBB_ICS_ISCI_ANS("There is no candidate for the signing certificate!"),
+	BBB_ICS_ISASCP("Is the signed attribute: 'signing-certificate' present?"),
+	BBB_ICS_ISASCP_ANS("The signed attribute: 'signing-certificate' is absent!"),
+	BBB_ICS_ISACDP("Is the signed attribute: 'cert-digest' of the certificate present?"),
+	BBB_ICS_ISACDP_ANS("The signed attribute: 'cert-digest' is absent!"),
 	BBB_ICS_ICDVV("Is the certificate's digest value valid?"),
 	BBB_ICS_ICDVV_ANS("The signing certificate digest value does not match!"),
 	BBB_ICS_AIDNASNE("Are the issuer distinguished name and the serial number equal?"),
-	BBB_ICS_AIDNASNE_ANS("The issuer distinguished name or the serial number are not equal!"),
-	BBB_ICS_ISCI("Is the signer's certificate identified?"),
-	BBB_ICS_ISCI_ANS("The signer's certificate cannot be identified!"),
+	BBB_ICS_AIDNASNE_ANS("The 'issuer-serial' attribute is absent or does not match!"),
 
 	ASCCM("Are the signature cryptographic constraints met?"),
 	ASCCM_ANS_1("The encryption algorithm not authorised!"),
@@ -71,7 +75,7 @@ public enum MessageTag {
 	BBB_XCV_ACCCM("Are the chain cryptographic constraints met?"),
 	BBB_XCV_ACCM("Are the chain constraints met?"),
 	BBB_XCV_ARDCCM("Are revocation data cryptographic constraints met?"),
-	BBB_XCV_CCCBB("Can the certificate chain be built?"),
+	BBB_XCV_CCCBB("Can the certificate chain be built till the trust anchor?"),
 	BBB_XCV_CCCBB_ANS("The certificate chain is not trusted, there is no trusted anchor."),
 	BBB_XCV_CMDCIITLP("Certificate meta-data constraints: Is issued to a legal person?"),
 	BBB_XCV_CMDCIITLP_ANS("The signer's certificate is not issued to a legal person."),
@@ -85,9 +89,9 @@ public enum MessageTag {
 	BBB_XCV_IICR_ANS("The intermediate CA is revoked"),
 	BBB_XCV_IRDPFC("Is the revocation data present for the certificate?"),
 	BBB_XCV_IRDPFC_ANS("No revocation data for the certificate"),
-	BBB_XCV_IRDTFC("Is the revocation data trusted for the certificate [%s]?"),
+	BBB_XCV_IRDTFC("Is the revocation data trusted for the certificate?"),
 	BBB_XCV_IRDTFC_ANS("The revocation data for the certificate is not trusted!"),
-	BBB_XCV_IRIF("Is the revocation information fresh for the certificate [%s]?"),
+	BBB_XCV_IRIF("Is the revocation information fresh for the certificate?"),
 	BBB_XCV_IRIF_ANS("The revocation status information is not considered as 'fresh'."),
 	BBB_XCV_ISCOH("Is the signer's certificate on hold?"),
 	BBB_XCV_ISCOH_ANS("The certificate is on hold!"),
@@ -103,8 +107,12 @@ public enum MessageTag {
 	CTS_ICNEAIDORSI("Is the certificate not expired at the issuance date of the revocation status information?"),
 	CTS_IIDORSIBCT("Is the issuance date of the revocation status information before control-time?"),
 	CTS_SCT("Sliding the control-time."),
+	CTS_IIDOCWVPOTS("Is the issuance date of the certificate within the validity period of trusted service?"),
+	CTS_IIDOCWVPOTS_ANS("There is no concordance between the validity dates of trusted services and the certificate!"),
 	CTS_WITSS("What is the trusted service status?"),
-	CTS_WITSS_ANS("The status of the trusted service should be: UNDERSUPERVISION, SUPERVISIONINCESSATION or ACCREDITED."),
+	CTS_WITSS_ANS("The status of the trusted service should be: UNDERSUPERVISION, SUPERVISIONINCESSATION or ACCREDITED!"),
+	CTS_ITACBT("Is there a concordance between the trusted service and the certificate?"),
+	CTS_ITACBT_ANS("There is no concordance between the trusted service and the certificate!"),
 
 	PCV_ICTSC("Is control time sliding conclusive?"),
 	PCV_ICTSC_ANS("The indications returned by control time sliding sub-process."),
@@ -123,8 +131,7 @@ public enum MessageTag {
 	TSV_ISCNVABST("Is the signing certificate not valid at the best-signature-time?"),
 	TSV_ISCNVABST_ANS("The signing certificate is not valid at the best-signature-time!"),
 
-	TSV_IBSTAIDOqSC("The signature-time-stamp protects the signature against the revocation of the signer's certificate but not against its expiration!"),
-	//TSV_IBSTAIDOSC("The signature-time-stamp protects the signature against the revocation of the signer's certificate but not against its expiration!"),
+	// TSV___("The signature-time-stamp protects the signature against the revocation of the signer's certificate but not against its expiration!"),
 	ADEST_IRTPTBST("Is revocation time posterior to best-signature-time?"),
 	ADEST_IRTPTBST_ANS("The revocation time is not posterior to best-signature-time!"),
 	ADEST_VFDTAOCST_ANS("The validation failed due to the absence of claimed signing time!"),
@@ -133,7 +140,11 @@ public enum MessageTag {
 	TSV_WACRABST("Was the algorithm(s) considered reliable at best-signature-time?"),
 	TSV_WACRABST_ANS("The algorithm(s) was not considered reliable at best-signature-time!"),
 
+	LABEL_TINTWS("Additional assurance on the signing time may be needed to prove the validity of the signature."),
+	LABEL_TINVTWS("There is no valid timestamp within the signature."),
+
 	EMPTY("");
+
 
 	public static final String NAME_ID = AttributeName.NAME_ID;
 

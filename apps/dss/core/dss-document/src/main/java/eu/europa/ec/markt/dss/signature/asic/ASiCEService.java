@@ -191,7 +191,7 @@ public class ASiCEService extends AbstractSignatureService {
 		final ZipOutputStream outZip = new ZipOutputStream(outBytes);
 
 		// Zip comment
-		if (specificParameters.aSiC().isAsicComment() && DSSUtils.isNotEmpty(toSignDocument.getName())) {
+		if (specificParameters.aSiC().isZipComment() && DSSUtils.isNotEmpty(toSignDocument.getName())) {
 
 			if (!System.getProperties().containsKey("content.types.user.table")) {
 				final URL contentTypeURL = this.getClass().getResource("/custom-content-types.properties");

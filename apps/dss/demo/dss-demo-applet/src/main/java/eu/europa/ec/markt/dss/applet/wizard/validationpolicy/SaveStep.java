@@ -24,7 +24,7 @@ import eu.europa.ec.markt.dss.commons.swing.mvc.applet.ControllerException;
 import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardStep;
 import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardView;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicy;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicyDao;
+import eu.europa.ec.markt.dss.applet.util.ValidationPolicyDao;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

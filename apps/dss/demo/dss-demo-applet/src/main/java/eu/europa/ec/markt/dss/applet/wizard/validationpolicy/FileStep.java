@@ -29,7 +29,7 @@ import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardStep;
 import eu.europa.ec.markt.dss.commons.swing.mvc.applet.wizard.WizardView;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicy;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.constraint.ValidationPolicyDao;
+import eu.europa.ec.markt.dss.applet.util.ValidationPolicyDao;
 
 /**
  * TODO
@@ -59,6 +59,7 @@ public class FileStep extends WizardStep<ValidationPolicyModel, ValidationPolicy
     @Override
     protected void finish() throws ControllerException {
         URL validationPolicyURL = getController().getCore().getParameters().getDefaultPolicyUrl();
+        URL validationXsdPolicyURL = getController().getCore().getParameters().getDefaultXsdPolicyUrl();
         if (!getModel().isEditDefaultPolicy()) {
             // load specified validation policy file
             try {
@@ -74,7 +75,7 @@ public class FileStep extends WizardStep<ValidationPolicyModel, ValidationPolicy
         }
 
         final ValidationPolicyDao validationPolicyDao = new ValidationPolicyDao();
-        ValidationPolicy validationPolicy = validationPolicyDao.load(validationPolicyURL);
+        ValidationPolicy validationPolicy = validationPolicyDao.load(validationPolicyURL,validationXsdPolicyURL);
 
         getModel().setValidationPolicy(validationPolicy);
 

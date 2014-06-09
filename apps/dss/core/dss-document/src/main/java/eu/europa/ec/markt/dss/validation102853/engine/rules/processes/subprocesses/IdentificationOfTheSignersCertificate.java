@@ -23,9 +23,9 @@ package eu.europa.ec.markt.dss.validation102853.engine.rules.processes.subproces
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
-import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.Constraint;
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
+import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.ExceptionMessage;
@@ -40,6 +40,10 @@ import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_A
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_AIDNASNE_ANS;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ICDVV;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ICDVV_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISACDP;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISACDP_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISASCP;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISASCP_ANS;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCI;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCI_ANS;
 
@@ -173,6 +177,14 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
 		params.setSigningCertificateId(signingCertificateId);
 		params.setSigningCertificate(signingCertificateXmlDom);
 
+		if (!checkSigningCertificateAttributePresentConstraint(conclusion)) {
+			return conclusion;
+		}
+
+		if (!checkDigestValuePresentConstraint(conclusion)) {
+			return conclusion;
+		}
+
 		if (!checkDigestValueMatchConstraint(conclusion)) {
 			return conclusion;
 		}
@@ -204,6 +216,42 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
 			constraint.setAttribute(CERTIFICATE_ID, signingCertificateId);
 		}
 		constraint.setIndications(INDETERMINATE, NO_SIGNER_CERTIFICATE_FOUND, BBB_ICS_ISCI_ANS);
+		constraint.setConclusionReceiver(conclusion);
+
+		return constraint.check();
+	}
+
+	private boolean checkSigningCertificateAttributePresentConstraint(final Conclusion conclusion) {
+
+		final Constraint constraint = constraintData.getSigningCertificateAttributePresentConstraint(contextName);
+		if (constraint == null) {
+			return true;
+		}
+		constraint.create(validationDataXmlNode, BBB_ICS_ISASCP);
+		final boolean digestValueMatch = contextElement.getBoolValue("./SigningCertificate/AttributePresent/text()");
+		constraint.setValue(digestValueMatch);
+		constraint.setIndications(INVALID, FORMAT_FAILURE, BBB_ICS_ISASCP_ANS);
+		constraint.setConclusionReceiver(conclusion);
+
+		return constraint.check();
+	}
+
+	/**
+	 * This method checks if the digest value of the signing certificate is within the signature
+	 *
+	 * @param conclusion the conclusion to use to add the result of the check.
+	 * @return false if the check failed and the process should stop, true otherwise.
+	 */
+	private boolean checkDigestValuePresentConstraint(final Conclusion conclusion) {
+
+		final Constraint constraint = constraintData.getSigningCertificateDigestValuePresentConstraint(contextName);
+		if (constraint == null) {
+			return true;
+		}
+		constraint.create(validationDataXmlNode, BBB_ICS_ISACDP);
+		final boolean digestValueMatch = contextElement.getBoolValue("./SigningCertificate/DigestValuePresent/text()");
+		constraint.setValue(digestValueMatch);
+		constraint.setIndications(INVALID, FORMAT_FAILURE, BBB_ICS_ISACDP_ANS);
 		constraint.setConclusionReceiver(conclusion);
 
 		return constraint.check();

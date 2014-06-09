@@ -33,6 +33,8 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinder;
+import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinderFactory;
 
 /**
  * Validation of CMS document
@@ -42,60 +44,68 @@ import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
 
 public class CMSDocumentValidator extends SignedDocumentValidator {
 
-    protected CMSSignedData cmsSignedData;
+	protected CMSSignedData cmsSignedData;
 
-    /**
-     * This constructor is used with {@code TimeStampToken}.
-     */
-    public CMSDocumentValidator() {
-    }
+	/**
+	 * This constructor is used with {@code TimeStampToken}.
+	 */
+	public CMSDocumentValidator() {
+		cadesSignatureScopeFinder = SignatureScopeFinderFactory.geInstance(CAdESSignature.class);
+	}
 
-    /**
-     * The default constructor for {@code CMSDocumentValidator}.
-     *
-     * @param cmsSignedData pkcs7-signature(s)
-     */
-    public CMSDocumentValidator(final CMSSignedData cmsSignedData){
+	/**
+	 * The default constructor for {@code CMSDocumentValidator}.
+	 *
+	 * @param cmsSignedData pkcs7-signature(s)
+	 */
+	public CMSDocumentValidator(final CMSSignedData cmsSignedData) {
 
-        this.cmsSignedData = cmsSignedData;
-    }
+		cadesSignatureScopeFinder = SignatureScopeFinderFactory.geInstance(CAdESSignature.class);
+		this.cmsSignedData = cmsSignedData;
+	}
 
-    /**
-     * The default constructor for {@code CMSDocumentValidator}.
-     *
-     * @param document document to validate (with the signature(s))
-     * @throws DSSException
-     */
-    public CMSDocumentValidator(final DSSDocument document) throws DSSException {
+	/**
+	 * The default constructor for {@code CMSDocumentValidator}.
+	 *
+	 * @param document document to validate (with the signature(s))
+	 * @throws DSSException
+	 */
+	public CMSDocumentValidator(final DSSDocument document) throws DSSException {
 
-        this.document = document;
-        try {
+		cadesSignatureScopeFinder = SignatureScopeFinderFactory.geInstance(CAdESSignature.class);
+		this.document = document;
+		try {
 
-            final InputStream is = document.openStream();
-            if (DSSUtils.available(is) > 0) {
-                this.cmsSignedData = new CMSSignedData(is);
-            }
-        } catch (CMSException e) {
-            throw new DSSException("Not a valid CAdES file", e);
-        }
-    }
+			final InputStream is = document.openStream();
+			if (DSSUtils.available(is) > 0) {
+				this.cmsSignedData = new CMSSignedData(is);
+			}
+		} catch (CMSException e) {
+			throw new DSSException("Not a valid CAdES file", e);
+		}
+	}
 
-    @Override
-    public List<AdvancedSignature> getSignatures() {
+	@Override
+	public List<AdvancedSignature> getSignatures() {
 
-        if (signatures != null) {
-            return signatures;
-        }
-        signatures = new ArrayList<AdvancedSignature>();
-        if (cmsSignedData != null) {
+		if (signatures != null) {
+			return signatures;
+		}
+		signatures = new ArrayList<AdvancedSignature>();
+		if (cmsSignedData != null) {
 
-            for (final Object signerInformationObject : cmsSignedData.getSignerInfos().getSigners()) {
+			for (final Object signerInformationObject : cmsSignedData.getSignerInfos().getSigners()) {
 
-                final SignerInformation signerInformation = (SignerInformation) signerInformationObject;
-                final CAdESSignature signature = new CAdESSignature(cmsSignedData, signerInformation, validationCertPool, externalContent);
-                signatures.add(signature);
-            }
-        }
-        return signatures;
-    }
+				final SignerInformation signerInformation = (SignerInformation) signerInformationObject;
+				final CAdESSignature signature = new CAdESSignature(cmsSignedData, signerInformation, validationCertPool, externalContent);
+				signatures.add(signature);
+			}
+		}
+		return signatures;
+	}
+
+	@Override
+	protected SignatureScopeFinder getSignatureScopeFinder() {
+		return cadesSignatureScopeFinder;
+	}
 }

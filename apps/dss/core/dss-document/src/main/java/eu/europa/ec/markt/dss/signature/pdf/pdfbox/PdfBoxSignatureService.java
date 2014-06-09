@@ -241,14 +241,24 @@ class PdfBoxSignatureService implements PDFSignatureService {
     }
 
     /* This is O(scary), but seems quick enough in practice. */
+
+    /**
+     * @param validationCertPool
+     * @param byteRangeMap
+     * @param outerCatalog       the PdfDictionnary of the document that enclose the document stored in the input InputStream
+     * @param input              the Pdf bytes to open as a PDF
+     * @return
+     * @throws DSSException
+     */
     private Set<PdfSignatureOrDocTimestampInfo> validateSignatures(CertificatePool validationCertPool, Map<String, Set<PdfSignatureOrDocTimestampInfo>> byteRangeMap,
                                                                    PdfDict outerCatalog, InputStream input) throws DSSException {
         Set<PdfSignatureOrDocTimestampInfo> signaturesFound = new LinkedHashSet<PdfSignatureOrDocTimestampInfo>();
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        PDDocument doc = null;
         try {
             DSSUtils.copy(input, buffer);
 
-            final PDDocument doc = PDDocument.load(new ByteArrayInputStream(buffer.toByteArray()));
+            doc = PDDocument.load(new ByteArrayInputStream(buffer.toByteArray()));
             final PdfDict catalog = new PdfBoxDict(doc.getDocumentCatalog().getCOSDictionary(), doc);
 
             final List<PDSignature> signatureDictionaries = doc.getSignatureDictionaries();
@@ -263,15 +273,18 @@ class PdfBoxSignatureService implements PDFSignatureService {
                  * When the value of Type is DocTimestamp, the value of SubFilter shall be ETSI.RFC3161.
                  */
                 final String subFilter = signature.getSubFilter();
+
+                byte[] cms = new PdfBoxDict(signature.getDictionary(), doc).get("Contents");
+
                 PdfSignatureOrDocTimestampInfo signatureInfo;
                 try {
                     if (PdfBoxDocTimeStampService.SUB_FILTER_ETSI_RFC3161.getName().equals(subFilter)) {
-                        signatureInfo = PdfSignatureFactory.createPdfTimestampInfo(validationCertPool, outerCatalog, doc, signature, buffer);
+                        signatureInfo = PdfSignatureFactory.createPdfTimestampInfo(validationCertPool, outerCatalog, doc, signature, cms, buffer);
                     } else {
-                        signatureInfo = PdfSignatureFactory.createPdfSignatureInfo(validationCertPool, outerCatalog, doc, signature, buffer);
+                        signatureInfo = PdfSignatureFactory.createPdfSignatureInfo(validationCertPool, outerCatalog, doc, signature, cms, buffer);
                     }
                 } catch (PdfSignatureOrDocTimestampInfo.DssPadesNoSignatureFound e) {
-                    LOG.debug("No signature found in signature Dictionary:Content");
+                    LOG.debug("No signature found in signature Dictionary:Content", e);
                     continue;
                 }
 
@@ -304,6 +317,8 @@ class PdfBoxSignatureService implements PDFSignatureService {
             LOG.error("Error loading buffer of size {}", buffer.size(), up);
             // ignore error when loading signatures
             return signaturesFound;
+        } finally {
+            DSSPDFUtils.close(doc);
         }
     }
 

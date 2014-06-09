@@ -149,7 +149,7 @@
     <xsl:template match="dss:AdESTValidationData/dss:Signature|dss:LongTermValidationData/dss:Signature">
         <h3 class="signature-title" xml:space="preserve">Signature
             <xsl:value-of select="@Id"/>:
-            <xsl:call-template name="signature-conlusion">
+            <xsl:call-template name="signature-conclusion">
                 <xsl:with-param name="Conclusion" select="dss:Conclusion" />
             </xsl:call-template>
         </h3>
@@ -173,7 +173,7 @@
     <xsl:template match="dss:TimestampValidationData/dss:Signature/dss:Timestamp">
         <h4 class="signature-title" xml:space="preserve">Timestamp
             <span xml:space="preserve"><xsl:value-of select="@Id"/> / [<xsl:value-of select="@Category" />]</span>:
-            <xsl:call-template name="signature-conlusion">
+            <xsl:call-template name="signature-conclusion">
                 <xsl:with-param name="Conclusion" select="dss:BasicBuildingBlocks/dss:Conclusion"/>
             </xsl:call-template>
         </h4>
@@ -189,7 +189,7 @@
         <h3 class="signature-title" xml:space="preserve">Signature
             <xsl:value-of select="@Id"/>:
 
-            <xsl:call-template name="signature-conlusion">
+            <xsl:call-template name="signature-conclusion">
                     <xsl:with-param name="Conclusion" select="dss:Conclusion" />
             </xsl:call-template>
         </h3>
@@ -200,7 +200,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template name="signature-conlusion">
+    <xsl:template name="signature-conclusion">
         <xsl:param name="Conclusion"/>
         <xsl:value-of select="$Conclusion/dss:Indication"/>
         <xsl:if test="string-length($Conclusion/dss:SubIndication) &gt; 0">.
@@ -232,7 +232,7 @@
                     </xsl:otherwise>
                 </xsl:choose>
                 :
-                <xsl:call-template name="signature-conlusion">
+                <xsl:call-template name="signature-conclusion">
                     <xsl:with-param name="Conclusion" select="dss:Conclusion"/>
                 </xsl:call-template>
             </h4>
@@ -259,18 +259,7 @@
     <xsl:template match="dss:Info">
         <div class="basic-building-block-item-constraint">
             <span class="basic-building-block-item-constraint-name">
-                <xsl:value-of select="@Field"/>
-            </span>
-            <span class="basic-building-block-item-constraint-value">
-                <xsl:choose>
-                    <xsl:when test="string-length(text()) = 0">
-                        [N/A]
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="text()"/>
-                    </xsl:otherwise>
-                </xsl:choose>
-
+	            <xsl:value-of select="concat(' - ',name(@*[1]),'=',@*)"/>
             </span>
         </div>
     </xsl:template>

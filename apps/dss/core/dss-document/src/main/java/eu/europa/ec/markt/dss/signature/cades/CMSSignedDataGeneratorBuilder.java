@@ -23,6 +23,7 @@ package eu.europa.ec.markt.dss.signature.cades;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -66,171 +67,176 @@ import eu.europa.ec.markt.dss.validation102853.TrustedCertificateSource;
  */
 public class CMSSignedDataGeneratorBuilder {
 
-    /**
-     * Note:
-     * Section 5.1 of RFC 3852 [4] requires that, the CMS SignedData version be set to 3 if certificates from
-     * SignedData is present AND (any version 1 attribute certificates are present OR any SignerInfo structures
-     * are version 3 OR eContentType from encapContentInfo is other than id-data). Otherwise, the CMS
-     * SignedData version is required to be set to 1.
-     * ---> CMS SignedData Version is handled automatically by BouncyCastle.
-     *
-     * @param certificateVerifier the certificate verifier used to find the trusted certificates
-     * @param signerCertificate   the certificate used to sign
-     * @param contentSigner       the contentSigned to get the hash of the data to be signed
-     * @param originalSignedData  the original signed data if extending an existing signature. null otherwise.
-     * @return the bouncycastle signed data generator which will sign the document and add the required signed and unsigned CMS attributes
-     * @throws eu.europa.ec.markt.dss.exception.DSSException
-     */
-    protected CMSSignedDataGenerator createCMSSignedDataGenerator(CertificateVerifier certificateVerifier, X509Certificate signerCertificate,
-                                                                  List<X509Certificate> certificateChain, ContentSigner contentSigner,
-                                                                  SignerInfoGeneratorBuilder signerInfoGeneratorBuilder, CMSSignedData originalSignedData) throws DSSException {
-        try {
+	/**
+	 * Note:
+	 * Section 5.1 of RFC 3852 [4] requires that, the CMS SignedData version be set to 3 if certificates from
+	 * SignedData is present AND (any version 1 attribute certificates are present OR any SignerInfo structures
+	 * are version 3 OR eContentType from encapContentInfo is other than id-data). Otherwise, the CMS
+	 * SignedData version is required to be set to 1.
+	 * ---> CMS SignedData Version is handled automatically by BouncyCastle.
+	 *
+	 * @param certificateVerifier the certificate verifier used to find the trusted certificates
+	 * @param signerCertificate   the certificate used to sign
+	 * @param contentSigner       the contentSigned to get the hash of the data to be signed
+	 * @param originalSignedData  the original signed data if extending an existing signature. null otherwise.
+	 * @return the bouncycastle signed data generator which will sign the document and add the required signed and unsigned CMS attributes
+	 * @throws eu.europa.ec.markt.dss.exception.DSSException
+	 */
+	protected CMSSignedDataGenerator createCMSSignedDataGenerator(CertificateVerifier certificateVerifier, X509Certificate signerCertificate,
+	                                                              List<X509Certificate> certificateChain, ContentSigner contentSigner,
+	                                                              SignerInfoGeneratorBuilder signerInfoGeneratorBuilder, CMSSignedData originalSignedData) throws DSSException {
+		try {
 
-            CMSSignedDataGenerator generator = new CMSSignedDataGenerator();
+			CMSSignedDataGenerator generator = new CMSSignedDataGenerator();
 
-            X509CertificateHolder certHolder = new X509CertificateHolder(signerCertificate.getEncoded());
-            SignerInfoGenerator signerInfoGenerator = signerInfoGeneratorBuilder.build(contentSigner, certHolder);
+			X509CertificateHolder certHolder = new X509CertificateHolder(signerCertificate.getEncoded());
+			SignerInfoGenerator signerInfoGenerator = signerInfoGeneratorBuilder.build(contentSigner, certHolder);
 
-            generator.addSignerInfoGenerator(signerInfoGenerator);
-            if (originalSignedData != null) {
-                generator.addSigners(originalSignedData.getSignerInfos());
-                generator.addAttributeCertificates(originalSignedData.getAttributeCertificates());
-                generator.addCRLs(originalSignedData.getCRLs());
-                generator.addOtherRevocationInfo(OCSPObjectIdentifiers.id_pkix_ocsp_basic, originalSignedData.getOtherRevocationInfo(OCSPObjectIdentifiers.id_pkix_ocsp_basic));
-                generator.addOtherRevocationInfo(CMSObjectIdentifiers.id_ri_ocsp_response, originalSignedData.getOtherRevocationInfo(CMSObjectIdentifiers.id_ri_ocsp_response));
-            }
+			generator.addSignerInfoGenerator(signerInfoGenerator);
+			if (originalSignedData != null) {
+				generator.addSigners(originalSignedData.getSignerInfos());
+				generator.addAttributeCertificates(originalSignedData.getAttributeCertificates());
+				generator.addCRLs(originalSignedData.getCRLs());
+				generator.addOtherRevocationInfo(OCSPObjectIdentifiers.id_pkix_ocsp_basic, originalSignedData.getOtherRevocationInfo(OCSPObjectIdentifiers.id_pkix_ocsp_basic));
+				generator.addOtherRevocationInfo(CMSObjectIdentifiers.id_ri_ocsp_response, originalSignedData.getOtherRevocationInfo(CMSObjectIdentifiers.id_ri_ocsp_response));
+			}
 
-            final Set<X509Certificate> newCertificateChain = new HashSet<X509Certificate>();
-            if (originalSignedData != null) {
-                final Store certificates = originalSignedData.getCertificates();
-                final Collection<X509CertificateHolder> certificatesMatches = certificates.getMatches(null);
-                for (final X509CertificateHolder certificatesMatch : certificatesMatches) {
-                    newCertificateChain.add(DSSUtils.getCertificate(certificatesMatch));
-                }
-            }
-            newCertificateChain.addAll(certificateChain);
-            final Store jcaCertStore = getJcaCertStore(certificateVerifier, signerCertificate, newCertificateChain);
-            generator.addCertificates(jcaCertStore);
-            return generator;
+			final Set<X509Certificate> newCertificateChain = new HashSet<X509Certificate>();
+			if (originalSignedData != null) {
+				final Store certificates = originalSignedData.getCertificates();
+				final Collection<X509CertificateHolder> certificatesMatches = certificates.getMatches(null);
+				for (final X509CertificateHolder certificatesMatch : certificatesMatches) {
+					newCertificateChain.add(DSSUtils.getCertificate(certificatesMatch));
+				}
+			}
+			newCertificateChain.addAll(certificateChain);
+			final Store jcaCertStore = getJcaCertStore(certificateVerifier, signerCertificate, newCertificateChain);
+			generator.addCertificates(jcaCertStore);
+			return generator;
 
-        } catch (CMSException e) {
-            throw new DSSException(e);
-        } catch (CertificateEncodingException e) {
-            throw new DSSException(e);
-        } catch (OperatorCreationException e) {
-            throw new DSSException(e);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        }
-    }
+		} catch (CMSException e) {
+			throw new DSSException(e);
+		} catch (CertificateEncodingException e) {
+			throw new DSSException(e);
+		} catch (OperatorCreationException e) {
+			throw new DSSException(e);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
 
-    /**
-     * @param document                  the document for which the attribute needs to be generated
-     * @param parameters                the parameters of the signature containing values for the attributes
-     * @param includeUnsignedAttributes true if the unsigned attributes shall be included
-     * @return a SignerInfoGeneratorBuilder that generate the signed and unsigned attributes according to the CAdESLevelBaselineB
-     */
-    protected SignerInfoGeneratorBuilder getSignerInfoGeneratorBuilder(final DSSDocument document, final SignatureParameters parameters, final boolean includeUnsignedAttributes) {
-        final CAdESLevelBaselineB cadesProfile = new CAdESLevelBaselineB();
-        final AttributeTable signedAttributes = cadesProfile.getSignedAttributes(document, parameters);
-        AttributeTable unsignedAttributes = null;
-        if (includeUnsignedAttributes) {
-            unsignedAttributes = cadesProfile.getUnsignedAttributes(document, parameters);
-        }
+	/**
+	 * @param document                  the document for which the attribute needs to be generated
+	 * @param parameters                the parameters of the signature containing values for the attributes
+	 * @param includeUnsignedAttributes true if the unsigned attributes shall be included
+	 * @return a SignerInfoGeneratorBuilder that generate the signed and unsigned attributes according to the CAdESLevelBaselineB
+	 */
+	protected SignerInfoGeneratorBuilder getSignerInfoGeneratorBuilder(final DSSDocument document, final SignatureParameters parameters, final boolean includeUnsignedAttributes) {
+		final CAdESLevelBaselineB cadesProfile = new CAdESLevelBaselineB();
+		final AttributeTable signedAttributes = cadesProfile.getSignedAttributes(document, parameters);
+		AttributeTable unsignedAttributes = null;
+		if (includeUnsignedAttributes) {
+			unsignedAttributes = cadesProfile.getUnsignedAttributes(document, parameters);
+		}
 
-        return getSignerInfoGeneratorBuilder(signedAttributes, unsignedAttributes);
-    }
+		return getSignerInfoGeneratorBuilder(signedAttributes, unsignedAttributes);
+	}
 
-    /**
-     * @param signedAttributes   the signedAttributes
-     * @param unsignedAttributes the unsignedAttributes
-     * @return a SignerInfoGeneratorBuilder that generate the signed and unsigned attributes according to the parameters
-     */
-    protected SignerInfoGeneratorBuilder getSignerInfoGeneratorBuilder(AttributeTable signedAttributes, AttributeTable unsignedAttributes) {
-        if (signedAttributes != null && signedAttributes.size() == 0) {
-            signedAttributes = null;
-        }
-        final DefaultSignedAttributeTableGenerator signedAttributeGenerator = new DefaultSignedAttributeTableGenerator(signedAttributes);
-        if (unsignedAttributes != null && unsignedAttributes.size() == 0) {
-            unsignedAttributes = null;
-        }
-        final SimpleAttributeTableGenerator unsignedAttributeGenerator = new SimpleAttributeTableGenerator(unsignedAttributes);
+	/**
+	 * @param signedAttributes   the signedAttributes
+	 * @param unsignedAttributes the unsignedAttributes
+	 * @return a SignerInfoGeneratorBuilder that generate the signed and unsigned attributes according to the parameters
+	 */
+	protected SignerInfoGeneratorBuilder getSignerInfoGeneratorBuilder(AttributeTable signedAttributes, AttributeTable unsignedAttributes) {
+		if (signedAttributes != null && signedAttributes.size() == 0) {
+			signedAttributes = null;
+		}
+		final DefaultSignedAttributeTableGenerator signedAttributeGenerator = new DefaultSignedAttributeTableGenerator(signedAttributes);
+		if (unsignedAttributes != null && unsignedAttributes.size() == 0) {
+			unsignedAttributes = null;
+		}
+		final SimpleAttributeTableGenerator unsignedAttributeGenerator = new SimpleAttributeTableGenerator(unsignedAttributes);
 
-        return getSignerInfoGeneratorBuilder(signedAttributeGenerator, unsignedAttributeGenerator);
-    }
+		return getSignerInfoGeneratorBuilder(signedAttributeGenerator, unsignedAttributeGenerator);
+	}
 
-    /**
-     * @param signedAttributeGenerator   the signedAttribute generator
-     * @param unsignedAttributeGenerator the unsignedAttribute generator
-     * @return a SignerInfoGeneratorBuilder that generate the signed and unsigned attributes according to the parameters
-     */
-    protected SignerInfoGeneratorBuilder getSignerInfoGeneratorBuilder(DefaultSignedAttributeTableGenerator signedAttributeGenerator,
-                                                                       SimpleAttributeTableGenerator unsignedAttributeGenerator) {
-        final DigestCalculatorProvider digestCalculatorProvider = new BcDigestCalculatorProvider();
-        SignerInfoGeneratorBuilder sigInfoGeneratorBuilder = new SignerInfoGeneratorBuilder(digestCalculatorProvider);
-        sigInfoGeneratorBuilder.setSignedAttributeGenerator(signedAttributeGenerator);
-        sigInfoGeneratorBuilder.setUnsignedAttributeGenerator(unsignedAttributeGenerator);
-        return sigInfoGeneratorBuilder;
-    }
+	/**
+	 * @param signedAttributeGenerator   the signedAttribute generator
+	 * @param unsignedAttributeGenerator the unsignedAttribute generator
+	 * @return a SignerInfoGeneratorBuilder that generate the signed and unsigned attributes according to the parameters
+	 */
+	protected SignerInfoGeneratorBuilder getSignerInfoGeneratorBuilder(DefaultSignedAttributeTableGenerator signedAttributeGenerator,
+	                                                                   SimpleAttributeTableGenerator unsignedAttributeGenerator) {
+		final DigestCalculatorProvider digestCalculatorProvider = new BcDigestCalculatorProvider();
+		SignerInfoGeneratorBuilder sigInfoGeneratorBuilder = new SignerInfoGeneratorBuilder(digestCalculatorProvider);
+		sigInfoGeneratorBuilder.setSignedAttributeGenerator(signedAttributeGenerator);
+		sigInfoGeneratorBuilder.setUnsignedAttributeGenerator(unsignedAttributeGenerator);
+		return sigInfoGeneratorBuilder;
+	}
 
-    /**
-     * @return a store with the certificate chain of the signing certificate
-     * @throws CertificateEncodingException
-     */
-    private JcaCertStore getJcaCertStore(final CertificateVerifier certificateVerifier, final X509Certificate signingCertificate,
-                                         final Collection<X509Certificate> certificateChain) {
+	/**
+	 * TODO (Bob 28.05.2014) The position of the signing certificate must be clarified
+	 * The order of the certificates is important, the fist one must be the signing certificate.
+	 *
+	 * @return a store with the certificate chain of the signing certificate
+	 * @throws CertificateEncodingException
+	 */
+	private JcaCertStore getJcaCertStore(final CertificateVerifier certificateVerifier, final X509Certificate signingCertificate,
+	                                     final Collection<X509Certificate> certificateChain) {
 
-        try {
-            final Collection<X509Certificate> certs = new HashSet<X509Certificate>();
-            certs.add(signingCertificate);
+		try {
+			final Collection<X509Certificate> certs = new ArrayList<X509Certificate>();
+			certs.add(signingCertificate);
 
-            if (certificateChain != null) {
+			if (certificateChain != null) {
 
-                final X500Principal signingCertificateSubjectX500Principal = signingCertificate.getSubjectX500Principal();
-                for (X509Certificate certificateInChain : certificateChain) {
+				final X500Principal signingCertificateSubjectX500Principal = signingCertificate.getSubjectX500Principal();
+				for (X509Certificate certificateInChain : certificateChain) {
 
-                    final X500Principal subjectX500Principal = certificateInChain.getSubjectX500Principal();
-                    if (subjectX500Principal.equals(signingCertificateSubjectX500Principal)) {
-                        continue;
-                    }
-                    // CAdES-Baseline-B: do not include certificates found in the trusted list
-                    final TrustedCertificateSource trustedCertSource = certificateVerifier.getTrustedCertSource();
-                    if (trustedCertSource != null) {
+					final X500Principal subjectX500Principal = certificateInChain.getSubjectX500Principal();
+					if (subjectX500Principal.equals(signingCertificateSubjectX500Principal)) {
+						continue;
+					}
+					// CAdES-Baseline-B: do not include certificates found in the trusted list
+					final TrustedCertificateSource trustedCertSource = certificateVerifier.getTrustedCertSource();
+					if (trustedCertSource != null) {
 
-                        if (!trustedCertSource.get(subjectX500Principal).isEmpty()) {
-                            continue;
-                        }
-                    }
-                    certs.add(certificateInChain);
-                }
-            }
-            return new JcaCertStore(certs);
-        } catch (CertificateEncodingException e) {
-            throw new DSSException(e);
-        }
-    }
+						if (!trustedCertSource.get(subjectX500Principal).isEmpty()) {
+							continue;
+						}
+					}
+					if (!certs.contains(certificateInChain)) {
+						certs.add(certificateInChain);
+					}
+				}
+			}
+			return new JcaCertStore(certs);
+		} catch (CertificateEncodingException e) {
+			throw new DSSException(e);
+		}
+	}
 
 
-    protected CMSSignedData regenerateCMSSignedData(CMSSignedData cmsSignedData, SignatureParameters parameters, Store certificatesStore, Store attributeCertificatesStore,
-                                                    Store crlsStore, Store otherRevocationInfoFormatStoreBasic, Store otherRevocationInfoFormatStoreOcsp) {
-        try {
-            final CMSSignedDataGenerator cmsSignedDataGenerator = new CMSSignedDataGenerator();
-            cmsSignedDataGenerator.addSigners(cmsSignedData.getSignerInfos());
-            cmsSignedDataGenerator.addAttributeCertificates(attributeCertificatesStore);
-            cmsSignedDataGenerator.addCertificates(certificatesStore);
-            cmsSignedDataGenerator.addCRLs(crlsStore);
-            cmsSignedDataGenerator.addOtherRevocationInfo(OCSPObjectIdentifiers.id_pkix_ocsp_basic, otherRevocationInfoFormatStoreBasic);
-            cmsSignedDataGenerator.addOtherRevocationInfo(CMSObjectIdentifiers.id_ri_ocsp_response, otherRevocationInfoFormatStoreOcsp);
-            final boolean encapsulate = cmsSignedData.getSignedContent() != null;
-            if (!encapsulate) {
-                final CMSProcessableByteArray content = new CMSProcessableByteArray(DSSUtils.toByteArray(parameters.getOriginalDocument().openStream()));
-                cmsSignedData = cmsSignedDataGenerator.generate(content, encapsulate);
-            } else {
-                cmsSignedData = cmsSignedDataGenerator.generate(cmsSignedData.getSignedContent(), encapsulate);
-            }
-            return cmsSignedData;
-        } catch (CMSException e) {
-            throw new DSSException(e);
-        }
-    }
+	protected CMSSignedData regenerateCMSSignedData(CMSSignedData cmsSignedData, SignatureParameters parameters, Store certificatesStore, Store attributeCertificatesStore,
+	                                                Store crlsStore, Store otherRevocationInfoFormatStoreBasic, Store otherRevocationInfoFormatStoreOcsp) {
+		try {
+			final CMSSignedDataGenerator cmsSignedDataGenerator = new CMSSignedDataGenerator();
+			cmsSignedDataGenerator.addSigners(cmsSignedData.getSignerInfos());
+			cmsSignedDataGenerator.addAttributeCertificates(attributeCertificatesStore);
+			cmsSignedDataGenerator.addCertificates(certificatesStore);
+			cmsSignedDataGenerator.addCRLs(crlsStore);
+			cmsSignedDataGenerator.addOtherRevocationInfo(OCSPObjectIdentifiers.id_pkix_ocsp_basic, otherRevocationInfoFormatStoreBasic);
+			cmsSignedDataGenerator.addOtherRevocationInfo(CMSObjectIdentifiers.id_ri_ocsp_response, otherRevocationInfoFormatStoreOcsp);
+			final boolean encapsulate = cmsSignedData.getSignedContent() != null;
+			if (!encapsulate) {
+				final CMSProcessableByteArray content = new CMSProcessableByteArray(DSSUtils.toByteArray(parameters.getOriginalDocument().openStream()));
+				cmsSignedData = cmsSignedDataGenerator.generate(content, encapsulate);
+			} else {
+				cmsSignedData = cmsSignedDataGenerator.generate(cmsSignedData.getSignedContent(), encapsulate);
+			}
+			return cmsSignedData;
+		} catch (CMSException e) {
+			throw new DSSException(e);
+		}
+	}
 }

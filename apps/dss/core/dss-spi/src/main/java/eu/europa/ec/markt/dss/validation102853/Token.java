@@ -100,7 +100,7 @@ public abstract class Token implements Serializable {
 	}
 
 	/**
-	 * Returns the X500Principal of the certificate which was used to sign this token.
+	 * Returns the {@code X500Principal} of the certificate which was used to sign this token.
 	 *
 	 * @return
 	 */
