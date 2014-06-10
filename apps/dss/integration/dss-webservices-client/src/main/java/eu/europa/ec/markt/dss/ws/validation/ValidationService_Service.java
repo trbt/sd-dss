@@ -20,10 +20,7 @@ import javax.xml.ws.WebServiceFeature;
       wsdlLocation = "http://localhost:8080/dss-webapp/wservice/validationService?wsdl")
 public class ValidationService_Service extends Service {
 
-    //WAB-APP: Service URL	http://localhost:8080/dss-webapp/wservice
-    //LOCAL  : Service URL	http://localhost:8080/dss-test/service
     private static final String METHOD_URL = "/validationService?wsdl";
-    // private static String ROOT_SERVICE_URL = "http://localhost:8080/dss-test/wservice";
     private static URL SERVICE_WSDL_LOCATION;
 
     private final static Logger logger = Logger.getLogger(eu.europa.ec.markt.dss.ws.validation.ValidationService_Service.class.getName());
@@ -42,13 +39,6 @@ public class ValidationService_Service extends Service {
 
     public static void setROOT_SERVICE_URL(String ROOT_SERVICE_URL) {
 
-//        System.out.println("ROOT_SERVICE_URL 1: " + ROOT_SERVICE_URL);
-/*
-        if ("http://localhost:8080/dss-test/service".equals(ROOT_SERVICE_URL)) {
-            ROOT_SERVICE_URL = "http://localhost:8080/dss-test/wservice";
-        }
-*/
-        // ValidationService_Service.ROOT_SERVICE_URL = ROOT_SERVICE_URL;
         try {
             SERVICE_WSDL_LOCATION = new URL(ROOT_SERVICE_URL + METHOD_URL);
         } catch (MalformedURLException e) {

@@ -33,7 +33,7 @@ public enum MimeType {
     XML("XML"),
     PDF("PDF"),
     @XmlEnumValue("PKCS7")
-    PKCS_7("PKCS7"),
+    PKCS7("PKCS7"),
     ASICS("ASICS"),
     TEXT("TEXT");
     private final String value;

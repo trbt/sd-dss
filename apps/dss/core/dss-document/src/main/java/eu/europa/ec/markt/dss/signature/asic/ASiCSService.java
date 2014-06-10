@@ -32,9 +32,6 @@ package eu.europa.ec.markt.dss.signature.asic;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.FileNameMap;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -192,16 +189,15 @@ public class ASiCSService extends AbstractSignatureService {
 
 		final String toSignDocumentName = toSignDocument.getName();
 
-		if (!System.getProperties().containsKey("content.types.user.table")) {
-			final URL contentTypeURL = this.getClass().getResource("/custom-content-types.properties");
-			if (contentTypeURL != null) {
-				System.setProperty("content.types.user.table", contentTypeURL.getPath());
-			}
-		}
-
-		final FileNameMap fileNameMap = URLConnection.getFileNameMap();
-		final String containedFileMimeType_ = fileNameMap.getContentTypeFor(toSignDocumentName);
-
+		//		if (!System.getProperties().containsKey("content.types.user.table")) {
+		//			final URL contentTypeURL = this.getClass().getResource("/custom-content-types.properties");
+		//			if (contentTypeURL != null) {
+		//				System.setProperty("content.types.user.table", contentTypeURL.getPath());
+		//			}
+		//		}
+		//		final FileNameMap fileNameMap = URLConnection.getFileNameMap();
+		//		final String containedFileMimeType_ = fileNameMap.getContentTypeFor(toSignDocumentName);
+		//		System.out.println(toSignDocument.toString());
 		final MimeType containedFileMimeType = toSignDocument.getMimeType();
 		// Zip comment
 		if (specificParameters.aSiC().isZipComment() && DSSUtils.isNotEmpty(toSignDocumentName)) {

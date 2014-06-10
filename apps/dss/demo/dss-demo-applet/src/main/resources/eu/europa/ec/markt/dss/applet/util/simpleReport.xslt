@@ -14,7 +14,8 @@
                 <title>Validation Simple Report</title>
                 <style type="text/css">
                     body {
-                        font-family: sans-serif;
+                        font-family: Calibri;
+	                    font-size: 100%;
                     }
 
                     th, td {
@@ -24,11 +25,11 @@
 
                     th {
                         font-weight: inherit;
-                        width: 30%;
+                        width: 20%;
                     }
 
                     td {
-                        width: 70%;
+                        width: 80%;
                     }
 
                     tr.validationPolicy .validationPolicy-name {
@@ -49,7 +50,7 @@
                     }
 
                     th.indication .indication-icon {
-                        font-size:150%;
+                        font-size:110%;
                         margin-right: 0.5em;
                         font-style: italic;
                     }
@@ -60,7 +61,6 @@
 
                     .INDETERMINATE {
                         color: orangered;
-                        text-transform: lowercase;
                     }
 
                     .INVALID {
@@ -144,6 +144,12 @@
         <xsl:apply-templates select="dss:SubIndication">
             <xsl:with-param name="indicationClass" select="$indicationClass"/>
         </xsl:apply-templates>
+	    <xsl:apply-templates select="dss:Error">
+		    <xsl:with-param name="indicationClass" select="$indicationClass"/>
+	    </xsl:apply-templates>
+	    <xsl:apply-templates select="dss:Warning">
+		    <xsl:with-param name="indicationClass" select="$indicationClass"/>
+	    </xsl:apply-templates>
         <xsl:apply-templates select="dss:Info">
             <xsl:with-param name="indicationClass" select="$indicationClass"/>
         </xsl:apply-templates>
@@ -199,20 +205,75 @@
         </xsl:for-each>
     </xsl:template>
 
-    <xsl:template match="dss:SubIndication|dss:Info">
-        <xsl:param name="indicationClass" />
-        <tr class="info">
-            <th></th>
-            <td class="{$indicationClass}">
-                <xsl:if test="string-length(@Field) &gt; 0">
-                    <xsl:value-of select="@Field" />:&#160;
-                </xsl:if>
-                <xsl:apply-templates/>
-            </td>
-        </tr>
-    </xsl:template>
+	<xsl:template match="dss:SubIndication">
+		<xsl:param name="indicationClass" />
+		<tr class="info">
+			<th></th>
+			<td class="{$indicationClass}">
+				<xsl:value-of select="concat(' - ',@*)"/>
+				<xsl:apply-templates/>
+			</td>
+		</tr>
+	</xsl:template>
 
-    <xsl:template name="documentInformation">
+	<xsl:template match="dss:Error">
+		<xsl:param name="indicationClass" />
+		<tr class="info">
+			<th></th>
+			<td class="{$indicationClass}">
+				<xsl:variable name="txt" select="concat(' - E: ',name(@*[not(name()='NameId')][1]),'=',@*[not(name()='NameId')],' / ')"/>
+				<xsl:variable name="ntxt">
+					<xsl:call-template name="string-replace-all">
+						<xsl:with-param name="text" select="$txt" />
+						<xsl:with-param name="replace" select="'= /'" />
+						<xsl:with-param name="by" select="''"/>
+					</xsl:call-template>
+				</xsl:variable>
+				<xsl:value-of select="$ntxt"/>
+				<xsl:apply-templates/>
+			</td>
+		</tr>
+	</xsl:template>
+
+	<xsl:template match="dss:Warning">
+		<xsl:param name="indicationClass" />
+		<tr class="info">
+			<th></th>
+			<td class="{$indicationClass}">
+				<xsl:variable name="txt" select="concat(' - W: ',name(@*[not(name()='NameId')][1]),'=',@*[not(name()='NameId')],' / ')"/>
+				<xsl:variable name="ntxt">
+					<xsl:call-template name="string-replace-all">
+						<xsl:with-param name="text" select="$txt" />
+						<xsl:with-param name="replace" select="'= /'" />
+						<xsl:with-param name="by" select="''"/>
+					</xsl:call-template>
+				</xsl:variable>
+				<xsl:value-of select="$ntxt"/>
+				<xsl:apply-templates/>
+			</td>
+		</tr>
+	</xsl:template>
+
+	<xsl:template match="dss:Info">
+		<xsl:param name="indicationClass" />
+		<tr class="info">
+			<th></th>
+			<td class="{$indicationClass}">
+				<xsl:variable name="txt" select="concat(' - I: ',name(@*[not(name()='NameId')][1]),'=',@*[not(name()='NameId')],' / ')"/>
+				<xsl:variable name="ntxt">
+					<xsl:call-template name="string-replace-all">
+						<xsl:with-param name="text" select="$txt" />
+						<xsl:with-param name="replace" select="'= /'" />
+						<xsl:with-param name="by" select="''"/>
+					</xsl:call-template>
+				</xsl:variable>
+				<xsl:value-of select="$ntxt"/>
+				<xsl:apply-templates/>
+			</td>
+		</tr>
+	</xsl:template>
+
+	<xsl:template name="documentInformation">
         <tr class="documentInformation documentInformation-header">
             <th colspan="2">Document Information</th>
         </tr>
@@ -237,4 +298,25 @@
             </td>
         </tr>
     </xsl:template>
+
+	<xsl:template name="string-replace-all">
+		<xsl:param name="text" />
+		<xsl:param name="replace" />
+		<xsl:param name="by" />
+		<xsl:choose>
+			<xsl:when test="contains($text, $replace)">
+				<xsl:value-of select="substring-before($text,$replace)" />
+				<xsl:value-of select="$by" />
+				<xsl:call-template name="string-replace-all">
+					<xsl:with-param name="text"
+					                select="substring-after($text,$replace)" />
+					<xsl:with-param name="replace" select="$replace" />
+					<xsl:with-param name="by" select="$by" />
+				</xsl:call-template>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:value-of select="$text" />
+			</xsl:otherwise>
+		</xsl:choose>
+	</xsl:template>
 </xsl:stylesheet>

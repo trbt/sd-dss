@@ -17,7 +17,8 @@
                     }
 
                     body {
-                        margin: 25px;
+	                    font-family: Calibri;
+	                    margin: 25px;
                     }
 
                     .signature-title {
@@ -172,7 +173,7 @@
 
     <xsl:template match="dss:TimestampValidationData/dss:Signature/dss:Timestamp">
         <h4 class="signature-title" xml:space="preserve">Timestamp
-            <span xml:space="preserve"><xsl:value-of select="@Id"/> / [<xsl:value-of select="@Category" />]</span>:
+            <span xml:space="preserve"><xsl:value-of select="@Id"/> / [<xsl:value-of select="@Type" />]</span>:
             <xsl:call-template name="signature-conclusion">
                 <xsl:with-param name="Conclusion" select="dss:BasicBuildingBlocks/dss:Conclusion"/>
             </xsl:call-template>
@@ -264,11 +265,82 @@
         </div>
     </xsl:template>
 
+  <xsl:template match="dss:Error">
+    <div class="basic-building-block-item-constraint">
+      <span class="basic-building-block-item-constraint-name">
+        <xsl:variable name="txt" select="concat(' - E: ',name(@*[not(name()='NameId')][1]),'=',@*[not(name()='NameId')],' / ')"/>
+        <xsl:variable name="ntxt">
+          <xsl:call-template name="string-replace-all">
+            <xsl:with-param name="text" select="$txt" />
+            <xsl:with-param name="replace" select="'= /'" />
+            <xsl:with-param name="by" select="''"/>
+          </xsl:call-template>
+        </xsl:variable>
+        <xsl:value-of select="$ntxt"/>
+        <xsl:apply-templates/>
+      </span>
+    </div>
+  </xsl:template>
+  <xsl:template match="dss:Warning">
+    <div class="basic-building-block-item-constraint">
+      <span class="basic-building-block-item-constraint-name">
+        <xsl:variable name="txt" select="concat(' - W: ',name(@*[not(name()='NameId')][1]),'=',@*[not(name()='NameId')],' / ')"/>
+        <xsl:variable name="ntxt">
+          <xsl:call-template name="string-replace-all">
+            <xsl:with-param name="text" select="$txt" />
+            <xsl:with-param name="replace" select="'= /'" />
+            <xsl:with-param name="by" select="''"/>
+          </xsl:call-template>
+        </xsl:variable>
+        <xsl:value-of select="$ntxt"/>
+        <xsl:apply-templates/>
+      </span>
+    </div>
+  </xsl:template>
+
+  <xsl:template match="dss:Info">
+    <div class="basic-building-block-item-constraint">
+      <span class="basic-building-block-item-constraint-name">
+        <xsl:variable name="txt" select="concat(' - I: ',name(@*[not(name()='NameId')][1]),'=',@*[not(name()='NameId')],' / ')"/>
+        <xsl:variable name="ntxt">
+          <xsl:call-template name="string-replace-all">
+            <xsl:with-param name="text" select="$txt" />
+            <xsl:with-param name="replace" select="'= /'" />
+            <xsl:with-param name="by" select="''"/>
+          </xsl:call-template>
+        </xsl:variable>
+        <xsl:value-of select="$ntxt"/>
+        <xsl:apply-templates/>
+      </span>
+    </div>
+  </xsl:template>
+
     <xsl:template match="*">
         <xsl:comment>
             Ignored tag:
             <xsl:value-of select="name()"/>
         </xsl:comment>
     </xsl:template>
+
+  <xsl:template name="string-replace-all">
+    <xsl:param name="text" />
+    <xsl:param name="replace" />
+    <xsl:param name="by" />
+    <xsl:choose>
+      <xsl:when test="contains($text, $replace)">
+        <xsl:value-of select="substring-before($text,$replace)" />
+        <xsl:value-of select="$by" />
+        <xsl:call-template name="string-replace-all">
+          <xsl:with-param name="text"
+                          select="substring-after($text,$replace)" />
+          <xsl:with-param name="replace" select="$replace" />
+          <xsl:with-param name="by" select="$by" />
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$text" />
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 
 </xsl:stylesheet>
