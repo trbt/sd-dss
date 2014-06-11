@@ -112,18 +112,17 @@ import eu.europa.ec.markt.dss.validation102853.pades.PDFDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.report.DetailedReport;
 import eu.europa.ec.markt.dss.validation102853.report.DiagnosticData;
 import eu.europa.ec.markt.dss.validation102853.report.SimpleReport;
-import eu.europa.ec.markt.dss.validation102853.scope.CAdESSignatureScopeFinder;
-import eu.europa.ec.markt.dss.validation102853.scope.PAdESSignatureScopeFinder;
 import eu.europa.ec.markt.dss.validation102853.scope.SignatureScope;
 import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinder;
-import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinderFactory;
-import eu.europa.ec.markt.dss.validation102853.scope.XAdESSignatureScopeFinder;
 import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 import eu.europa.ec.markt.dss.validation102853.xades.XMLDocumentValidator;
 
 
 /**
  * Validate the signed document. The content of the document is determined automatically. It can be: XML, CAdES(p7m), PDF or ASiC(zip).
+ *
+ * SignatureScopeFinder can be set using the appropriate setter (ex. setCadesSignatureScopeFinder). By default, this class will use the
+ * default SignatureScopeFinder as defined by eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinderFactory
  *
  * @version $Revision: 889 $ - $Date: 2011-05-31 17:29:35 +0200 (Tue, 31 May 2011) $
  */
@@ -1403,7 +1402,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		return xadesSignatureScopeFinder;
 	}
 
-	public void setXadesSignatureScopeFinder(SignatureScopeFinder<XAdESSignature> xadesSignatureScopeFinder) {
+    /**
+     * Set the SignatureScopeFinder to use for XML signatures
+     *
+     * @param xadesSignatureScopeFinder
+     */
+    public void setXadesSignatureScopeFinder(SignatureScopeFinder<XAdESSignature> xadesSignatureScopeFinder) {
 		this.xadesSignatureScopeFinder = xadesSignatureScopeFinder;
 	}
 
@@ -1411,7 +1415,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		return cadesSignatureScopeFinder;
 	}
 
-	public void setCadesSignatureScopeFinder(SignatureScopeFinder<CAdESSignature> cadesSignatureScopeFinder) {
+    /**
+     * Set the SignatureScopeFinder to use for CMS signatures
+     *
+     * @param cadesSignatureScopeFinder
+     */
+    public void setCadesSignatureScopeFinder(SignatureScopeFinder<CAdESSignature> cadesSignatureScopeFinder) {
 		this.cadesSignatureScopeFinder = cadesSignatureScopeFinder;
 	}
 
@@ -1419,7 +1428,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		return padesSignatureScopeFinder;
 	}
 
-	public void setPadesSignatureScopeFinder(SignatureScopeFinder<PAdESSignature> padesSignatureScopeFinder) {
+    /**
+     * Set the SignatureScopeFinder to use for PDF signatures
+     *
+     * @param padesSignatureScopeFinder
+     */
+    public void setPadesSignatureScopeFinder(SignatureScopeFinder<PAdESSignature> padesSignatureScopeFinder) {
 		this.padesSignatureScopeFinder = padesSignatureScopeFinder;
 	}
 

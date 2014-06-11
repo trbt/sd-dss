@@ -86,7 +86,7 @@ public class QcStatementCondition extends Condition {
                 input.close();
                 input = new ASN1InputStream(content);
                 final ASN1Sequence seq = (ASN1Sequence) input.readObject();
-                /* Sequence of QCStatment */
+                /* Sequence of QCStatement */
                 for (int ii = 0; ii < seq.size(); ii++) {
 
                     final QCStatement statement = QCStatement.getInstance(seq.getObjectAt(ii));
