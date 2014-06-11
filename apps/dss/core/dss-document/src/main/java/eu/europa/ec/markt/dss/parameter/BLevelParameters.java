@@ -181,6 +181,9 @@ public class BLevelParameters {
 
 				postalAddress = new ArrayList<String>(signerLocation.postalAddress);
 			}
+			postalCode = signerLocation.postalCode;
+			city = signerLocation.city;
+			stateOrProvince = signerLocation.stateOrProvince;
 		}
 
 		public String getCountry() {
