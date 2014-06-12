@@ -31,6 +31,7 @@ import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.LongTermVa
 import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
 import eu.europa.ec.markt.dss.validation102853.report.DetailedReport;
 import eu.europa.ec.markt.dss.validation102853.report.DiagnosticData;
+import eu.europa.ec.markt.dss.validation102853.report.Reports;
 import eu.europa.ec.markt.dss.validation102853.report.SimpleReport;
 import eu.europa.ec.markt.dss.validation102853.report.SimpleReportBuilder;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
@@ -169,32 +170,7 @@ public class ProcessExecutor {
      */
     public Reports getReports() {
 
-        final Reports reports = new Reports();
-        reports.diagnosticData = diagnosticData;
-        reports.detailedReport = detailedReport;
-        reports.simpleReport = simpleReport;
+        final Reports reports = new Reports(diagnosticData, detailedReport, simpleReport);
         return reports;
     }
-
-    public static class Reports {
-
-        public DiagnosticData diagnosticData;
-        public DetailedReport detailedReport;
-        public SimpleReport simpleReport;
-
-        public void print() {
-
-            System.out.println("----------------Diagnostic data-----------------");
-            System.out.println(diagnosticData);
-
-            System.out.println("----------------Validation report---------------");
-            System.out.println(detailedReport);
-
-            System.out.println("----------------Simple report-------------------");
-            System.out.println(simpleReport);
-
-            System.out.println("------------------------------------------------");
-        }
-    }
-
 }

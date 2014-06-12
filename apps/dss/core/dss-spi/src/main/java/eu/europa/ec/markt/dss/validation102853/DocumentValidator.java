@@ -9,6 +9,7 @@ import java.util.List;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.validation102853.report.DetailedReport;
 import eu.europa.ec.markt.dss.validation102853.report.DiagnosticData;
+import eu.europa.ec.markt.dss.validation102853.report.Reports;
 import eu.europa.ec.markt.dss.validation102853.report.SimpleReport;
 
 /**
@@ -58,21 +59,23 @@ public interface DocumentValidator {
 
 	void setPolicyFile(final String signatureId, final File policyDocument);
 
-	DetailedReport validateDocument();
+	Reports validateDocument();
 
-	DetailedReport validateDocument(final URL validationPolicyURL);
+	Reports validateDocument(final URL validationPolicyURL);
 
-	DetailedReport validateDocument(final String policyResourcePath);
+	Reports validateDocument(final String policyResourcePath);
 
-	DetailedReport validateDocument(final File policyFile);
+	Reports validateDocument(final File policyFile);
 
-	DetailedReport validateDocument(final InputStream policyDataStream);
+	Reports validateDocument(final InputStream policyDataStream);
 
 	DiagnosticData getDiagnosticData();
 
 	SimpleReport getSimpleReport();
 
 	DetailedReport getDetailedReport();
+
+	Reports getReports() ;
 
 	void printReports();
 }
