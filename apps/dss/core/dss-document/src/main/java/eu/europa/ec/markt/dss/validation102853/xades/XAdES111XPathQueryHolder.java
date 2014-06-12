@@ -33,9 +33,11 @@ public class XAdES111XPathQueryHolder extends XPathQueryHolder {
 
         XPATH__X509_ISSUER_NAME = "./xades111:IssuerSerial/ds:X509IssuerName";
         XPATH__X509_SERIAL_NUMBER = "./xades111:IssuerSerial/ds:X509SerialNumber";
-        XPATH__CERT_DIGEST_DIGEST_METHOD = "./xades111:CertDigest/xades111:DigestMethod";
+	    XPATH__CERT_DIGEST = "./xades111:CertDigest";
+	    XPATH__DIGEST_METHOD = "./xades111:DigestMethod";
+        XPATH__CERT_DIGEST_DIGEST_METHOD = XPATH__CERT_DIGEST + "/xades111:DigestMethod";
         XPATH__DIGEST_VALUE = "./xades111:DigestValue";
-        XPATH__CERT_DIGEST_DIGEST_VALUE = "./xades111:CertDigest/xades111:DigestValue";
+        XPATH__CERT_DIGEST_DIGEST_VALUE = XPATH__CERT_DIGEST + "/xades111:DigestValue";
 
         // Level -B
         XPATH_COUNT_SIGNED_SIGNATURE_PROPERTIES = "count(" + XPATH_SIGNED_SIGNATURE_PROPERTIES + ")";
