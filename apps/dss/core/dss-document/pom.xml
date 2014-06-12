@@ -8,7 +8,7 @@
     <parent>
         <groupId>eu.europa.ec.joinup.sd-dss</groupId>
         <artifactId>sd-dss-app</artifactId>
-        <version>4.1.0</version>
+        <version>4.2.0-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -36,20 +36,6 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <java.util.logging.config.file>logging.properties</java.util.logging.config.file>
-                    </systemPropertyVariables>
-                    <excludes>
-                        <!-- Do not run CAdES plugtests tests in the maven test phase -->
-                        <exclude>**/cades2013/*</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-
             <plugin>
                 <groupId>org.jvnet.jaxb2.maven2</groupId>
                 <artifactId>maven-jaxb2-plugin</artifactId>
@@ -89,11 +75,6 @@
         <dependency>
             <groupId>eu.europa.ec.joinup.sd-dss</groupId>
             <artifactId>dss-service</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
@@ -138,17 +119,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.easytesting</groupId>
-            <artifactId>fest-assert</artifactId>
-            <version>1.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
