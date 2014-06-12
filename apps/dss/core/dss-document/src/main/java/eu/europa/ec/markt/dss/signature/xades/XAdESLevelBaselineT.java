@@ -47,7 +47,6 @@ import eu.europa.ec.markt.dss.signature.ProfileParameters.Operation;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
-import eu.europa.ec.markt.dss.validation102853.CertificatePoolImpl;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
@@ -189,7 +188,7 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements XAdESSignat
 
                 continue;
             }
-            final CertificatePool certPool = new CertificatePoolImpl();
+            final CertificatePool certPool = new CertificatePool();
             xadesSignature = new XAdESSignature(currentSignatureDom, certPool);
             extendSignatureTag();
         }

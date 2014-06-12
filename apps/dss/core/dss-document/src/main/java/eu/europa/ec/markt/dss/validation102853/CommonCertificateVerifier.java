@@ -252,7 +252,7 @@ public class CommonCertificateVerifier implements CertificateVerifier {
 	@Override
 	public CertificatePool createValidationPool() {
 
-		final CertificatePool validationPool = new CertificatePoolImpl();
+		final CertificatePool validationPool = new CertificatePool();
 		if (trustedCertSource != null) {
 
 			validationPool.merge(trustedCertSource.getCertificatePool());

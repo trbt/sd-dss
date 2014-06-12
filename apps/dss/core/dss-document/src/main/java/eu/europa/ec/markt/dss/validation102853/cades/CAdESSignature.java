@@ -123,7 +123,6 @@ import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.ArchiveTimestampType;
 import eu.europa.ec.markt.dss.validation102853.CAdESCertificateSource;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
-import eu.europa.ec.markt.dss.validation102853.CertificatePoolImpl;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.SignatureForm;
@@ -195,7 +194,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 	 */
 	public CAdESSignature(final byte[] data) throws CMSException {
 
-		this(new CMSSignedData(data), new CertificatePoolImpl());
+		this(new CMSSignedData(data), new CertificatePool());
 	}
 
 	/**
@@ -236,7 +235,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 	 * @param externalContent   the external signed content if detached signature
 	 */
 	public CAdESSignature(final CMSSignedData cmsSignedData, final SignerInformation signerInformation, final DSSDocument externalContent) {
-		this(cmsSignedData, signerInformation, new CertificatePoolImpl(), externalContent);
+		this(cmsSignedData, signerInformation, new CertificatePool(), externalContent);
 	}
 
 	/**
