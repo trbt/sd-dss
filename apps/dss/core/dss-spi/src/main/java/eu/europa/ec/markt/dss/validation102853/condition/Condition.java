@@ -21,7 +21,8 @@
 package eu.europa.ec.markt.dss.validation102853.condition;
 
 import java.io.Serializable;
-import java.security.cert.X509Certificate;
+
+import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
  * Represents a condition defined in the trusted list on a certificate.
@@ -34,10 +35,10 @@ public abstract class Condition implements Serializable {
     /**
      * Returns true if the condition is evaluated to true for the given certificate.
      *
-     * @param cert certificate to be checked
+     * @param certificateToken {@code CertificateToken} to be checked
      * @return
      */
-    public abstract boolean check(final X509Certificate cert);
+    public abstract boolean check(final CertificateToken certificateToken);
 
     public abstract String toString(String indent);
 }

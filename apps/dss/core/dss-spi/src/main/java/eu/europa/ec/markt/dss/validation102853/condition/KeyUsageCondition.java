@@ -20,7 +20,7 @@
 
 package eu.europa.ec.markt.dss.validation102853.condition;
 
-import java.security.cert.X509Certificate;
+import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
  * Test if the certificate has a Key usage
@@ -90,13 +90,13 @@ public class KeyUsageCondition extends Condition {
     /**
      * Checks the condition for the given certificate.
      *
-     * @param cert certificate to be checked
+     * @param certificateToken certificate to be checked
      * @return
      */
     @Override
-    public boolean check(final X509Certificate cert) {
+    public boolean check(final CertificateToken certificateToken) {
 
-        final boolean keyUsage = cert.getKeyUsage()[bit.index];
+        final boolean keyUsage = certificateToken.checkKeyUsage(bit.index);
         return keyUsage == value;
     }
 

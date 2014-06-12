@@ -111,6 +111,7 @@ import eu.europa.ec.markt.dss.validation102853.pades.PAdESSignature;
 import eu.europa.ec.markt.dss.validation102853.pades.PDFDocumentValidator;
 import eu.europa.ec.markt.dss.validation102853.report.DetailedReport;
 import eu.europa.ec.markt.dss.validation102853.report.DiagnosticData;
+import eu.europa.ec.markt.dss.validation102853.report.Reports;
 import eu.europa.ec.markt.dss.validation102853.report.SimpleReport;
 import eu.europa.ec.markt.dss.validation102853.scope.SignatureScope;
 import eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinder;
@@ -181,17 +182,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * This variable contains the reference to the diagnostic data.
 	 */
 	protected eu.europa.ec.markt.dss.validation102853.data.diagnostic.DiagnosticData jaxbDiagnosticData; // JAXB object
-	protected DiagnosticData diagnosticData; // XmlDom object
 
-	/**
-	 * This is the simple report generated at the end of the validation process.
-	 */
-	protected SimpleReport simpleReport;
-
-	/**
-	 * This is the detailed report of the validation.
-	 */
-	protected DetailedReport detailedReport;
+	protected Reports reports; // XmlDom objects (diagnostic data, detailed report and simple report)
 
 	private final Condition qcp = new PolicyIdCondition(OID.id_etsi_qcp_public.getId());
 
@@ -296,7 +288,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * Validates the document and all its signatures. The default constraint file is used.
 	 */
 	@Override
-	public DetailedReport validateDocument() {
+	public Reports validateDocument() {
 
 		return validateDocument((InputStream) null);
 	}
@@ -309,7 +301,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * @return
 	 */
 	@Override
-	public DetailedReport validateDocument(final URL validationPolicyURL) {
+	public Reports validateDocument(final URL validationPolicyURL) {
 		if (validationPolicyURL == null) {
 			return validateDocument((InputStream) null);
 		} else {
@@ -327,7 +319,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * @param policyResourcePath is located against the classpath (getClass().getResourceAsStream), and NOT the filesystem
 	 */
 	@Override
-	public DetailedReport validateDocument(final String policyResourcePath) {
+	public Reports validateDocument(final String policyResourcePath) {
 
 		if (policyResourcePath == null) {
 			return validateDocument((InputStream) null);
@@ -342,7 +334,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * @param policyFile contains the validation policy (xml)
 	 */
 	@Override
-	public DetailedReport validateDocument(final File policyFile) {
+	public Reports validateDocument(final File policyFile) {
 
 		if (policyFile == null || !policyFile.exists()) {
 			return validateDocument((InputStream) null);
@@ -358,7 +350,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * @param policyDataStream
 	 */
 	@Override
-	public DetailedReport validateDocument(final InputStream policyDataStream) {
+	public Reports validateDocument(final InputStream policyDataStream) {
 
 		LOG.info("Document validation...");
 		if (certificateVerifier == null) {
@@ -377,11 +369,9 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 		executor.execute();
 
-		diagnosticData = executor.getDiagnosticData();
-		detailedReport = executor.getDetailedReport();
-		simpleReport = executor.getSimpleReport();
+		reports = executor.getReports();
 
-		return detailedReport;
+		return reports;
 	}
 
 	/**
@@ -700,12 +690,11 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		if (!certToken.isTrusted()) {
 
 			/// System.out.println("--> QCStatement for: " + certToken.getAbbreviation());
-			final X509Certificate cert = certToken.getCertificate();
 			final XmlQCStatement xmlQCS = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlQCStatement();
-			xmlQCS.setQCP(qcp.check(cert));
-			xmlQCS.setQCPPlus(qcpPlus.check(cert));
-			xmlQCS.setQCC(qcCompliance.check(cert));
-			xmlQCS.setQCSSCD(qcsscd.check(cert));
+			xmlQCS.setQCP(qcp.check(certToken));
+			xmlQCS.setQCPPlus(qcpPlus.check(certToken));
+			xmlQCS.setQCC(qcCompliance.check(certToken));
+			xmlQCS.setQCSSCD(qcsscd.check(certToken));
 			xmlCert.setQCStatement(xmlQCS);
 		}
 	}
@@ -875,7 +864,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			xmlTSP.setExpiredCertsRevocationInfo(DSSXMLUtils.createXMLGregorianCalendar(serviceInfo.getExpiredCertsRevocationInfo()));
 
 			// Check of the associated conditions to identify the qualifiers
-			final List<String> qualifiers = serviceInfo.getQualifiers(certToken.getCertificate());
+			final List<String> qualifiers = serviceInfo.getQualifiers(certToken);
 			if (!qualifiers.isEmpty()) {
 
 				final XmlQualifiers xmlQualifiers = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlQualifiers();
@@ -1356,7 +1345,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	@Override
 	public DiagnosticData getDiagnosticData() {
 
-		return diagnosticData;
+		return reports.getDiagnosticData();
 	}
 
 	/**
@@ -1366,7 +1355,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 */
 	@Override
 	public SimpleReport getSimpleReport() {
-		return simpleReport;
+		return reports.getSimpleReport();
 	}
 
 	/**
@@ -1376,7 +1365,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 */
 	@Override
 	public DetailedReport getDetailedReport() {
-		return detailedReport;
+		return reports.getDetailedReport();
 	}
 
 	/**
@@ -1700,5 +1689,10 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public Reports getReports() {
+		return reports;
 	}
 }

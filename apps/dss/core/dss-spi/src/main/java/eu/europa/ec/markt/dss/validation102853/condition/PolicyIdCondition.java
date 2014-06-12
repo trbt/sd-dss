@@ -25,6 +25,7 @@ import java.util.List;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
+import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
  * Checks if a certificate has a specific policy OID.<br>
@@ -35,76 +36,73 @@ import eu.europa.ec.markt.dss.exception.DSSNullException;
 
 public class PolicyIdCondition extends Condition {
 
-    private static final long serialVersionUID = 7590885101177874819L;
+	private static final long serialVersionUID = 7590885101177874819L;
 
-    final private String policyOid;
+	/**
+	 * PolicyOid to be checked if present in the certificate's policies
+	 */
+	final private String policyOid;
 
-/*
-    private X509Certificate contextCert;
+	/**
+	 * The default constructor for PolicyIdCondition.
+	 *
+	 * @param policyId
+	 */
+	public PolicyIdCondition(final String policyId) {
 
-    private List<String> contextPolicyIdentifiers;
-*/
+		if (policyId == null) {
+			throw new DSSNullException(StrictMath.class, "policyId");
+		}
+		this.policyOid = policyId;
+	}
 
-    /**
-     * The default constructor for PolicyIdCondition.
-     *
-     * @param policyId
-     */
-    public PolicyIdCondition(final String policyId) {
+	/**
+	 * @return the policyOid
+	 */
+	public String getPolicyOid() {
 
-        if (policyId == null) {
+		return policyOid;
+	}
 
-            throw new DSSNullException(StrictMath.class, "policyId");
-        }
-        this.policyOid = policyId;
-    }
+	/**
+	 * Checks the condition for the given certificate.
+	 *
+	 * @param certificateToken certificate to be checked
+	 * @return
+	 */
+	@Override
+	public boolean check(final CertificateToken certificateToken) {
 
-    /**
-     * @return the policyOid
-     */
-    public String getPolicyOid() {
+		if (certificateToken == null) {
+			throw new DSSNullException(X509Certificate.class);
+		}
+		/**
+		 * Certificate policies identifier: 2.5.29.32 (IETF RFC 3280)<br>
+		 * Gets all certificate's policies
+		 */
+		List<String> contextPolicyIdentifiers = certificateToken.getPolicyIdentifiers();
+		return contextPolicyIdentifiers.contains(policyOid);
+	}
 
-        return policyOid;
-    }
+	@Override
+	public String toString(String indent) {
 
-    /**
-     * Checks the condition for the given certificate.
-     *
-     * @param cert certificate to be checked
-     * @return
-     */
-    @Override
-    public boolean check(final X509Certificate cert) {
+		try {
 
-        /**
-         * Certificate policies identifier: 2.5.29.32 (IETF RFC 3280)<br>
-         * Gets all certificate's policies
-         */
-        final List<String> policyIdentifiers = DSSUtils.getPolicyIdentifiers(cert);
-        return policyIdentifiers.contains(policyOid);
-    }
+			if (indent == null) {
+				indent = "";
+			}
+			StringBuilder builder = new StringBuilder();
+			builder.append(indent).append("PolicyIdCondition: ").append(policyOid).append('\n');
+			return builder.toString();
+		} catch (Exception e) {
 
-    @Override
-    public String toString(String indent) {
+			return e.toString();
+		}
+	}
 
-        try {
-
-            if (indent == null) {
-
-                indent = "";
-            }
-            StringBuilder builder = new StringBuilder();
-            builder.append(indent).append("PolicyIdCondition: ").append(policyOid).append('\n');
-            return builder.toString();
-        } catch (Exception e) {
-
-            return e.toString();
-        }
-    }
-
-    @Override
-    public String toString() {
-
-        return toString("");
-    }
+	@Override
+	public String toString() {
+		return toString("");
+	}
 }

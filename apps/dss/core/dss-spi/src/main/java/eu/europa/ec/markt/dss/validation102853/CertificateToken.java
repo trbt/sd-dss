@@ -74,7 +74,7 @@ public class CertificateToken extends Token {
 	/**
 	 * Encapsulated X509 certificate.
 	 */
-	private X509Certificate cert;
+	private X509Certificate x509Certificate;
 
 	/**
 	 * This array contains the different sources for this certificate.
@@ -139,16 +139,16 @@ public class CertificateToken extends Token {
 	 * Creates a CertificateToken wrapping the provided X509Certificate. A certificate must come from a source like:
 	 * trusted store, trusted list, signature...
 	 *
-	 * @param cert X509Certificate
-	 * @param id   DSS internal id (unique certificate's identifier)
+	 * @param x509Certificate X509Certificate
+	 * @param id              DSS internal id (unique certificate's identifier)
 	 */
-	protected CertificateToken(X509Certificate cert, int id) {
+	protected CertificateToken(X509Certificate x509Certificate, int id) {
 
 		this.dssId = id;
-		this.cert = cert;
-		this.issuerX500Principal = DSSUtils.getIssuerX500Principal(cert);
-		// The Algorithm OID is used and not the name {@code cert.getSigAlgName()}
-		final String sigAlgOID = cert.getSigAlgOID();
+		this.x509Certificate = x509Certificate;
+		this.issuerX500Principal = DSSUtils.getIssuerX500Principal(x509Certificate);
+		// The Algorithm OID is used and not the name {@code x509Certificate.getSigAlgName()}
+		final String sigAlgOID = x509Certificate.getSigAlgOID();
 		final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.forOID(sigAlgOID);
 		this.algoUsedToSignToken = signatureAlgorithm;
 
@@ -202,7 +202,7 @@ public class CertificateToken extends Token {
 
 		if (dssId == 0) {
 
-			return "[" + cert.getSubjectX500Principal().getName(X500Principal.CANONICAL) + "]";
+			return "[" + x509Certificate.getSubjectX500Principal().getName(X500Principal.CANONICAL) + "]";
 		}
 		return "[" + dssId + "]";
 	}
@@ -246,7 +246,7 @@ public class CertificateToken extends Token {
 	 */
 	public PublicKey getPublicKey() {
 
-		return cert.getPublicKey();
+		return x509Certificate.getPublicKey();
 	}
 
 	/**
@@ -256,7 +256,7 @@ public class CertificateToken extends Token {
 	 */
 	public Date getNotAfter() {
 
-		return cert.getNotAfter();
+		return x509Certificate.getNotAfter();
 	}
 
 	/**
@@ -266,7 +266,7 @@ public class CertificateToken extends Token {
 	 */
 	public Date getNotBefore() {
 
-		return cert.getNotBefore();
+		return x509Certificate.getNotBefore();
 	}
 
 	/**
@@ -277,10 +277,10 @@ public class CertificateToken extends Token {
 	 */
 	public boolean isExpiredOn(final Date date) {
 
-		if (cert == null || date == null) {
+		if (x509Certificate == null || date == null) {
 			return true;
 		}
-		return cert.getNotAfter().before(date);
+		return x509Certificate.getNotAfter().before(date);
 	}
 
 	/**
@@ -291,11 +291,11 @@ public class CertificateToken extends Token {
 	 */
 	public boolean isValidOn(final Date date) {
 
-		if (cert == null || date == null) {
+		if (x509Certificate == null || date == null) {
 			return false;
 		}
 		try {
-			cert.checkValidity(date);
+			x509Certificate.checkValidity(date);
 			return true;
 		} catch (CertificateExpiredException e) {
 			return false;
@@ -344,8 +344,8 @@ public class CertificateToken extends Token {
 
 		if (selfSigned == null) {
 
-			final String n1 = cert.getSubjectX500Principal().getName(X500Principal.CANONICAL);
-			final String n2 = cert.getIssuerX500Principal().getName(X500Principal.CANONICAL);
+			final String n1 = x509Certificate.getSubjectX500Principal().getName(X500Principal.CANONICAL);
+			final String n2 = x509Certificate.getIssuerX500Principal().getName(X500Principal.CANONICAL);
 			selfSigned = n1.equals(n2);
 		}
 		return selfSigned;
@@ -384,7 +384,7 @@ public class CertificateToken extends Token {
 	 */
 	public X509Certificate getCertificate() {
 
-		return cert;
+		return x509Certificate;
 	}
 
 	/**
@@ -395,7 +395,7 @@ public class CertificateToken extends Token {
 	@Override
 	public byte[] getEncoded() {
 
-		final byte[] bytes = DSSUtils.getEncoded(cert);
+		final byte[] bytes = DSSUtils.getEncoded(x509Certificate);
 		return bytes;
 	}
 
@@ -432,7 +432,7 @@ public class CertificateToken extends Token {
 	 */
 	public BigInteger getSerialNumber() {
 
-		return cert.getSerialNumber();
+		return x509Certificate.getSerialNumber();
 	}
 
 	/**
@@ -444,7 +444,7 @@ public class CertificateToken extends Token {
 	public X500Principal getSubjectX500Principal() {
 
 		if (subjectX500PrincipalNormalized == null) {
-			subjectX500PrincipalNormalized = DSSUtils.getSubjectX500Principal(cert);
+			subjectX500PrincipalNormalized = DSSUtils.getSubjectX500Principal(x509Certificate);
 		}
 		return subjectX500PrincipalNormalized;
 	}
@@ -457,7 +457,7 @@ public class CertificateToken extends Token {
 		try {
 
 			final PublicKey publicKey = issuerToken.getCertificate().getPublicKey();
-			cert.verify(publicKey);
+			x509Certificate.verify(publicKey);
 			signatureValid = true;
 			if (!isSelfSigned()) {
 				this.issuerToken = issuerToken;
@@ -497,7 +497,7 @@ public class CertificateToken extends Token {
 
 		try {
 
-			List<String> keyPurposes = cert.getExtendedKeyUsage();
+			List<String> keyPurposes = x509Certificate.getExtendedKeyUsage();
 			if (keyPurposes != null && keyPurposes.contains(OID.id_kp_OCSPSigning.getId())) {
 
 				return true;
@@ -521,7 +521,7 @@ public class CertificateToken extends Token {
 	 */
 	public boolean hasIdPkixOcspNoCheckExtension() {
 
-		byte[] extensionValue = cert.getExtensionValue(OID.id_pkix_ocsp_no_check.getId());
+		byte[] extensionValue = x509Certificate.getExtensionValue(OID.id_pkix_ocsp_no_check.getId());
 		try {
 
 			if (extensionValue != null) {
@@ -547,7 +547,7 @@ public class CertificateToken extends Token {
 	 */
 	public boolean hasExpiredCertOnCRLExtension() {
 
-		byte[] extensionValue = cert.getExtensionValue(OID.id_ce_expiredCertsOnCRL.getId());
+		byte[] extensionValue = x509Certificate.getExtensionValue(OID.id_ce_expiredCertsOnCRL.getId());
 		try {
 
 			if (extensionValue != null) {
@@ -608,7 +608,7 @@ public class CertificateToken extends Token {
 				try {
 
 					final MessageDigest digest = DSSUtils.getMessageDigest(digestAlgorithm);
-					digest.update(cert.getEncoded());
+					digest.update(x509Certificate.getEncoded());
 					encoded = DSSUtils.base64Encode(digest.digest());
 					digests.put(digestAlgorithm, encoded);
 				} catch (CertificateEncodingException e) {
@@ -642,6 +642,51 @@ public class CertificateToken extends Token {
 			issuerCertToken = issuerCertToken.getIssuerToken();
 		}
 		return null;
+	}
+
+	/**
+	 * This method returns the CRL distribution point of the wrapped certificate.
+	 *
+	 * @return {@code byte[]}
+	 */
+	public byte[] getCRLDistributionPoints() {
+
+		final String id = X509Extension.cRLDistributionPoints.getId();
+		final byte[] extensionValue = x509Certificate.getExtensionValue(id);
+		return extensionValue;
+	}
+
+	/**
+	 * Indicates if the wrapped certificate has cRLSign key usage bit set.
+	 *
+	 * @return
+	 */
+	public boolean hasCRLSignKeyUsage() {
+
+		final boolean[] keyUsage = x509Certificate.getKeyUsage();
+		final boolean crlSignKeyUsage = keyUsage != null || (keyUsage != null && keyUsage[6]);
+		return crlSignKeyUsage;
+	}
+
+	/**
+	 * This method returns the size of the public key of the certificate.
+	 *
+	 * @return
+	 */
+	public int getPublicKeyLength() {
+
+		final int publicKeySize = DSSPKUtils.getPublicKeySize(getPublicKey());
+		return publicKeySize;
+	}
+
+	/**
+	 * This method checks if the certificate contains the given key usage bit.
+	 *
+	 * @param index the index of the key usage to be checked.
+	 * @return true if contains
+	 */
+	public boolean checkKeyUsage(final int index) {
+		return x509Certificate.getKeyUsage()[index];
 	}
 
 	@Override
@@ -682,10 +727,10 @@ public class CertificateToken extends Token {
 				}
 			}
 			out.append(indentStr).append(getDSSIdAsString()).append("<--").append(issuerAsString).append(", source=").append(certSource);
-			out.append(", serial=" + cert.getSerialNumber()).append('\n');
+			out.append(", serial=" + x509Certificate.getSerialNumber()).append('\n');
 			// Validity period
-			final String certStartDate = DSSUtils.formatInternal(cert.getNotBefore());
-			final String certEndDate = DSSUtils.formatInternal(cert.getNotAfter());
+			final String certStartDate = DSSUtils.formatInternal(x509Certificate.getNotBefore());
+			final String certEndDate = DSSUtils.formatInternal(x509Certificate.getNotAfter());
 			out.append(indentStr).append("Validity period    : ").append(certStartDate).append(" - ").append(certEndDate).append('\n');
 			out.append(indentStr).append("Subject name       : ").append(getSubjectX500Principal()).append('\n');
 			out.append(indentStr).append("Issuer subject name: ").append(getIssuerX500Principal()).append('\n');
@@ -765,38 +810,23 @@ public class CertificateToken extends Token {
 		}
 	}
 
-	/**
-	 * This method returns the CRL distribution point of the wrapped certificate.
-	 *
-	 * @return {@code byte[]}
-	 */
-	public byte[] getCRLDistributionPoints() {
+	private List<String> policyIdentifiers = null;
 
-		final String id = X509Extension.cRLDistributionPoints.getId();
-		final byte[] extensionValue = cert.getExtensionValue(id);
-		return extensionValue;
+	public List<String> getPolicyIdentifiers() {
+
+		if (policyIdentifiers == null) {
+			policyIdentifiers = DSSUtils.getPolicyIdentifiers(x509Certificate);
+		}
+		return policyIdentifiers;
 	}
 
-	/**
-	 * Indicates if the wrapped certificate has cRLSign key usage bit set.
-	 *
-	 * @return
-	 */
-	public boolean hasCRLSignKeyUsage() {
+	private List<String> qcStatementsIdList = null;
 
-		final boolean[] keyUsage = cert.getKeyUsage();
-		final boolean crlSignKeyUsage = keyUsage != null || (keyUsage != null && keyUsage[6]);
-		return crlSignKeyUsage;
-	}
+	public List<String> getQCStatementsIdList() {
 
-	/**
-	 * This method returns the size of the public key of the certificate.
-	 *
-	 * @return
-	 */
-	public int getPublicKeyLength() {
-
-		final int publicKeySize = DSSPKUtils.getPublicKeySize(getPublicKey());
-		return publicKeySize;
+		if (qcStatementsIdList == null) {
+			qcStatementsIdList = DSSUtils.getQCStatementsIdList(x509Certificate);
+		}
+		return qcStatementsIdList;
 	}
 }

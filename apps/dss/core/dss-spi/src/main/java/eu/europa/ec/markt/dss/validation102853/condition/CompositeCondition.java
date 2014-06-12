@@ -20,9 +20,10 @@
 
 package eu.europa.ec.markt.dss.validation102853.condition;
 
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+
+import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
  * Checks if a certificate has a specific policy OID.<br>
@@ -56,11 +57,11 @@ public class CompositeCondition extends Condition {
     /**
      * Checks the condition for the given certificate.
      *
-     * @param cert certificate to be checked
+     * @param certificateToken certificate to be checked
      * @return
      */
     @Override
-    public boolean check(final X509Certificate cert) {
+    public boolean check(final CertificateToken certificateToken) {
 
         if (children == null) {
 
@@ -68,7 +69,7 @@ public class CompositeCondition extends Condition {
         }
         for (final Condition condition : children) {
 
-            boolean checkResult = condition.check(cert);
+            boolean checkResult = condition.check(certificateToken);
             if (!checkResult) {
 
                 return false;

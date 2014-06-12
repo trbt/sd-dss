@@ -21,7 +21,6 @@
 package eu.europa.ec.markt.dss.validation102853.condition;
 
 import java.io.Serializable;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
  * From a validation point of view, a Service is a set of pair ("Qualification Statement", "Condition").
@@ -121,10 +121,10 @@ public class ServiceInfo implements Serializable {
     /**
      * Retrieves all the qualifiers for which the corresponding conditionEntry is true.
      *
-     * @param cert
+     * @param certificateToken
      * @return
      */
-    public List<String> getQualifiers(X509Certificate cert) {
+    public List<String> getQualifiers(CertificateToken certificateToken) {
 
         // System.out.println("--> GET_QUALIFIERS()");
         List<String> list = new ArrayList<String>();
@@ -134,7 +134,7 @@ public class ServiceInfo implements Serializable {
             // System.out.println("--> " + conditions);
             for (final Condition condition : conditions) {
 
-                if (condition.check(cert)) {
+                if (condition.check(certificateToken)) {
 
                     // System.out.println("--> CONDITION TRUE / " + conditionEntry.getKey());
                     list.add(conditionEntry.getKey());

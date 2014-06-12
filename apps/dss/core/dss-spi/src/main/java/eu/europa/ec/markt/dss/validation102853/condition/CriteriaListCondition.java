@@ -20,9 +20,8 @@
 
 package eu.europa.ec.markt.dss.validation102853.condition;
 
-import java.security.cert.X509Certificate;
-
 import eu.europa.ec.markt.dss.exception.DSSNullException;
+import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
  * Condition resulting of the matchingCriteriaIndicator of other Conditions
@@ -59,30 +58,30 @@ public class CriteriaListCondition extends CompositeCondition {
     }
 
     /**
-     * @param cert certificate to be checked
+     * @param certificateToken certificate to be checked
      * @return
      */
     @Override
-    public boolean check(final X509Certificate cert) {
+    public boolean check(final CertificateToken certificateToken) {
 
         switch (matchingCriteriaIndicator) {
             case all:
                 for (final Condition condition : children) {
-                    if (!condition.check(cert)) {
+                    if (!condition.check(certificateToken)) {
                         return false;
                     }
                 }
                 return true;
             case atLeastOne:
                 for (final Condition condition : children) {
-                    if (condition.check(cert)) {
+                    if (condition.check(certificateToken)) {
                         return true;
                     }
                 }
                 return false;
             case none:
                 for (final Condition condition : children) {
-                    if (condition.check(cert)) {
+                    if (condition.check(certificateToken)) {
                         return false;
                     }
                 }

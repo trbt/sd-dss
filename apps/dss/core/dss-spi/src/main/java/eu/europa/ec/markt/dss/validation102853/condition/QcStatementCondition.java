@@ -20,18 +20,12 @@
 
 package eu.europa.ec.markt.dss.validation102853.condition;
 
-import java.io.IOException;
-import java.security.cert.X509Certificate;
+import java.util.List;
 
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERObjectIdentifier;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.x509.X509Extension;
-import org.bouncycastle.asn1.x509.qualified.QCStatement;
 
 import eu.europa.ec.markt.dss.DSSUtils;
-import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
  * Condition that check a specific QCStatement
@@ -41,73 +35,56 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 
 public class QcStatementCondition extends Condition {
 
-    private static final long serialVersionUID = -5504958938057542907L;
+	private static final long serialVersionUID = -5504958938057542907L;
 
-    private String qcStatementId = null;
+	private String qcStatementId = null;
 
-    /**
-     * The default constructor for QcStatementCondition.
-     *
-     * @param qcStatementId
-     */
-    public QcStatementCondition(final String qcStatementId) {
+	/**
+	 * The default constructor for QcStatementCondition.
+	 *
+	 * @param qcStatementId
+	 */
+	public QcStatementCondition(final String qcStatementId) {
 
-        this.qcStatementId = qcStatementId;
-    }
+		this.qcStatementId = qcStatementId;
+	}
 
-    /**
-     * The default constructor for QcStatementCondition.
-     *
-     * @param qcStatementId
-     */
-    public QcStatementCondition(final DERObjectIdentifier qcStatementId) {
+	/**
+	 * The default constructor for QcStatementCondition.
+	 *
+	 * @param qcStatementId
+	 */
+	public QcStatementCondition(final DERObjectIdentifier qcStatementId) {
 
-        this(qcStatementId.getId());
-    }
+		this(qcStatementId.getId());
+	}
 
-    /**
-     * Checks the condition for the given certificate.
-     *
-     * @param cert certificate to be checked
-     * @return
-     */
-    @Override
-    public boolean check(final X509Certificate cert) {
+	/**
+	 * Checks the condition for the given certificate.
+	 *
+	 * @param x509Certificate certificate to be checked
+	 * @return
+	 */
+	@Override
+	public boolean check(final CertificateToken x509Certificate) {
 
-        final byte[] qcStatement = cert.getExtensionValue(X509Extension.qCStatements.getId());
-        if (qcStatement != null) {
+		final List<String> extensionIdList = x509Certificate.getQCStatementsIdList();
+		return extensionIdList.contains(qcStatementId);
+	}
 
-            ASN1InputStream input = null;
-            try {
+	@Override
+	public String toString(String indent) {
 
-                input = new ASN1InputStream(qcStatement);
-                final DEROctetString s = (DEROctetString) input.readObject();
-                final byte[] content = s.getOctets();
-                input.close();
-                input = new ASN1InputStream(content);
-                final ASN1Sequence seq = (ASN1Sequence) input.readObject();
-                /* Sequence of QCStatement */
-                for (int ii = 0; ii < seq.size(); ii++) {
+		if (indent == null) {
+			indent = "";
+		}
+		return indent + "QcStatementCondition{" +
+			  "qcStatementId='" + qcStatementId + '\'' +
+			  '}';
+	}
 
-                    final QCStatement statement = QCStatement.getInstance(seq.getObjectAt(ii));
-                    if (statement.getStatementId().getId().equals(qcStatementId)) {
-
-                        return true;
-                    }
-                }
-            } catch (IOException e) {
-
-                throw new DSSException(e);
-            } finally {
-
-                DSSUtils.closeQuietly(input);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public String toString(String indent) {
-        return null;
-    }
+	@Override
+	public String toString() {
+		return toString("");
+	}
 }
