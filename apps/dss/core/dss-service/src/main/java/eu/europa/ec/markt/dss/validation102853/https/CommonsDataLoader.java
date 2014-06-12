@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -36,11 +35,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import org.apache.directory.api.ldap.model.entry.Attribute;
-import org.apache.directory.api.ldap.model.entry.Entry;
-import org.apache.directory.api.ldap.model.url.LdapUrl;
-import org.apache.directory.ldap.client.api.LdapConnection;
-import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -303,39 +297,39 @@ public class CommonsDataLoader implements DataLoader {
         return null;
     }
 
-    /**
-     * Obtains a CRL from a specified LDAP URL (Another method)
-     *
-     * @param ldapURL The LDAP URL String
-     * @return A CRL obtained from this LDAP URL if successful, otherwise NULL (if no CRL was resent) or an exception will be thrown.
-     * @throws DSSException
-     */
-    public static byte[] ldapGet2(final String ldapURL) throws DSSException {
-
-        try {
-
-            //final String ldapUrlStr = URLDecoder.decode(ldapURL, "UTF-8");
-            final LdapUrl ldapUrl = new LdapUrl(ldapURL);
-            final int port = ldapUrl.getPort() > 0 ? ldapUrl.getPort() : 389;
-            final LdapConnection con = new LdapNetworkConnection(ldapUrl.getHost(), port);
-            con.connect();
-            final Entry entry = con.lookup(ldapUrl.getDn(), ldapUrl.getAttributes().toArray(new String[ldapUrl.getAttributes().size()]));
-            final Collection<Attribute> attributes = entry.getAttributes();
-            byte[] bytes = null;
-            for (Attribute attr : attributes) {
-
-                bytes = attr.getBytes();
-                break;
-            }
-            con.close();
-            return bytes;
-        } catch (Exception e) {
-
-            LOG.warn(e.toString(), e);
-        }
-        return null;
-    }
-
+//    /**
+//     * Obtains a CRL from a specified LDAP URL (Another method)
+//     *
+//     * @param ldapURL The LDAP URL String
+//     * @return A CRL obtained from this LDAP URL if successful, otherwise NULL (if no CRL was resent) or an exception will be thrown.
+//     * @throws DSSException
+//     */
+//    public static byte[] ldapGet2(final String ldapURL) throws DSSException {
+//
+//        try {
+//
+//            //final String ldapUrlStr = URLDecoder.decode(ldapURL, "UTF-8");
+//            final LdapUrl ldapUrl = new LdapUrl(ldapURL);
+//            final int port = ldapUrl.getPort() > 0 ? ldapUrl.getPort() : 389;
+//            final LdapConnection con = new LdapNetworkConnection(ldapUrl.getHost(), port);
+//            con.connect();
+//            final Entry entry = con.lookup(ldapUrl.getDn(), ldapUrl.getAttributes().toArray(new String[ldapUrl.getAttributes().size()]));
+//            final Collection<Attribute> attributes = entry.getAttributes();
+//            byte[] bytes = null;
+//            for (Attribute attr : attributes) {
+//
+//                bytes = attr.getBytes();
+//                break;
+//            }
+//            con.close();
+//            return bytes;
+//        } catch (Exception e) {
+//
+//            LOG.warn(e.toString(), e);
+//        }
+//        return null;
+//    }
+//
     /**
      * This method retrieves data using LDAP protocol.
      * - CRL from given LDAP url, e.g. ldap://ldap.infonotary.com/dc=identity-ca,dc=infonotary,dc=com
