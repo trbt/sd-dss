@@ -98,6 +98,7 @@ import org.bouncycastle.asn1.x509.IssuerSerial;
 import org.bouncycastle.asn1.x509.PolicyInformation;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
+import org.bouncycastle.asn1.x509.qualified.QCStatement;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CRLConverter;
@@ -2850,6 +2851,38 @@ public final class DSSUtils {
 	public static byte[] toByteArray(final long longValue) {
 
 		return String.valueOf(longValue).getBytes();
+	}
+
+	public static List<String> getQCStatementsIdList(final X509Certificate x509Certificate) {
+
+		final List<String> extensionIdList = new ArrayList<String>();
+		final byte[] qcStatement = x509Certificate.getExtensionValue(X509Extension.qCStatements.getId());
+		if (qcStatement != null) {
+
+			ASN1InputStream input = null;
+			try {
+
+				input = new ASN1InputStream(qcStatement);
+				final DEROctetString s = (DEROctetString) input.readObject();
+				final byte[] content = s.getOctets();
+				input.close();
+				input = new ASN1InputStream(content);
+				final ASN1Sequence seq = (ASN1Sequence) input.readObject();
+                /* Sequence of QCStatement */
+				for (int ii = 0; ii < seq.size(); ii++) {
+
+					final QCStatement statement = QCStatement.getInstance(seq.getObjectAt(ii));
+					extensionIdList.add(statement.getStatementId().getId());
+				}
+			} catch (IOException e) {
+
+				throw new DSSException(e);
+			} finally {
+
+				DSSUtils.closeQuietly(input);
+			}
+		}
+		return extensionIdList;
 	}
 }
 
