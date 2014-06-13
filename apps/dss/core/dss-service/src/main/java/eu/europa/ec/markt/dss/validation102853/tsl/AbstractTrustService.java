@@ -25,15 +25,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.security.auth.x500.X500Principal;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.w3c.dom.Element;
 
 import eu.europa.ec.markt.dss.DSSUtils;
-import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSEncodingException;
 import eu.europa.ec.markt.dss.exception.DSSEncodingException.MSG;
+import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.validation102853.condition.CompositeCondition;
 import eu.europa.ec.markt.dss.validation102853.condition.Condition;
@@ -112,15 +113,15 @@ abstract class AbstractTrustService {
 	abstract String getServiceName();
 
 	/**
-	 * Return the list of certificate representing the digital identity of this service.
+	 * Returns the list of certificate representing the digital identity of this service.
 	 *
-	 * @return
+	 * @return {@code List} of {@code Object} which can be {@code X509Certificate} or {@code X500Principal}
 	 */
-	List<X509Certificate> getDigitalIdentity() {
+	List<Object> getDigitalIdentity() {
 
 		try {
 
-			final List<X509Certificate> certs = new ArrayList<X509Certificate>();
+			final List<Object> certs = new ArrayList<Object>();
 			for (final DigitalIdentityType digitalIdentity : getServiceDigitalIdentity().getDigitalId()) {
 
 				final byte[] x509CertificateBytes = digitalIdentity.getX509Certificate();
@@ -129,9 +130,15 @@ abstract class AbstractTrustService {
 					final X509Certificate x509Certificate = DSSUtils.loadCertificate(x509CertificateBytes);
 					// System.out.println(" ----- > " + x509Certificate.getSubjectX500Principal());
 					certs.add(x509Certificate);
+				} else {
+
+					final String x509SubjectName = digitalIdentity.getX509SubjectName();
+					if (x509SubjectName != null) {
+
+						final X500Principal x500Principal = DSSUtils.getX500Principal(x509SubjectName);
+						certs.add(x500Principal);
+					}
 				}
-				// TODO: (Bob: 2014 Jan 28) In case of history: The digital identity can be also just a public key. So if the certificate is absent a dummy cert should be created
-				// TODO: (Bob: 2014 Feb 21) to be able to handle the history
 			}
 			return certs;
 		} catch (DSSException e) {

@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.security.auth.x500.X500Principal;
+
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -506,9 +508,27 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 				// System.out.println(trustService.getType());
 				// System.out.println("------> " + trustService.getStatus());
 				try {
-					for (final X509Certificate x509Certificate : trustService.getDigitalIdentity()) {
 
-						addCertificate(x509Certificate, trustService, trustServiceProvider, trustStatusList.isWellSigned());
+					for (final Object digitalIdentity : trustService.getDigitalIdentity()) {
+
+						X509Certificate x509Certificate = null;
+						if (digitalIdentity instanceof X509Certificate) {
+
+							x509Certificate = (X509Certificate) digitalIdentity;
+						} else if (digitalIdentity instanceof X500Principal) {
+
+							final X500Principal x500Principal = (X500Principal) digitalIdentity;
+							final List<CertificateToken> certificateTokens = certPool.get(x500Principal);
+							if (certificateTokens.size() > 0) {
+								x509Certificate = certificateTokens.get(0).getCertificate();
+							} else {
+								LOG.warn("There is no yet certificate with the given X500Principal: '{}' within the certificate pool!", x500Principal);
+							}
+						}
+						if (x509Certificate != null) {
+
+							addCertificate(x509Certificate, trustService, trustServiceProvider, trustStatusList.isWellSigned());
+						}
 					}
 				} catch (DSSEncodingException e) {
 
