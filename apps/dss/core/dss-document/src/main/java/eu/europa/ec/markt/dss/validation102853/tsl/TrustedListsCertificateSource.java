@@ -54,14 +54,14 @@ import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.exception.DSSNullReturnedException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
-import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
-import eu.europa.ec.markt.dss.validation102853.CommonCertificateVerifier;
-import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
-import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.AdvancedSignature;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
+import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
+import eu.europa.ec.markt.dss.validation102853.CommonCertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.CommonTrustedCertificateSource;
+import eu.europa.ec.markt.dss.validation102853.certificate.CertificateSourceType;
 import eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo;
+import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 import eu.europa.ec.markt.dss.validation102853.report.SimpleReport;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
 import eu.europa.ec.markt.dss.validation102853.xades.XMLDocumentValidator;
@@ -504,9 +504,11 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
 			for (final AbstractTrustService trustService : trustServiceProvider.getTrustServiceList()) {
 
-				// System.out.println(trustService.getServiceName());
-				// System.out.println(trustService.getType());
-				// System.out.println("------> " + trustService.getStatus());
+				if (LOG.isTraceEnabled()) {
+					LOG.trace("### " + trustService.getServiceName());
+					LOG.trace("------> " + trustService.getType());
+					LOG.trace("------> " + trustService.getStatus());
+				}
 				try {
 
 					for (final Object digitalIdentity : trustService.getDigitalIdentity()) {
@@ -522,7 +524,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 							if (certificateTokens.size() > 0) {
 								x509Certificate = certificateTokens.get(0).getCertificate();
 							} else {
-								LOG.warn("There is no yet certificate with the given X500Principal: '{}' within the certificate pool!", x500Principal);
+								LOG.warn("There is currently no certificate with the given X500Principal: '{}' within the certificate pool!", x500Principal);
 							}
 						}
 						if (x509Certificate != null) {
