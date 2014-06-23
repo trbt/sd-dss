@@ -127,6 +127,10 @@ public class Pkcs12SignatureToken extends AbstractSignatureTokenConnection {
 
     @Override
     public void close() {
+
+	    for (int ii = 0; ii < password.length; ii++) {
+		    password[ii] = 0;
+	    }
     }
 
     @Override

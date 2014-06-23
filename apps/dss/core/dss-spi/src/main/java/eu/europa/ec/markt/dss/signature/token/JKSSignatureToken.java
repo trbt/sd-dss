@@ -46,75 +46,80 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 
 public class JKSSignatureToken extends AbstractSignatureTokenConnection {
 
-    private char[] password;
+	private char[] password;
 
-    protected KeyStore keyStore = null;
+	protected KeyStore keyStore = null;
 
-    /**
-     * Creates a SignatureTokenConnection with the provided path to Java KeyStore file and password.
-     *
-     * @param ksUrlLocation
-     * @param ksPassword
-     */
-    public JKSSignatureToken(String ksUrlLocation, String ksPassword) {
+	/**
+	 * Creates a SignatureTokenConnection with the provided path to Java KeyStore file and password.
+	 *
+	 * @param ksUrlLocation
+	 * @param ksPassword
+	 */
+	public JKSSignatureToken(String ksUrlLocation, String ksPassword) {
 
-        InputStream ksStream = null;
-        try {
+		InputStream ksStream = null;
+		try {
 
-            final URL ksLocation = new URL(ksUrlLocation);
-            keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            ksStream = ksLocation.openStream();
-            keyStore.load(ksStream, (ksPassword == null) ? null : ksPassword.toCharArray());
-        } catch (CertificateException e) {
-            throw new DSSException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new DSSException(e);
-        } catch (KeyStoreException e) {
-            throw new DSSException(e);
-        } catch (MalformedURLException e) {
-            throw new DSSException(e);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        } finally {
+			final URL ksLocation = new URL(ksUrlLocation);
+			keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			ksStream = ksLocation.openStream();
+			password = (ksPassword == null) ? null : ksPassword.toCharArray();
+			keyStore.load(ksStream, password);
+		} catch (CertificateException e) {
+			throw new DSSException(e);
+		} catch (NoSuchAlgorithmException e) {
+			throw new DSSException(e);
+		} catch (KeyStoreException e) {
+			throw new DSSException(e);
+		} catch (MalformedURLException e) {
+			throw new DSSException(e);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		} finally {
 
-            DSSUtils.closeQuietly(ksStream);
-        }
-    }
+			DSSUtils.closeQuietly(ksStream);
+		}
+	}
 
-    @Override
-    public void close() {
-    }
+	@Override
+	public void close() {
 
-    /**
-     * Retrieves all the available keys (private keys entries) from the Java KeyStore.
-     *
-     * @return
-     * @throws DSSException
-     */
-    @Override
-    public List<DSSPrivateKeyEntry> getKeys() throws DSSException {
+		for (int ii = 0; ii < password.length; ii++) {
+			password[ii] = 0;
+		}
+	}
 
-        final List<DSSPrivateKeyEntry> list = new ArrayList<DSSPrivateKeyEntry>();
+	/**
+	 * Retrieves all the available keys (private keys entries) from the Java KeyStore.
+	 *
+	 * @return
+	 * @throws DSSException
+	 */
+	@Override
+	public List<DSSPrivateKeyEntry> getKeys() throws DSSException {
 
-        try {
-            final PasswordProtection pp = new KeyStore.PasswordProtection(password);
-            final Enumeration<String> aliases = keyStore.aliases();
-            while (aliases.hasMoreElements()) {
+		final List<DSSPrivateKeyEntry> list = new ArrayList<DSSPrivateKeyEntry>();
 
-                final String alias = aliases.nextElement();
-                if (keyStore.isKeyEntry(alias)) {
+		try {
+			final PasswordProtection pp = new KeyStore.PasswordProtection(password);
+			final Enumeration<String> aliases = keyStore.aliases();
+			while (aliases.hasMoreElements()) {
 
-                    final PrivateKeyEntry entry = (PrivateKeyEntry) keyStore.getEntry(alias, pp);
-                    list.add(new KSPrivateKeyEntry(entry));
-                }
-            }
-        } catch (UnrecoverableEntryException e) {
-            throw new DSSException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new DSSException(e);
-        } catch (KeyStoreException e) {
-            throw new DSSException(e);
-        }
-        return list;
-    }
+				final String alias = aliases.nextElement();
+				if (keyStore.isKeyEntry(alias)) {
+
+					final PrivateKeyEntry entry = (PrivateKeyEntry) keyStore.getEntry(alias, pp);
+					list.add(new KSPrivateKeyEntry(entry));
+				}
+			}
+		} catch (UnrecoverableEntryException e) {
+			throw new DSSException(e);
+		} catch (NoSuchAlgorithmException e) {
+			throw new DSSException(e);
+		} catch (KeyStoreException e) {
+			throw new DSSException(e);
+		}
+		return list;
+	}
 }
