@@ -354,7 +354,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 
     /**
      * Creates SigningCertificate building block DOM object:
-     *
+	 * <p/>
      * <SigningCertificate> <Cert> <CertDigest> <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/> <ds:DigestValue>fj8SJujSXU4fi342bdtiKVbglA0=</ds:DigestValue>
      * </CertDigest> <IssuerSerial> <ds:X509IssuerName>CN=ICA A,O=DSS,C=AA</ds:X509IssuerName> <ds:X509SerialNumber>4</ds:X509SerialNumber> </IssuerSerial> </Cert>
      * </SigningCertificate>
@@ -433,22 +433,30 @@ public abstract class SignatureBuilder extends XAdESBuilder {
                   .addElement(documentDom, signedSignaturePropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:SignatureProductionPlace");
 
             final String city = signatureProductionPlace.getCity();
+			if (city != null) {
             DSSXMLUtils.addTextElement(documentDom, signatureProductionPlaceDom, xPathQueryHolder.XADES_NAMESPACE, "xades:City", city);
+			}
 
             final String postalCode = signatureProductionPlace.getPostalCode();
+			if (postalCode != null) {
             DSSXMLUtils.addTextElement(documentDom, signatureProductionPlaceDom, xPathQueryHolder.XADES_NAMESPACE, "xades:PostalCode", postalCode);
+			}
 
             final String stateOrProvince = signatureProductionPlace.getStateOrProvince();
+			if (stateOrProvince != null) {
             DSSXMLUtils.addTextElement(documentDom, signatureProductionPlaceDom, xPathQueryHolder.XADES_NAMESPACE, "xades:StateOrProvince", stateOrProvince);
+			}
 
             final String country = signatureProductionPlace.getCountry();
+			if (country != null) {
             DSSXMLUtils.addTextElement(documentDom, signatureProductionPlaceDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CountryName", country);
         }
     }
+	}
 
     /**
      * Below follows the schema definition for this element. <xsd:element name="CommitmentTypeIndication" type="CommitmentTypeIndicationType"/>
-     *
+	 * <p/>
      * <xsd:complexType name="CommitmentTypeIndicationType"> ...<xsd:sequence> ......<xsd:element name="CommitmentTypeId" type="ObjectIdentifierType"/> ......<xsd:choice>
      * .........<xsd:element name="ObjectReference" type="xsd:anyURI" maxOccurs="unbounded"/> .........< xsd:element name="AllSignedDataObjects"/> ......</xsd:choice>
      * ......<xsd:element name="CommitmentTypeQualifiers" type="CommitmentTypeQualifiersListType" minOccurs="0"/> ...</xsd:sequence> </xsd:complexType> <xsd:complexType
