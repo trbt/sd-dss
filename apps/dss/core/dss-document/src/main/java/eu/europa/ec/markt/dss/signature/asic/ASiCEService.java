@@ -31,7 +31,6 @@ package eu.europa.ec.markt.dss.signature.asic;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.FileNameMap;
 import java.net.URL;
 import java.net.URLConnection;
@@ -257,15 +256,6 @@ public class ASiCEService extends AbstractSignatureService {
 			throw new DSSException(e);
 		}
 
-	}
-
-	@Override
-	@Deprecated
-	public InputStream toBeSigned(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
-
-		final byte[] dataToSign = getDataToSign(toSignDocument, parameters);
-		final InputStream toSignInputStream = DSSUtils.toInputStream(dataToSign);
-		return toSignInputStream;
 	}
 
 	@Override
