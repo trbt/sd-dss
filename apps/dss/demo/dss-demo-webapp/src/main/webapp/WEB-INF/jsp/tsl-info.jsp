@@ -40,16 +40,16 @@
 					</tr>
 				</thead>
 				<tbody>
-					<c:forEach items="${certs}" var="cert">
+					<c:forEach items="${certs}" var="x509Certificate">
                         <tr>
-                            <td colspan="4">${cert.certificate.subjectDN.name}</td>
+                            <td colspan="4">${x509Certificate.certificate.subjectDN.name}</td>
                         </tr>
                         <tr>
-                            <td colspan="4">${cert.certificate.issuerDN.name}</td>
+                            <td colspan="4">${x509Certificate.certificate.issuerDN.name}</td>
                         </tr>
                         <tr>
-                            <td colspan="2">${cert.certificate.notBefore}</td>
-                            <td colspan="2">${cert.certificate.notAfter}</td>
+                            <td colspan="2">${x509Certificate.certificate.notBefore}</td>
+                            <td colspan="2">${x509Certificate.certificate.notAfter}</td>
                         </tr>
                         <tr>
                             <td colspan="4">&nbsp;</td>

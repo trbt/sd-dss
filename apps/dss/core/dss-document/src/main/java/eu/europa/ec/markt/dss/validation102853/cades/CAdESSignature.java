@@ -932,7 +932,36 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
 	@Override
 	public byte[] getContentTimestampData(final TimestampToken timestampToken) {
-		return DSSUtils.EMPTY_BYTE_ARRAY;
+
+		final ContentInfo contentInfo = cmsSignedData.toASN1Structure();
+		final SignedData signedData = SignedData.getInstance(contentInfo.getContent());
+
+		ContentInfo content = signedData.getEncapContentInfo();
+		//		if (content == null || content.getContent() == null) {
+		//			    /* Detached signatures have either no encapContentInfo in signedData, or it exists but has no eContent */
+		//			if (getOriginalDocumentBytes() != null) {
+		//				data.write(content.toASN1Primitive().getEncoded());
+		//				data.write(getOriginalDocumentBytes());
+		//			} else {
+		//				throw new DSSException("Signature is detached and no original data provided.");
+		//			}
+		//		} else {
+
+		ASN1OctetString octet = (ASN1OctetString) content.getContent();
+		return octet.getOctets();
+		//		ContentInfo info2 = new ContentInfo(PKCSObjectIdentifiers.data, octet);
+		//		byte[] contentInfoBytes = null;
+		//		try {
+		//			contentInfoBytes = info2.getEncoded();
+		//		} catch (IOException e) {
+		//			e.printStackTrace();
+		//		}
+		//		if (LOG.isTraceEnabled()) {
+		//			LOG.trace("Content Info: {}", DSSUtils.toHex(contentInfoBytes));
+		//		}
+		//		return contentInfoBytes;
+
+		//		return DSSUtils.EMPTY_BYTE_ARRAY;
 	}
 
 	@Override
@@ -1452,10 +1481,11 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 	private byte[] getArchiveTimestampDataV2(TimestampToken timestampToken) throws DSSException {
 
 		try {
+
 			final ByteArrayOutputStream data = new ByteArrayOutputStream();
 
-			ContentInfo contentInfo = cmsSignedData.toASN1Structure();
-			SignedData signedData = SignedData.getInstance(contentInfo.getContent());
+			final ContentInfo contentInfo = cmsSignedData.toASN1Structure();
+			final SignedData signedData = SignedData.getInstance(contentInfo.getContent());
 
 			ContentInfo content = signedData.getEncapContentInfo();
 			if (content == null || content.getContent() == null) {
@@ -1464,7 +1494,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 					data.write(content.toASN1Primitive().getEncoded());
 					data.write(getOriginalDocumentBytes());
 				} else {
-					throw new RuntimeException("Signature is detached and no original data provided.");
+					throw new DSSException("Signature is detached and no original data provided.");
 				}
 			} else {
 
@@ -1472,23 +1502,28 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
 				ContentInfo info2 = new ContentInfo(PKCSObjectIdentifiers.data, octet);
 				final byte[] contentInfoBytes = info2.getEncoded();
-				LOG.debug("Content Info: {}", DSSUtils.toHex(contentInfoBytes));
+				if (LOG.isTraceEnabled()) {
+					LOG.trace("Content Info: {}", DSSUtils.toHex(contentInfoBytes));
+				}
 				data.write(contentInfoBytes);
 			}
-
 			final ASN1Set certificates = signedData.getCertificates();
 			if (certificates != null) {
+
 				final byte[] certificatesBytes = new DERTaggedObject(false, 0, new DERSequence(certificates.toArray())).getEncoded();
-				LOG.debug("Certificates: {}", DSSUtils.toHex(certificatesBytes));
+				if (LOG.isTraceEnabled()) {
+					LOG.trace("Certificates: {}", DSSUtils.toHex(certificatesBytes));
+				}
 				data.write(certificatesBytes);
 			}
-
 			if (signedData.getCRLs() != null) {
+
 				final byte[] crlBytes = signedData.getCRLs().getEncoded();
-				LOG.debug("CRLs: {}", DSSUtils.toHex(crlBytes));
+				if (LOG.isTraceEnabled()) {
+					LOG.trace("CRLs: {}", DSSUtils.toHex(crlBytes));
+				}
 				data.write(crlBytes);
 			}
-
 			final SignerInfo signerInfo = signerInformation.toASN1Structure();
 			final ByteArrayOutputStream signerByteArrayOutputStream = new ByteArrayOutputStream();
 			final ASN1Set unauthenticatedAttributes = signerInfo.getUnauthenticatedAttributes();
@@ -1500,7 +1535,9 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 				signerByteArrayOutputStream.write(signerInfoBytes);
 			}
 			final byte[] signerInfoBytes = signerByteArrayOutputStream.toByteArray();
-			LOG.debug("SignerInfoBytes: {}", DSSUtils.toHex(signerInfoBytes));
+			if (LOG.isTraceEnabled()) {
+				LOG.trace("SignerInfoBytes: {}", DSSUtils.toHex(signerInfoBytes));
+			}
 			data.write(signerInfoBytes);
 
 			final byte[] result = data.toByteArray();
@@ -1576,7 +1613,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 		if (signatureId == null) {
 
 			final CertificateToken certificateToken = getSigningCertificateToken();
-			final int dssId = (certificateToken == null ? 0 : certificateToken.getDSSId()) + signatureCounter++;
+			final int dssId = certificateToken == null ? 0 : certificateToken.getDSSId();
 			signatureId = DSSUtils.getDeterministicId(getSigningTime(), dssId);
 		}
 		return signatureId;

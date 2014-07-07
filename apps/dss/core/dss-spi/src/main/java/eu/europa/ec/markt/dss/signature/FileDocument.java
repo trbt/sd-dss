@@ -28,112 +28,121 @@ import java.io.InputStream;
 import java.io.StringWriter;
 
 import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 
 /**
  * Document implementation stored on file-system.
  *
- * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
+ * @version $Revision: 4182 $ - $Date: 2014-07-02 14:40:17 +0200 (Wed, 02 Jul 2014) $
  */
 
 public class FileDocument implements DSSDocument {
 
-    private final File file;
+	private final File file;
 
-    private MimeType mimeType;
+	private MimeType mimeType;
 
-    /**
-     * Create a FileDocument
-     *
-     * @param pathName
-     */
-    public FileDocument(String pathName) {
-        this(new File(pathName));
-    }
+	/**
+	 * Create a FileDocument
+	 *
+	 * @param pathName
+	 */
+	public FileDocument(String pathName) {
+		this(new File(pathName));
+	}
 
-    /**
-     * Create a FileDocument
-     *
-     * @param file
-     */
-    public FileDocument(final File file) {
+	/**
+	 * Create a FileDocument
+	 *
+	 * @param file
+	 */
+	public FileDocument(final File file) {
 
-        if (file == null) {
+		if (file == null) {
 
-            throw new DSSNullException(File.class);
-        }
-        if (!file.exists()) {
+			throw new DSSNullException(File.class);
+		}
+		if (!file.exists()) {
 
-            throw new DSSException("File Not Found: " + file.getAbsolutePath());
-        }
-        this.file = file;
-        this.mimeType = MimeType.fromFileName(file.getName());
-    }
+			throw new DSSException("File Not Found: " + file.getAbsolutePath());
+		}
+		this.file = file;
+		this.mimeType = MimeType.fromFileName(file.getName());
+	}
 
-    @Override
-    public InputStream openStream() throws DSSException {
+	@Override
+	public InputStream openStream() throws DSSException {
 
-        final InputStream inputStream = DSSUtils.toInputStream(file);
-        return inputStream;
-    }
+		final InputStream inputStream = DSSUtils.toInputStream(file);
+		return inputStream;
+	}
 
-    public boolean exists() {
-        return file.exists();
-    }
+	public boolean exists() {
+		return file.exists();
+	}
 
-    public File getParentFile() {
-        return file.getParentFile();
-    }
+	public File getParentFile() {
+		return file.getParentFile();
+	}
 
-    @Override
-    public String getName() {
-        return file.getName();
-    }
+	@Override
+	public String getName() {
+		return file.getName();
+	}
 
-    @Override
-    public String getAbsolutePath() {
-        return file.getAbsolutePath();
-    }
+	@Override
+	public String getAbsolutePath() {
+		return file.getAbsolutePath();
+	}
 
-    @Override
-    public MimeType getMimeType() {
-        return mimeType;
-    }
+	@Override
+	public MimeType getMimeType() {
+		return mimeType;
+	}
 
-    @Override
-    public void setMimeType(final MimeType mimeType) {
-        this.mimeType = mimeType;
-    }
+	@Override
+	public void setMimeType(final MimeType mimeType) {
+		this.mimeType = mimeType;
+	}
 
-    @Override
-    public byte[] getBytes() throws DSSException {
+	@Override
+	public byte[] getBytes() throws DSSException {
 
-        return DSSUtils.toByteArray(openStream());
-    }
+		return DSSUtils.toByteArray(openStream());
+	}
 
-    @Override
-    public void save(final String filePath) throws DSSException {
+	@Override
+	public void save(final String filePath) throws DSSException {
 
-        try {
+		try {
 
-            final FileOutputStream fos = new FileOutputStream(filePath);
-            DSSUtils.write(getBytes(), fos);
-            fos.close();
-        } catch (FileNotFoundException e) {
-            throw new DSSException(e);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        }
-    }
+			final FileOutputStream fos = new FileOutputStream(filePath);
+			DSSUtils.write(getBytes(), fos);
+			fos.close();
+		} catch (FileNotFoundException e) {
+			throw new DSSException(e);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
 
-    @Override
-    public String toString() {
+	@Override
+	public String getDigest(final DigestAlgorithm digestAlgorithm) {
 
-        final StringWriter stringWriter = new StringWriter();
-        final MimeType mimeType = getMimeType();
-        stringWriter.append("Name: " + getName()).append(" / ").append(mimeType == null ? "" : getMimeType().name()).append(" / ").append(getAbsolutePath());
-        final String string = stringWriter.toString();
-        return string;
-    }
+		final byte[] digestBytes = DSSUtils.digest(digestAlgorithm, getBytes());
+		final String base64Encode = DSSUtils.base64Encode(digestBytes);
+		return base64Encode;
+	}
+
+	@Override
+	public String toString() {
+
+		final StringWriter stringWriter = new StringWriter();
+		final MimeType mimeType = getMimeType();
+		stringWriter.append("Name: " + getName()).append(" / ").append(mimeType == null ? "" : getMimeType().name()).append(" / ").append(getAbsolutePath());
+		final String string = stringWriter.toString();
+		return string;
+	}
 }

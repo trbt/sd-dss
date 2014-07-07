@@ -34,14 +34,15 @@ import org.w3c.dom.Document;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.TSLConstant;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.validation102853.policy.EtsiValidationPolicy;
 import eu.europa.ec.markt.dss.validation102853.CertificateQualification;
 import eu.europa.ec.markt.dss.validation102853.RuleUtils;
 import eu.europa.ec.markt.dss.validation102853.SignatureQualification;
 import eu.europa.ec.markt.dss.validation102853.SignatureType;
 import eu.europa.ec.markt.dss.validation102853.TLQualification;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.ProcessParameters;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.processes.dss.InvolvedServiceInfo;
-import eu.europa.ec.markt.dss.validation102853.engine.rules.wrapper.ValidationPolicy;
+import eu.europa.ec.markt.dss.validation102853.policy.ProcessParameters;
+import eu.europa.ec.markt.dss.validation102853.processes.dss.InvolvedServiceInfo;
+import eu.europa.ec.markt.dss.validation102853.policy.ValidationPolicy;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
 import eu.europa.ec.markt.dss.validation102853.rules.Indication;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
@@ -64,7 +65,7 @@ public class SimpleReportBuilder {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleReportBuilder.class);
 
-	private final ValidationPolicy constraintData;
+	private final EtsiValidationPolicy constraintData;
 	private final DiagnosticData diagnosticData;
 
 	private int totalSignatureCount = 0;
@@ -72,7 +73,7 @@ public class SimpleReportBuilder {
 
 	public SimpleReportBuilder(final ValidationPolicy constraintData, final DiagnosticData diagnosticData) {
 
-		this.constraintData = constraintData;
+		this.constraintData = (EtsiValidationPolicy)constraintData;
 		this.diagnosticData = diagnosticData;
 	}
 

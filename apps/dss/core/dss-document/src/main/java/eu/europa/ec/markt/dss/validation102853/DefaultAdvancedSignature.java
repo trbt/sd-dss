@@ -49,11 +49,6 @@ import eu.europa.ec.markt.dss.validation102853.scope.SignatureScope;
 public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 
 	/**
-	 * This variable is used to ensure the uniqueness of the signature in the same document.
-	 */
-	protected static int signatureCounter = 0;
-
-	/**
 	 * The reference to the object containing all candidates to the signing certificate.
 	 */
 	protected CandidatesForSigningCertificate candidatesForSigningCertificate;
@@ -77,10 +72,10 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	// This variable contains the list of enclosed archive signature timestamps.
 	protected List<TimestampToken> archiveTimestamps;
 
-    /**
-     * The scope of the signature (full document, parts of documents, etc).
-     */
-    private SignatureScope signatureScope;
+	/**
+	 * The scope of the signature (full document, parts of documents, etc).
+	 */
+	private SignatureScope signatureScope;
 
 	/**
 	 * @return the upper level for which data have been found. Doesn't mean any validity of the data found. Null if unknown.
@@ -142,9 +137,9 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	}
 
 	public List<CertificateToken> getCertificatesWithinSignatureAndTimestamps() {
+
 		final List<CertificateToken> certWithinSignatures = new ArrayList<CertificateToken>();
 		certWithinSignatures.addAll(getCertificates());
-		//TODO (2013-12-11 Nicolas -> Bob): Create a convenient method to get all the timestamptokens // to get all the certificates
 		for (final TimestampToken timestampToken : getSignatureTimestamps()) {
 			certWithinSignatures.addAll(timestampToken.getCertificates());
 		}
@@ -263,7 +258,7 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
         /*
 	     * This validates the signature timestamp tokensToProcess present in the signature.
          */
-		for (final TimestampToken timestampToken : getContentTimestamps()) {
+        for (final TimestampToken timestampToken : getContentTimestamps()) {
 
 			validationContext.addTimestampTokenForVerification(timestampToken);
 		}
@@ -299,7 +294,6 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 
 	/**
 	 * This method adds all timestamps to be validated.
-	 *
 	 */
 	@Override
 	public void validateTimestamps() {
@@ -307,7 +301,7 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
         /*
 	     * This validates the signature timestamp tokensToProcess present in the signature.
          */
-		for (final TimestampToken timestampToken : getContentTimestamps()) {
+        for (final TimestampToken timestampToken : getContentTimestamps()) {
 
 			final byte[] timestampBytes = getContentTimestampData(timestampToken);
 			timestampToken.matchData(timestampBytes);

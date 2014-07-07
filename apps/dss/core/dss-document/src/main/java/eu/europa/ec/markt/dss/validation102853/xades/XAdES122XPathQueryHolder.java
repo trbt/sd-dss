@@ -31,7 +31,7 @@ public class XAdES122XPathQueryHolder extends XPathQueryHolder {
 
 	    XPATH__ENCAPSULATED_TIMESTAMP = "./xades122:EncapsulatedTimeStamp";
 
-	    XPATH_ALL_DATA_OBJECT_TIMESTAMP = XPATH_SIGNED_PROPERTIES + "/xades122:SignedDataObjectProperties/xades122:AllDataObjectsTimeStamp";
+	    XPATH_ALL_DATA_OBJECTS_TIMESTAMP = XPATH_SIGNED_PROPERTIES + "/xades122:SignedDataObjectProperties/xades122:AllDataObjectsTimeStamp";
 
         XPATH__X509_ISSUER_NAME = "./xades122:IssuerSerial/ds:X509IssuerName";
         XPATH__X509_SERIAL_NUMBER = "./xades122:IssuerSerial/ds:X509SerialNumber";

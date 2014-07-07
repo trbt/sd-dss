@@ -28,12 +28,13 @@ import java.io.InputStream;
 import java.io.StringWriter;
 
 import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 
 /**
  * In memory representation of a document
  *
- * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
+ * @version $Revision: 4182 $ - $Date: 2014-07-02 14:40:17 +0200 (Wed, 02 Jul 2014) $
  */
 
 public class InMemoryDocument implements DSSDocument {
@@ -172,7 +173,15 @@ public class InMemoryDocument implements DSSDocument {
         return absolutePath;
     }
 
-    @Override
+	@Override
+	public String getDigest(final DigestAlgorithm digestAlgorithm) {
+
+		final byte[] digestBytes = DSSUtils.digest(digestAlgorithm, getBytes());
+		final String base64Encode = DSSUtils.base64Encode(digestBytes);
+		return base64Encode;
+	}
+
+	@Override
     public String toString() {
 
         final StringWriter stringWriter = new StringWriter();

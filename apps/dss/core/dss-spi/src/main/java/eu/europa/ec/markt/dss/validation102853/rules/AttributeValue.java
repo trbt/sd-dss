@@ -37,6 +37,8 @@ public interface AttributeValue {
     public static final String TRUSTED_SERVICE_STATUS = "TrustedServiceStatus";
     public static final String TIMESTAMP_PRODUCTION_TIME = "TimestampProductionTime";
     public static final String SIGNATURE_ID = "SignatureId";
+	public static final String LATEST_CONTENT_TIMESTAMP_PRODUCTION_TIME = "LatestContentTimestampProductionDate";
+	public static final String EARLIEST_SIGNATURE_TIMESTAMP_PRODUCTION_TIME = "EarliestSignatureTimestampProductionDate";
 
     public static final String ALGORITHM_EXPIRATION_DATE = "AlgorithmExpirationDate";
 

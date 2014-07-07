@@ -392,7 +392,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	public ProcessExecutor provideProcessExecutorInstance() {
 
 		if (processExecutor == null) {
-			processExecutor = new ProcessExecutor();
+			processExecutor = new CustomProcessExecutor();
 		}
 		return processExecutor;
 	}
@@ -1452,7 +1452,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		BufferedInputStream input = null;
 		try {
 
-			if (dssDocument.getName() != null && dssDocument.getName().toLowerCase().endsWith(".xml")) {
+			final String dssDocumentName = dssDocument.getName();
+			if (dssDocumentName != null && dssDocumentName.toLowerCase().endsWith(".xml")) {
 
 				return new XMLDocumentValidator(dssDocument);
 			}

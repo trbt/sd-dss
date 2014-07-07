@@ -493,6 +493,9 @@ public class SignatureValidationContext implements ValidationContext {
 	 */
 	private RevocationToken getRevocationData(final CertificateToken certToken) {
 
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("Checking revocation data for: " + certToken.getDSSIdAsString());
+		}
 		if (certToken.isSelfSigned() || certToken.isTrusted() || certToken.getIssuerToken() == null) {
 
 			// It is not possible to check the revocation data without its signing certificate;

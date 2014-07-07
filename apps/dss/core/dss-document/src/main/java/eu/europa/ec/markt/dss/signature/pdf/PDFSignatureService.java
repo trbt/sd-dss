@@ -33,45 +33,45 @@ import eu.europa.ec.markt.dss.validation102853.CertificatePool;
 /**
  * The usage of this interface permit the user to choose the underlying PDF library use to created PDF signatures.
  *
- * @version $Revision: 3375 $ - $Date: 2014-01-22 17:13:46 +0100 (Wed, 22 Jan 2014) $
+ * @version $Revision: 4191 $ - $Date: 2014-07-04 23:16:26 +0200 (Fri, 04 Jul 2014) $
  */
 public interface PDFSignatureService {
 
-    /**
-     * Return the digest value of a PDF document
-     *
-     * @param pdfData
-     * @param parameters
-     * @param digestAlgorithm
-     * @param extraDictionariesToAddBeforeSign @return
-     * @throws DSSException
-     */
-    byte[] digest(final InputStream pdfData, final SignatureParameters parameters, final DigestAlgorithm digestAlgorithm,
-                  final Map.Entry<String, PdfDict>... extraDictionariesToAddBeforeSign) throws DSSException;
+	/**
+	 * Return the digest value of a PDF document
+	 *
+	 * @param pdfData
+	 * @param parameters
+	 * @param digestAlgorithm
+	 * @param extraDictionariesToAddBeforeSign @return
+	 * @throws DSSException
+	 */
+	byte[] digest(final InputStream pdfData, final SignatureParameters parameters, final DigestAlgorithm digestAlgorithm,
+	              final Map.Entry<String, PdfDict>... extraDictionariesToAddBeforeSign) throws DSSException;
 
-    /**
-     * Sign a PDF document
-     *
-     * @param pdfData
-     * @param signatureValue
-     * @param signedStream
-     * @param parameters
-     * @param digestAlgorithm
-     * @param extraDictionariesToAddBeforeSign
-     * @throws DSSException
-     */
-    void sign(final InputStream pdfData, final byte[] signatureValue, final OutputStream signedStream, final SignatureParameters parameters, final DigestAlgorithm digestAlgorithm,
-              final Map.Entry<String, PdfDict>... extraDictionariesToAddBeforeSign) throws DSSException;
+	/**
+	 * Sign a PDF document
+	 *
+	 * @param pdfData
+	 * @param signatureValue
+	 * @param signedStream
+	 * @param parameters
+	 * @param digestAlgorithm
+	 * @param extraDictionariesToAddBeforeSign
+	 * @throws DSSException
+	 */
+	void sign(final InputStream pdfData, final byte[] signatureValue, final OutputStream signedStream, final SignatureParameters parameters, final DigestAlgorithm digestAlgorithm,
+	          final Map.Entry<String, PdfDict>... extraDictionariesToAddBeforeSign) throws DSSException;
 
-    /**
-     * Retrieve and trigger validation of the signatures from a PDF document
-     *
-     * @param validationCertPool
-     * @param input
-     * @param callback
-     * @throws DSSException
-     * @throws SignatureException
-     */
-    void validateSignatures(final CertificatePool validationCertPool, final InputStream input, final SignatureValidationCallback callback) throws DSSException;
+	/**
+	 * Retrieve and trigger validation of the signatures from a PDF document
+	 *
+	 * @param validationCertPool
+	 * @param input
+	 * @param callback
+	 * @throws DSSException
+	 * @throws SignatureException
+	 */
+	void validateSignatures(final CertificatePool validationCertPool, final InputStream input, final SignatureValidationCallback callback) throws DSSException;
 
 }

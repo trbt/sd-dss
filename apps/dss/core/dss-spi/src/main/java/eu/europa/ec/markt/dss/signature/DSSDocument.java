@@ -22,6 +22,7 @@ package eu.europa.ec.markt.dss.signature;
 
 import java.io.InputStream;
 
+import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 
 /**
@@ -81,4 +82,11 @@ public interface DSSDocument {
      * @param filePath
      */
     public void save(final String filePath);
+
+	/**
+	 *
+	 * @param digestAlgorithm
+	 * @return
+	 */
+	public String getDigest(final DigestAlgorithm digestAlgorithm);
 }

@@ -41,7 +41,7 @@ public enum MessageTag {
 	BBB_ICS_AIDNASNE("Are the issuer distinguished name and the serial number equal?"),
 	BBB_ICS_AIDNASNE_ANS("The 'issuer-serial' attribute is absent or does not match!"),
 
-	ASCCM("Are the signature cryptographic constraints met?"),
+	ASCCM("Are signature cryptographic constraints met?"),
 	ASCCM_ANS_1("The encryption algorithm not authorised!"),
 	ASCCM_ANS_2("The digest algorithm not authorised!"),
 	ASCCM_ANS_3("The public key size is to small!"),
@@ -72,8 +72,8 @@ public enum MessageTag {
 	BBB_VCI_ISPK_ANS_2("An error encountered when processing the signature policy identifier!"),
 	BBB_VCI_ISPK_ANS_3("The signature policy identifier is not allowed by the validation policy constraint!"),
 
-	BBB_XCV_ACCCM("Are the chain cryptographic constraints met?"),
-	BBB_XCV_ACCM("Are the chain constraints met?"),
+	BBB_XCV_ACCCM("Are chain cryptographic constraints met?"),
+	BBB_XCV_ACCM("Are chain constraints met?"),
 	BBB_XCV_ARDCCM("Are revocation data cryptographic constraints met?"),
 	BBB_XCV_CCCBB("Can the certificate chain be built till the trust anchor?"),
 	BBB_XCV_CCCBB_ANS("The certificate chain is not trusted, there is no trusted anchor."),
@@ -125,7 +125,8 @@ public enum MessageTag {
 	PSV_IPSVC("Is past signature validation conclusive?"),
 	PSV_ITPOSVAOBCT("Is there a POE of the signature value at (or before) control-time?"),
 
-	TSV_ASTPTCT("Are the signature timestamps posterior to the content timestamps?"),
+	TSV_ASTPTCT("Are signature timestamps posterior to the content timestamps?"),
+	TSV_ASTPTCT_ANS("Signature timestamps are not posterior to the content timestamps!"),
 	TSV_IBSTAIDOSC("Is the best-signature-time after the issuance date of the signing certificate?"),
 	TSV_IBSTAIDOSC_ANS("The best-signature-time is before the issuance date of the signing certificate!"),
 	TSV_ISCNVABST("Is the signing certificate not valid at the best-signature-time?"),

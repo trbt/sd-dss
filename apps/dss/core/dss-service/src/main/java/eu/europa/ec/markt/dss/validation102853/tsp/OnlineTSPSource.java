@@ -42,7 +42,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 /**
  * Class encompassing a RFC 3161 TSA, accessed through HTTP(S) to a given URI
  *
- * @version $Revision: 3675 $ - $Date: 2014-03-31 19:59:20 +0200 (Mon, 31 Mar 2014) $
+ * @version $Revision: 4189 $ - $Date: 2014-07-03 19:04:10 +0200 (Thu, 03 Jul 2014) $
  */
 
 public class OnlineTSPSource implements TSPSource {
@@ -107,8 +107,11 @@ public class OnlineTSPSource implements TSPSource {
 
         try {
 
-            LOG.info("Timestamp digest algorithm: " + digestAlgorithm.getName());
-            LOG.info("Timestamp digest value    : " + DSSUtils.toHex(digest));
+			if(LOG.isTraceEnabled()) {
+
+				LOG.trace("Timestamp digest algorithm: " + digestAlgorithm.getName());
+				LOG.trace("Timestamp digest value    : " + DSSUtils.toHex(digest));
+			}
 
             // Setup the time stamp request
             final TimeStampRequestGenerator tsqGenerator = new TimeStampRequestGenerator();

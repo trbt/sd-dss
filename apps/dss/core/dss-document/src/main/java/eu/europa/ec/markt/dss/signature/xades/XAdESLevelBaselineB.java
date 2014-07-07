@@ -35,61 +35,62 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 
 public class XAdESLevelBaselineB {
 
-    static {
+	static {
 
-        Init.init();
-    }
+		Init.init();
+	}
 
-    /**
-     * Reference to the object in charge of certificates validation
-     */
-    CertificateVerifier certificateVerifier;
+	/**
+	 * the reference to the {@code CertificateVerifier} which provides information on the sources to be used in the validation process in the context of a signature.
+	 */
+	CertificateVerifier certificateVerifier;
 
-    /**
-     * The default constructor for XAdESLevelBaselineB.
-     *
-     * @param certificateVerifier
-     */
-    public XAdESLevelBaselineB(final CertificateVerifier certificateVerifier) {
+	/**
+	 * The default constructor for XAdESLevelBaselineB.
+	 *
+	 * @param certificateVerifier
+	 */
+	public XAdESLevelBaselineB(final CertificateVerifier certificateVerifier) {
 
-        this.certificateVerifier = certificateVerifier;
-    }
+		this.certificateVerifier = certificateVerifier;
+	}
 
-    /**
-     * Returns the canonicalized <ds:SignedInfo> XML segment under the form of InputStream
-     *
-     *
-     * @param dssDocument The original dssDocument to sign.
-     * @param params      The set of parameters relating to the structure and process of the creation or extension of the
-     *                    electronic signature.
-     * @return bytes
-     */
-    public byte[] getDataToSign(final DSSDocument dssDocument, final SignatureParameters params) throws DSSException {
+	/**
+	 * Returns the canonicalized <ds:SignedInfo> XML segment under the form of InputStream
+	 *
+	 * @param dssDocument The original dssDocument to sign.
+	 * @param parameters  set of the driving signing parameters
+	 * @return bytes
+	 */
+	public byte[] getDataToSign(final DSSDocument dssDocument, final SignatureParameters parameters) throws DSSException {
 
-        final SignatureBuilder signatureBuilder = SignatureBuilder.getSignatureBuilder(params, dssDocument);
-        params.getContext().setBuilder(signatureBuilder);
-        final byte[] dataToSign = signatureBuilder.build();
-        return dataToSign;
-    }
+		final SignatureBuilder signatureBuilder = SignatureBuilder.getSignatureBuilder(parameters, dssDocument);
+		parameters.getContext().setBuilder(signatureBuilder);
+		final byte[] dataToSign = signatureBuilder.build();
+		return dataToSign;
+	}
 
-    /*
-     * Adds the signature value to the signature
-     *
-     * @see eu.europa.ec.markt.dss.signature.SignatureLevel#signDocument(eu.europa.ec.markt.dss.signature.Document,
-     * eu.europa.ec.markt.dss.signature.SignatureParameters, byte[])
-     */
-    public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
+	/**
+	 * Adds the signature value to the signature.
+	 *
+	 * @param document       the original document to sign.
+	 * @param parameters     set of the driving signing parameters
+	 * @param signatureValue array of bytes representing the signature value.
+	 * @return
+	 * @throws DSSException
+	 */
+	public DSSDocument signDocument(final DSSDocument document, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
 
-        SignatureBuilder builder = parameters.getContext().getBuilder();
-        if (builder != null) {
+		SignatureBuilder builder = parameters.getContext().getBuilder();
+		if (builder != null) {
 
-            builder = parameters.getContext().getBuilder();
-        } else {
+			builder = parameters.getContext().getBuilder();
+		} else {
 
-            builder = SignatureBuilder.getSignatureBuilder(parameters, document);
-        }
-        final DSSDocument dssDocument = builder.signDocument(signatureValue);
-        parameters.getContext().setBuilder(builder);
-        return dssDocument;
-    }
+			builder = SignatureBuilder.getSignatureBuilder(parameters, document);
+		}
+		final DSSDocument dssDocument = builder.signDocument(signatureValue);
+		parameters.getContext().setBuilder(builder);
+		return dssDocument;
+	}
 }

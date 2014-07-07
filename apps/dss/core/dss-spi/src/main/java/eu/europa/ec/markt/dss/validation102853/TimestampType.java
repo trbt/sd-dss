@@ -22,27 +22,19 @@ package eu.europa.ec.markt.dss.validation102853;
 
 /**
  * Source of the timestamp
- * 
- * <p>
+ * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
- * 
- * @version $Revision: 1824 $ - $Date: 2013-03-28 15:57:23 +0100 (Thu, 28 Mar 2013) $
+ *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
+ * @version $Revision: 1824 $ - $Date: 2013-03-28 15:57:23 +0100 (Thu, 28 Mar 2013) $
  */
 public enum TimestampType {
 
-   CONTENT_TIMESTAMP, // CAdES: id-aa-ets-contentTimestamp, XAdES:
-   // AllDataObjectsTimeStamp, PAdES standard
-   // timestamp
-   INDIVIDUAL_CONTENT_TIMESTAMP, // XAdES: IndividualDataObjectsTimeStamp
-   SIGNATURE_TIMESTAMP, // CAdES: id-aa-signatureTimeStampToken, XAdES:
-   // SignatureTimeStamp
-   VALIDATION_DATA_REFSONLY_TIMESTAMP, // CAdES:
-   // id-aa-ets-certCRLTimestamp,
-   // XAdES: RefsOnlyTimeStamp
-   VALIDATION_DATA_TIMESTAMP, // CAdES: id-aa-ets-escTimeStamp, XAdES:
-   // SigAndRefsTimeStamp
-   ARCHIVE_TIMESTAMP
-   // CAdES: id-aa-ets-archiveTimestamp, XAdES: ArchiveTimeStamp, PAdES-LTV
-   // "document timestamp"
+	CONTENT_TIMESTAMP, // CAdES: id-aa-ets-contentTimestamp
+	ALL_DATA_OBJECTS_TIMESTAMP, //XAdES: AllDataObjectsTimestamp
+	INDIVIDUAL_DATA_OBJECTS_TIMESTAMP, // XAdES: IndividualDataObjectsTimeStamp
+	SIGNATURE_TIMESTAMP, // CAdES: id-aa-signatureTimeStampToken, XAdES: SignatureTimeStamp
+	VALIDATION_DATA_REFSONLY_TIMESTAMP, // CAdES: id-aa-ets-certCRLTimestamp, XAdES: RefsOnlyTimeStamp
+	VALIDATION_DATA_TIMESTAMP, // CAdES: id-aa-ets-escTimeStamp, XAdES: SigAndRefsTimeStamp
+	ARCHIVE_TIMESTAMP // CAdES: id-aa-ets-archiveTimestamp, XAdES: ArchiveTimeStamp, PAdES-LTV "document timestamp"
 }

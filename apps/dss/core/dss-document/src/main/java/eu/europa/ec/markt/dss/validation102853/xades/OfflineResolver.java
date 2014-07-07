@@ -16,12 +16,6 @@
  */
 package eu.europa.ec.markt.dss.validation102853.xades;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.xml.security.Init;
 import org.apache.xml.security.signature.XMLSignatureInput;
 import org.apache.xml.security.utils.resolver.ResourceResolverContext;
@@ -88,7 +82,9 @@ public class OfflineResolver extends ResourceResolverSpi {
 			}
 			LOG.debug("I state that I can't resolve '" + uriNew.toString() + "'");
 		} catch (URI.MalformedURIException ex) {
-			LOG.debug("OfflineResolver: WARNING: ", ex);
+			if (document == null) {
+				LOG.warn("OfflineResolver: WARNING: ", ex);
+			}
 		}
 		if (document != null) {
 

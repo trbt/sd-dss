@@ -20,11 +20,10 @@
 
 package eu.europa.ec.markt.dss.signature.xades;
 
-import java.io.InputStream;
-
 import org.apache.xml.security.Init;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
@@ -34,41 +33,115 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.ProfileParameters;
 import eu.europa.ec.markt.dss.signature.ProfileParameters.Operation;
 import eu.europa.ec.markt.dss.signature.SignatureExtension;
+import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
-import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 
 /**
  * XAdES implementation of DocumentSignatureService
  *
- * @version $Revision: 4066 $ - $Date: 2014-06-08 09:09:23 +0200 (Sun, 08 Jun 2014) $
+ * @version $Revision: 4191 $ - $Date: 2014-07-04 23:16:26 +0200 (Fri, 04 Jul 2014) $
  */
 
 public class XAdESService extends AbstractSignatureService {
-
-	private TSPSource tspSource;
 
 	static {
 
 		Init.init();
 	}
 
+	private static final Logger LOG = LoggerFactory.getLogger(XAdESService.class);
+
 	/**
-	 * This is the main constructor to create an instance of the service. A certificate verifier must be provided.
+	 * This is the constructor to create an instance of the {@code XAdESService}. A certificate verifier must be provided.
 	 *
-	 * @param certificateVerifier certificate verifier (cannot be null)
+	 * @param certificateVerifier {@code CertificateVerifier} provides information on the sources to be used in the validation process in the context of a signature.
 	 */
 	public XAdESService(final CertificateVerifier certificateVerifier) {
 
 		super(certificateVerifier);
+		LOG.debug("+ XAdESService created");
 	}
 
 	@Override
-	public void setTspSource(final TSPSource tspSource) {
+	public byte[] getDataToSign(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
 
-		this.tspSource = tspSource;
+		assertSigningDateInCertificateValidityRange(parameters);
+
+		final XAdESLevelBaselineB levelBaselineB = new XAdESLevelBaselineB(certificateVerifier);
+		final byte[] dataToSign = levelBaselineB.getDataToSign(toSignDocument, parameters);
+		parameters.getContext().setProfile(levelBaselineB);
+		return dataToSign;
+	}
+
+	@Override
+	public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
+
+		if (parameters.getSignatureLevel() == null) {
+			throw new DSSNullException(SignatureParameters.class);
+		}
+		assertSigningDateInCertificateValidityRange(parameters);
+		parameters.getContext().setOperationKind(Operation.SIGNING);
+		final XAdESLevelBaselineB profile;
+		ProfileParameters context = parameters.getContext();
+		if (context.getProfile() != null) {
+
+			profile = context.getProfile();
+		} else {
+
+			profile = new XAdESLevelBaselineB(certificateVerifier);
+		}
+		final DSSDocument signedDoc = profile.signDocument(toSignDocument, parameters, signatureValue);
+		final SignatureExtension extension = getExtensionProfile(parameters);
+		if (extension != null) {
+
+			if (SignaturePackaging.DETACHED.equals(parameters.getSignaturePackaging())) {
+
+				parameters.setOriginalDocument(toSignDocument);
+			}
+			final DSSDocument dssExtendedDocument = extension.extendSignatures(signedDoc, parameters);
+			return dssExtendedDocument;
+		}
+		return signedDoc;
+	}
+
+	@Override
+	public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
+
+		if (parameters.getSignatureLevel() == null) {
+			throw new DSSNullException(SignatureParameters.class);
+		}
+		final SignatureTokenConnection signingToken = parameters.getSigningToken();
+		if (signingToken == null) {
+			throw new DSSNullException(SignatureTokenConnection.class);
+		}
+
+		parameters.getContext().setOperationKind(Operation.SIGNING);
+
+		final XAdESLevelBaselineB profile = new XAdESLevelBaselineB(certificateVerifier);
+		final byte[] dataToSign = profile.getDataToSign(toSignDocument, parameters);
+		parameters.getContext().setProfile(profile);
+
+		final DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
+		final DSSPrivateKeyEntry dssPrivateKeyEntry = parameters.getPrivateKeyEntry();
+		final byte[] signatureValue = signingToken.sign(dataToSign, digestAlgorithm, dssPrivateKeyEntry);
+		final DSSDocument dssDocument = signDocument(toSignDocument, parameters, signatureValue);
+		return dssDocument;
+	}
+
+	@Override
+	public DSSDocument extendDocument(final DSSDocument toExtendDocument, final SignatureParameters parameters) throws DSSException {
+
+		parameters.getContext().setOperationKind(Operation.EXTENDING);
+		final SignatureExtension extension = getExtensionProfile(parameters);
+		if (extension != null) {
+
+			final DSSDocument dssDocument = extension.extendSignatures(toExtendDocument, parameters);
+			return dssDocument;
+		}
+		throw new DSSException("Cannot extend to " + parameters.getSignatureLevel().name());
 	}
 
 	/**
@@ -122,95 +195,5 @@ public class XAdESService extends AbstractSignatureService {
 
 				throw new DSSException("Unsupported signature format " + parameters.getSignatureLevel());
 		}
-	}
-
-	@Override
-	@Deprecated
-	public InputStream toBeSigned(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
-
-		final byte[] dataToSign = getDataToSign(toSignDocument, parameters);
-		final InputStream inputStreamToSign = DSSUtils.toInputStream(dataToSign);
-		return inputStreamToSign;
-	}
-
-	@Override
-	public byte[] getDataToSign(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
-
-		if (parameters.getSignatureLevel() == null) {
-			throw new DSSNullException(SignatureParameters.class);
-		}
-		assertSigningDateInCertificateValidityRange(parameters);
-		final XAdESLevelBaselineB profile = new XAdESLevelBaselineB(certificateVerifier);
-		final byte[] dataToSign = profile.getDataToSign(toSignDocument, parameters);
-		parameters.getContext().setProfile(profile);
-		return dataToSign;
-	}
-
-	@Override
-	public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
-
-		if (parameters.getSignatureLevel() == null) {
-			throw new DSSNullException(SignatureParameters.class);
-		}
-		assertSigningDateInCertificateValidityRange(parameters);
-		parameters.getContext().setOperationKind(Operation.SIGNING);
-		final XAdESLevelBaselineB profile;
-		ProfileParameters context = parameters.getContext();
-		if (context.getProfile() != null) {
-
-			profile = context.getProfile();
-		} else {
-
-			profile = new XAdESLevelBaselineB(certificateVerifier);
-		}
-		final DSSDocument signedDoc = profile.signDocument(toSignDocument, parameters, signatureValue);
-		final SignatureExtension extension = getExtensionProfile(parameters);
-		if (extension != null) {
-
-			if (SignaturePackaging.DETACHED == parameters.getSignaturePackaging()) {
-
-				parameters.setOriginalDocument(toSignDocument);
-			}
-			final DSSDocument dssExtendedDocument = extension.extendSignatures(signedDoc, parameters);
-			return dssExtendedDocument;
-		}
-		return signedDoc;
-	}
-
-	@Override
-	public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
-
-		if (parameters.getSignatureLevel() == null) {
-			throw new DSSNullException(SignatureParameters.class);
-		}
-		final SignatureTokenConnection signingToken = parameters.getSigningToken();
-		if (signingToken == null) {
-			throw new DSSNullException(SignatureTokenConnection.class);
-		}
-
-		parameters.getContext().setOperationKind(Operation.SIGNING);
-
-		final XAdESLevelBaselineB profile = new XAdESLevelBaselineB(certificateVerifier);
-		final byte[] dataToSign = profile.getDataToSign(toSignDocument, parameters);
-		parameters.getContext().setProfile(profile);
-
-		final DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
-		final DSSPrivateKeyEntry dssPrivateKeyEntry = parameters.getPrivateKeyEntry();
-		final byte[] signatureValue = signingToken.sign(dataToSign, digestAlgorithm, dssPrivateKeyEntry);
-		final DSSDocument dssDocument = signDocument(toSignDocument, parameters, signatureValue);
-		return dssDocument;
-	}
-
-	@Override
-	public DSSDocument extendDocument(final DSSDocument toExtendDocument, final SignatureParameters parameters) throws DSSException {
-
-		parameters.getContext().setOperationKind(Operation.EXTENDING);
-		final SignatureExtension extension = getExtensionProfile(parameters);
-		if (extension != null) {
-
-			final DSSDocument dssDocument = extension.extendSignatures(toExtendDocument, parameters);
-			return dssDocument;
-		}
-		throw new DSSException("Cannot extend to " + parameters.getSignatureLevel().name());
 	}
 }

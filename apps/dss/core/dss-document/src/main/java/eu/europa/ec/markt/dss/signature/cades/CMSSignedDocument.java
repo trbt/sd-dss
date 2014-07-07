@@ -34,6 +34,7 @@ import org.bouncycastle.cms.CMSSignedData;
 
 import eu.europa.ec.markt.dss.DSSASN1Utils;
 import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
@@ -42,106 +43,114 @@ import eu.europa.ec.markt.dss.signature.MimeType;
 /**
  * A document composed by a CMSSignedData
  *
- * @version $Revision: 3697 $ - $Date: 2014-04-02 11:19:04 +0200 (Wed, 02 Apr 2014) $
+ * @version $Revision: 4182 $ - $Date: 2014-07-02 14:40:17 +0200 (Wed, 02 Jul 2014) $
  */
 
 public class CMSSignedDocument implements DSSDocument {
 
-    protected CMSSignedData signedData;
-    protected MimeType mimeType = MimeType.PKCS7;
+	protected CMSSignedData signedData;
+	protected MimeType mimeType = MimeType.PKCS7;
 
-    /**
-     * The default constructor for CMSSignedDocument.
-     *
-     * @param data
-     * @throws IOException
-     */
-    public CMSSignedDocument(final CMSSignedData data) throws DSSException {
+	/**
+	 * The default constructor for CMSSignedDocument.
+	 *
+	 * @param data
+	 * @throws IOException
+	 */
+	public CMSSignedDocument(final CMSSignedData data) throws DSSException {
 
-        this.signedData = data;
-        if (data == null) {
+		this.signedData = data;
+		if (data == null) {
 
-            throw new DSSNullException(CMSSignedData.class);
-        }
-    }
+			throw new DSSNullException(CMSSignedData.class);
+		}
+	}
 
-    @Override
-    public InputStream openStream() throws DSSException {
+	@Override
+	public InputStream openStream() throws DSSException {
 
-        final byte[] bytes = getBytes();
-        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
-        return byteArrayInputStream;
-    }
+		final byte[] bytes = getBytes();
+		final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+		return byteArrayInputStream;
+	}
 
-    /**
-     * @return the signedData
-     */
-    public CMSSignedData getCMSSignedData() {
+	/**
+	 * @return the signedData
+	 */
+	public CMSSignedData getCMSSignedData() {
 
-        return signedData;
-    }
+		return signedData;
+	}
 
-    @Override
-    public String getName() {
+	@Override
+	public String getName() {
 
-        return "CMSSignedDocument";
-    }
+		return "CMSSignedDocument";
+	}
 
-    @Override
-    public MimeType getMimeType() {
-        return mimeType;
-    }
+	@Override
+	public MimeType getMimeType() {
+		return mimeType;
+	}
 
-    @Override
-    public void setMimeType(final MimeType mimeType) {
-        this.mimeType = mimeType;
-    }
+	@Override
+	public void setMimeType(final MimeType mimeType) {
+		this.mimeType = mimeType;
+	}
 
-    @Override
-    public byte[] getBytes() throws DSSException {
+	@Override
+	public byte[] getBytes() throws DSSException {
 
-        try {
+		try {
 
-            final ByteArrayOutputStream output = new ByteArrayOutputStream();
-            final DEROutputStream derOutputStream = new DEROutputStream(output);
-            final byte[] encoded = signedData.getEncoded();
-            final ASN1Primitive asn1Primitive = DSSASN1Utils.toASN1Primitive(encoded);
-            derOutputStream.writeObject(asn1Primitive);
-            derOutputStream.close();
-            return output.toByteArray();
-        } catch (IOException e) {
+			final ByteArrayOutputStream output = new ByteArrayOutputStream();
+			final DEROutputStream derOutputStream = new DEROutputStream(output);
+			final byte[] encoded = signedData.getEncoded();
+			final ASN1Primitive asn1Primitive = DSSASN1Utils.toASN1Primitive(encoded);
+			derOutputStream.writeObject(asn1Primitive);
+			derOutputStream.close();
+			return output.toByteArray();
+		} catch (IOException e) {
 
-            throw new DSSException(e);
-        }
-    }
+			throw new DSSException(e);
+		}
+	}
 
-    @Override
-    public void save(final String filePath) {
+	@Override
+	public void save(final String filePath) {
 
-        try {
+		try {
 
-            final FileOutputStream fos = new FileOutputStream(filePath);
-            DSSUtils.write(getBytes(), fos);
-            fos.close();
-        } catch (FileNotFoundException e) {
-            throw new DSSException(e);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        }
-    }
+			final FileOutputStream fos = new FileOutputStream(filePath);
+			DSSUtils.write(getBytes(), fos);
+			fos.close();
+		} catch (FileNotFoundException e) {
+			throw new DSSException(e);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
 
-    @Override
-    public String getAbsolutePath() {
-        return getName();
-    }
+	@Override
+	public String getDigest(final DigestAlgorithm digestAlgorithm) {
 
-    @Override
-    public String toString() {
+		final byte[] digestBytes = DSSUtils.digest(digestAlgorithm, getBytes());
+		final String base64Encode = DSSUtils.base64Encode(digestBytes);
+		return base64Encode;
+	}
 
-        final StringWriter stringWriter = new StringWriter();
-        final MimeType mimeType = getMimeType();
-        stringWriter.append("Name: " + getName()).append(" / ").append(mimeType == null ? "" : getMimeType().name());
-        final String string = stringWriter.toString();
-        return string;
-    }
+	@Override
+	public String getAbsolutePath() {
+		return getName();
+	}
+
+	@Override
+	public String toString() {
+
+		final StringWriter stringWriter = new StringWriter();
+		final MimeType mimeType = getMimeType();
+		stringWriter.append("Name: " + getName()).append(" / ").append(mimeType == null ? "" : getMimeType().name());
+		final String string = stringWriter.toString();
+		return string;
+	}
 }

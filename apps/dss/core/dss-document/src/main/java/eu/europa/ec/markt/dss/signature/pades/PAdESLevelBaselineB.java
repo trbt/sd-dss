@@ -42,32 +42,32 @@ import eu.europa.ec.markt.dss.signature.cades.CAdESLevelBaselineB;
 
 class PAdESLevelBaselineB {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PAdESLevelBaselineB.class);
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PAdESLevelBaselineB.class);
 
-    AttributeTable getSignedAttributes(Map params, CAdESLevelBaselineB cadesProfile, DSSDocument document, SignatureParameters parameters, byte[] messageDigest) {
-        AttributeTable signedAttributes = cadesProfile.getSignedAttributes(document, parameters);
+	AttributeTable getSignedAttributes(Map params, CAdESLevelBaselineB cadesProfile, SignatureParameters parameters, byte[] messageDigest) {
 
-        if (signedAttributes.get(CMSAttributes.contentType) == null) {
+		AttributeTable signedAttributes = cadesProfile.getSignedAttributes(parameters);
 
-            DERObjectIdentifier contentType = (DERObjectIdentifier) params.get(CMSAttributeTableGenerator.CONTENT_TYPE);
+		if (signedAttributes.get(CMSAttributes.contentType) == null) {
 
-            // contentType will be null if we're trying to generate a counter signature.
-            if (contentType != null) {
-                signedAttributes = signedAttributes.add(CMSAttributes.contentType, contentType);
-            }
-        }
+			DERObjectIdentifier contentType = (DERObjectIdentifier) params.get(CMSAttributeTableGenerator.CONTENT_TYPE);
 
-        if (signedAttributes.get(CMSAttributes.messageDigest) == null) {
-            LOG.debug("Proposed Digest : {} ", new Object[]{DSSUtils.encodeHexString(messageDigest)});
-            // byte[] messageDigest = (byte[]) params.get(CMSAttributeTableGenerator.DIGEST);
-            signedAttributes = signedAttributes.add(CMSAttributes.messageDigest, new DEROctetString(messageDigest));
-        }
+			// contentType will be null if we're trying to generate a counter signature.
+			if (contentType != null) {
+				signedAttributes = signedAttributes.add(CMSAttributes.contentType, contentType);
+			}
+		}
 
-        return signedAttributes;
-    }
+		if (signedAttributes.get(CMSAttributes.messageDigest) == null) {
+			// byte[] messageDigest = (byte[]) params.get(CMSAttributeTableGenerator.DIGEST);
+			signedAttributes = signedAttributes.add(CMSAttributes.messageDigest, new DEROctetString(messageDigest));
+		}
 
-    AttributeTable getUnsignedAttributes(Map params, CAdESLevelBaselineB profile, DSSDocument document, SignatureParameters parameters, byte[] messageDigest) {
-        return new AttributeTable(new Hashtable());
-    }
+		return signedAttributes;
+	}
+
+	AttributeTable getUnsignedAttributes() {
+		return new AttributeTable(new Hashtable());
+	}
 
 }

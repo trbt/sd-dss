@@ -20,12 +20,17 @@
 
 package eu.europa.ec.markt.dss.signature;
 
+import java.security.Security;
+import java.security.cert.X509Certificate;
 import java.util.Date;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
+import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 
 /**
  * DISCLAIMER: Project owner DG-MARKT.
@@ -35,30 +40,51 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
  */
 public abstract class AbstractSignatureService implements DocumentSignatureService {
 
-    final protected CertificateVerifier certificateVerifier;
+	static {
+		Security.addProvider(new BouncyCastleProvider());
+	}
 
-    /**
-     * To construct a signature service the <code>CertificateVerifier</code> must be set and cannot be null.
-     *
-     * @param certificateVerifier
-     */
-    protected AbstractSignatureService(final CertificateVerifier certificateVerifier) {
+	protected TSPSource tspSource;
 
-        if (certificateVerifier == null) {
+	final protected CertificateVerifier certificateVerifier;
 
-            throw new DSSNullException(CertificateVerifier.class);
-        }
-        this.certificateVerifier = certificateVerifier;
-    }
+	/**
+	 * To construct a signature service the <code>CertificateVerifier</code> must be set and cannot be null.
+	 *
+	 * @param certificateVerifier {@code CertificateVerifier} provides information on the sources to be used in the validation process in the context of a signature.
+	 */
+	protected AbstractSignatureService(final CertificateVerifier certificateVerifier) {
 
-    protected void assertSigningDateInCertificateValidityRange(final SignatureParameters parameters) {
+		if (certificateVerifier == null) {
 
-        final Date signingDate = parameters.bLevel().getSigningDate();
-        final Date notAfter = parameters.getSigningCertificate().getNotAfter();
-        final Date notBefore = parameters.getSigningCertificate().getNotBefore();
-        if (signingDate.after(notAfter) || signingDate.before(notBefore)) {
-            throw new DSSException(
-                  String.format("Signing Date (%s) is not in certificate validity range (%s, %s).", signingDate.toString(), notBefore.toString(), notAfter.toString()));
-        }
-    }
+			throw new DSSNullException(CertificateVerifier.class);
+		}
+		this.certificateVerifier = certificateVerifier;
+	}
+
+	@Override
+	public void setTspSource(final TSPSource tspSource) {
+
+		this.tspSource = tspSource;
+	}
+
+	/**
+	 * This method raises an exception if the signing rules forbid the use on an expired certificate.
+	 *
+	 * @param parameters set of driving signing parameters
+	 */
+	protected void assertSigningDateInCertificateValidityRange(final SignatureParameters parameters) {
+
+		if (parameters.isSignWithExpiredCertificate()) {
+			return;
+		}
+		final X509Certificate signingCertificate = parameters.getSigningCertificate();
+		final Date notAfter = signingCertificate.getNotAfter();
+		final Date notBefore = signingCertificate.getNotBefore();
+		final Date signingDate = parameters.bLevel().getSigningDate();
+		if (signingDate.after(notAfter) || signingDate.before(notBefore)) {
+			throw new DSSException(
+				  String.format("Signing Date (%s) is not in certificate validity range (%s, %s).", signingDate.toString(), notBefore.toString(), notAfter.toString()));
+		}
+	}
 }

@@ -76,7 +76,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
  * HTTP & HTTPS: using HttpClient which is more flexible for HTTPS without having to add the certificate to the JVM TrustStore. It takes into account a proxy management through
  * {@code ProxyPreferenceManager}. The authentication is also supported.<p/>
  *
- * @version $Revision: 3710 $ - $Date: 2014-04-10 11:09:53 +0200 (Thu, 10 Apr 2014) $
+ * @version $Revision: 4144 $ - $Date: 2014-06-12 17:15:35 +0200 (Thu, 12 Jun 2014) $
  */
 public class CommonsDataLoader implements DataLoader {
 

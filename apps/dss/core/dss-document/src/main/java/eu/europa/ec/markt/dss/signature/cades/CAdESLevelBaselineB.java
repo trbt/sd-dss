@@ -30,6 +30,7 @@ import java.util.Random;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1GeneralizedTime;
+import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
@@ -57,6 +58,7 @@ import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.europa.ec.markt.dss.DSSASN1Utils;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.OID;
@@ -66,13 +68,14 @@ import eu.europa.ec.markt.dss.parameter.BLevelParameters.Policy;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.MimeType;
+import eu.europa.ec.markt.dss.validation102853.TimestampToken;
 
 /**
  * This class holds the CAdES-B signature profile; it supports the inclusion of the mandatory signed
  * id_aa_ets_sigPolicyId attribute as specified in ETSI TS 101 733 V1.8.1, clause 5.8.1.
  * <p/>
  *
- * @version $Revision: 3759 $ - $Date: 2014-04-21 07:52:52 +0200 (Mon, 21 Apr 2014) $
+ * @version $Revision: 4191 $ - $Date: 2014-07-04 23:16:26 +0200 (Fri, 04 Jul 2014) $
  */
 public class CAdESLevelBaselineB {
 
@@ -98,15 +101,14 @@ public class CAdESLevelBaselineB {
 	/**
 	 * Return the table of unsigned properties.
 	 *
-	 * @param document
-	 * @param parameters
 	 * @return
 	 */
-	public AttributeTable getUnsignedAttributes(DSSDocument document, SignatureParameters parameters) {
+	public AttributeTable getUnsignedAttributes() {
+
 		return new AttributeTable(new Hashtable<ASN1ObjectIdentifier, ASN1Encodable>());
 	}
 
-	public AttributeTable getSignedAttributes(DSSDocument document, SignatureParameters parameters) {
+	public AttributeTable getSignedAttributes(SignatureParameters parameters) {
 
 		AttributeTable signedAttributes = new AttributeTable(new Hashtable<ASN1ObjectIdentifier, ASN1Encodable>());
 		signedAttributes = addSigningCertificateAttribute(parameters, signedAttributes);
@@ -117,6 +119,7 @@ public class CAdESLevelBaselineB {
 		signedAttributes = addContentIdentifier(parameters, signedAttributes);
 		signedAttributes = addCommitmentType(parameters, signedAttributes);
 		signedAttributes = addSignerLocation(parameters, signedAttributes);
+		signedAttributes = addContentTimestamps(parameters, signedAttributes);
 
 		// mime-type attribute breaks parallel signatures by adding PKCS7 as a mime-type for subsequent signers.
 		// This attribute is not mandatory, so it has been disabled.
@@ -282,6 +285,43 @@ public class CAdESLevelBaselineB {
 				vector.add(instance);
 			}
 			signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_commitmentType, new DERSequence(vector));
+		}
+		return signedAttributes;
+	}
+
+	/**
+	 * A content time-stamp allows a time-stamp token of the data to be signed to be incorporated into the signed information.
+	 * It provides proof of the existence of the data before the signature was created.
+	 * <p/>
+	 * A content time-stamp attribute is the time-stamp token of the signed data content before it is signed.
+	 * This attribute is a signed attribute.
+	 * Its object identifier is :
+	 * id-aa-ets-contentTimestamp OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16) id-aa(2) 20}
+	 * <p/>
+	 * Content time-stamp attribute values have ASN.1 type ContentTimestamp:
+	 * ContentTimestamp ::= TimeStampToken
+	 * <p/>
+	 * The value of messageImprint of TimeStampToken (as described in RFC 3161) is the hash of the message digest as defined in
+	 * ETSI standard 101733 v.2.2.1, clause 5.6.1.
+	 * <p/>
+	 * NOTE: content-time-stamp indicates that the signed information was formed before the date included in the content-time-stamp.
+	 * NOTE (bis): There is a small difference in treatment between the content-time-stamp and the archive-timestamp (ATSv2) when the signature
+	 * is attached. In that case, the content-time-stamp is computed on the raw data (without ASN.1 tag and length) whereas the archive-timestamp
+	 * is computed on data as read.
+	 *
+	 * @param parameters
+	 * @param signedAttributes
+	 * @return
+	 */
+	private AttributeTable addContentTimestamps(SignatureParameters parameters, AttributeTable signedAttributes) {
+
+		if (parameters.getContentTimestamps() != null && !parameters.getContentTimestamps().isEmpty()) {
+
+			List<TimestampToken> contentTimestamps = parameters.getContentTimestamps();
+			for (TimestampToken contentTimestamp : contentTimestamps) {
+				ASN1Object asn1Object = DSSASN1Utils.toASN1Primitive(contentTimestamp.getEncoded());
+				signedAttributes = signedAttributes.add(PKCSObjectIdentifiers.id_aa_ets_contentTimestamp, asn1Object);
+			}
 		}
 		return signedAttributes;
 	}

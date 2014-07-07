@@ -31,16 +31,18 @@ package eu.europa.ec.markt.dss.signature.asic;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -50,6 +52,7 @@ import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.exception.DSSUnsupportedOperationException;
+import eu.europa.ec.markt.dss.parameter.ASiCParameters;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.AbstractSignatureService;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
@@ -63,11 +66,11 @@ import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.SignatureForm;
 import eu.europa.ec.markt.dss.validation102853.SignedDocumentValidator;
-import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
+import eu.europa.ec.markt.dss.validation102853.asic.ASiCCMSDocumentValidator;
+import eu.europa.ec.markt.dss.validation102853.asic.ASiCXMLDocumentValidator;
 
 /**
- * Implementation of DocumentSignatureService for ASiC-S documents.
- * <p/>
+ * Implementation of DocumentSignatureService for ASiC-S documents. It allows the creation of an ASiC-S container based on XAdES or CAdES standard.
  * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
@@ -75,6 +78,8 @@ import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
  * @version $Revision: 672 $ - $Date: 2011-05-12 11:59:21 +0200 (Thu, 12 May 2011) $
  */
 public class ASiCSService extends AbstractSignatureService {
+
+	private static final Logger LOG = LoggerFactory.getLogger(ASiCSService.class);
 
 	private final static String ZIP_ENTRY_DETACHED_FILE = "detached-file";
 	private final static String ZIP_ENTRY_MIMETYPE = "mimetype";
@@ -85,65 +90,52 @@ public class ASiCSService extends AbstractSignatureService {
 	private final static String ASICS_NS = "asic:XAdESSignatures";
 	private final static String ASICS_URI = "http://uri.etsi.org/2918/v1.2.1#";
 
-	private TSPSource tspSource;
-
 	/**
-	 * To construct a signature service the <code>CertificateVerifier</code> must be set and cannot be null.
+	 * This is the constructor to create an instance of the {@code ASiCSService}. A certificate verifier must be provided.
 	 *
-	 * @param certificateVerifier
+	 * @param certificateVerifier {@code CertificateVerifier} provides information on the sources to be used in the validation process in the context of a signature.
 	 */
 	public ASiCSService(final CertificateVerifier certificateVerifier) {
+
 		super(certificateVerifier);
-	}
-
-	/**
-	 * Creates a specific XAdES signature parameters on base of the provided parameters. Forces the signature packaging to
-	 * DETACHED
-	 *
-	 * @param parameters must provide signingToken, PrivateKeyEntry and date
-	 * @return new specific instance for XAdES
-	 */
-	private SignatureParameters getParameters(final SignatureParameters parameters) {
-
-		final SignatureParameters specificParameters = new SignatureParameters(parameters);
-		final SignatureLevel asicProfile = parameters.getSignatureLevel();
-		final SignatureForm asicSignatureForm = parameters.aSiC().getAsicSignatureForm();
-		SignatureLevel specificLevel;
-		switch (asicProfile) {
-
-			case ASiC_S_BASELINE_B:
-				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_B : SignatureLevel.CAdES_BASELINE_B;
-				break;
-			case ASiC_S_BASELINE_T:
-				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_T : SignatureLevel.CAdES_BASELINE_T;
-				break;
-			case ASiC_S_BASELINE_LT:
-				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LT : SignatureLevel.CAdES_BASELINE_LT;
-				break;
-			case ASiC_S_BASELINE_LTA:
-				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LTA : SignatureLevel.CAdES_BASELINE_LTA;
-				break;
-			case ASiC_E_BASELINE_B:
-				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_B : SignatureLevel.CAdES_BASELINE_B;
-				break;
-			case ASiC_E_BASELINE_T:
-				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_T : SignatureLevel.CAdES_BASELINE_T;
-				break;
-			case ASiC_E_BASELINE_LT:
-				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LT : SignatureLevel.CAdES_BASELINE_LT;
-				break;
-			default:
-				throw new DSSException("Unsupported format: " + asicProfile.name());
-		}
-		specificParameters.setSignatureLevel(specificLevel);
-		specificParameters.setSignaturePackaging(SignaturePackaging.DETACHED);
-		return specificParameters;
+		LOG.debug("+ ASiCSService created");
 	}
 
 	@Override
-	public void setTspSource(TSPSource tspSource) {
+	public byte[] getDataToSign(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
 
-		this.tspSource = tspSource;
+		final SignatureParameters specificParameters = getParameters(parameters);
+
+		// toSignDocument can be a simple file or an ASiC-S container
+		DSSDocument contextToSignDocument = toSignDocument;
+		SignedDocumentValidator validator = null;
+		try {
+			validator = SignedDocumentValidator.fromDocument(toSignDocument);
+		} catch (Exception e) {
+			// do nothing
+		}
+		if (validator != null) {
+
+			// This is the ASiC-S container
+			if (validator instanceof ASiCCMSDocumentValidator || validator instanceof ASiCXMLDocumentValidator) {
+
+				// This is already an existing ASiC-S container; a new signature should be added.
+				contextToSignDocument = validator.getExternalContent();
+				specificParameters.setOriginalDocument(contextToSignDocument);
+				final DSSDocument contextSignature = validator.getDocument();
+				parameters.aSiC().setEnclosedSignature(contextSignature);
+				if (validator instanceof ASiCCMSDocumentValidator) {
+
+					contextToSignDocument = contextSignature;
+				} else {
+
+				}
+			} else {
+				throw new DSSUnsupportedOperationException(validator.getClass().getSimpleName() + ": This form of the signature is not supported.");
+			}
+		}
+		final DocumentSignatureService underlyingService = getSpecificService(specificParameters);
+		return underlyingService.getDataToSign(contextToSignDocument, specificParameters);
 	}
 
 	/**
@@ -176,18 +168,62 @@ public class ASiCSService extends AbstractSignatureService {
 
 		// Signs the toSignDocument first
 		final SignatureParameters specificParameters = getParameters(parameters);
-		specificParameters.setOriginalDocument(toSignDocument);
+		// toSignDocument can be a simple file or an ASiC-S container
+		DSSDocument contextToSignDocument = toSignDocument;
+		SignedDocumentValidator validator = null;
+		try {
+			validator = SignedDocumentValidator.fromDocument(toSignDocument);
+		} catch (Exception e) {
+			// do nothing
+		}
+		if (validator != null) {
+
+			// This is the ASiC-S container
+			if (validator instanceof ASiCCMSDocumentValidator || validator instanceof ASiCXMLDocumentValidator) {
+
+				// This is already an existing ASiC-S container; a new signature should be added.
+				contextToSignDocument = validator.getExternalContent();
+				specificParameters.setOriginalDocument(contextToSignDocument);
+				final DSSDocument contextSignature = validator.getDocument();
+				parameters.aSiC().setEnclosedSignature(contextSignature);
+				if (validator instanceof ASiCCMSDocumentValidator) {
+
+					contextToSignDocument = contextSignature;
+				} else {
+
+				}
+			} else {
+				throw new DSSUnsupportedOperationException(validator.getClass().getSimpleName() + ": This form of the signature is not supported.");
+			}
+		} else {
+
+			specificParameters.setOriginalDocument(toSignDocument);
+		}
+
+		final ASiCParameters asicParameters = specificParameters.aSiC();
 
 		final DocumentSignatureService underlyingService = getSpecificService(specificParameters);
-		final DSSDocument signature = underlyingService.signDocument(toSignDocument, specificParameters, signatureValue);
 
-		final SignatureForm asicSignatureForm = specificParameters.aSiC().getAsicSignatureForm();
+		final DSSDocument enclosedSignature = asicParameters.getEnclosedSignature();
 
+		final SignatureForm asicSignatureForm = asicParameters.getAsicSignatureForm();
+		final DSSDocument signature;
+		if (SignatureForm.XAdES.equals(asicSignatureForm)) {
+
+			signature = underlyingService.signDocument(contextToSignDocument, specificParameters, signatureValue);
+		} else if (SignatureForm.CAdES.equals(asicSignatureForm)) {
+
+			signature = underlyingService.signDocument(contextToSignDocument, specificParameters, signatureValue);
+		} else {
+			throw new DSSUnsupportedOperationException(asicSignatureForm.name() + ": This form of the signature is not supported.");
+		}
+
+		final DSSDocument originalDocument = specificParameters.getOriginalDocument();
 
 		final ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
 		final ZipOutputStream outZip = new ZipOutputStream(outBytes);
 
-		final String toSignDocumentName = toSignDocument.getName();
+		final String toSignDocumentName = originalDocument.getName();
 
 		//		if (!System.getProperties().containsKey("content.types.user.table")) {
 		//			final URL contentTypeURL = this.getClass().getResource("/custom-content-types.properties");
@@ -198,96 +234,35 @@ public class ASiCSService extends AbstractSignatureService {
 		//		final FileNameMap fileNameMap = URLConnection.getFileNameMap();
 		//		final String containedFileMimeType_ = fileNameMap.getContentTypeFor(toSignDocumentName);
 		//		System.out.println(toSignDocument.toString());
-		final MimeType containedFileMimeType = toSignDocument.getMimeType();
+		final MimeType signedFileMimeType = originalDocument.getMimeType();
 		// Zip comment
-		if (specificParameters.aSiC().isZipComment() && DSSUtils.isNotEmpty(toSignDocumentName)) {
+		if (asicParameters.isZipComment() && DSSUtils.isNotEmpty(toSignDocumentName)) {
 
-			outZip.setComment("mimetype=" + containedFileMimeType.getCode());
+			outZip.setComment("mimetype=" + signedFileMimeType.getCode());
 		}
 
 		// Stores the ASiC mime-type
-		final byte[] mimeTypeBytes;
-		final String asicParameterMimeType = specificParameters.aSiC().getMimeType();
-		if (DSSUtils.isBlank(asicParameterMimeType)) {
-			mimeTypeBytes = containedFileMimeType.getCode().getBytes();
-		} else {
-			mimeTypeBytes = asicParameterMimeType.getBytes();
+		storeMimetype(asicParameters, outZip, signedFileMimeType);
+
+		// Stores the original toSignDocument
+		storeSignedFile(originalDocument, outZip);
+
+		// Stores the signature
+		if (SignatureForm.XAdES.equals(asicSignatureForm)) {
+
+			buildXAdES(enclosedSignature, signature, outZip);
+		} else if (SignatureForm.CAdES.equals(asicSignatureForm)) {
+
+			buildCAdES(signature, outZip);
 		}
-		final ZipEntry entryMimetype = new ZipEntry(ZIP_ENTRY_MIMETYPE);
-		entryMimetype.setMethod(ZipEntry.STORED);
-		entryMimetype.setSize(mimeTypeBytes.length);
-		entryMimetype.setCompressedSize(mimeTypeBytes.length);
-		final CRC32 crc = new CRC32();
-		crc.update(mimeTypeBytes);
-		entryMimetype.setCrc(crc.getValue());
-		try {
-			outZip.putNextEntry(entryMimetype);
-			outZip.write(mimeTypeBytes);
+		// Finishes the ZIP (with implicit finish/flush)
+		DSSUtils.close(outZip);
 
-			// Stores the original toSignDocument
-			final ZipEntry entryDocument = new ZipEntry(toSignDocumentName != null ? toSignDocumentName : ZIP_ENTRY_DETACHED_FILE);
-			outZip.setLevel(ZipEntry.DEFLATED);
-			outZip.putNextEntry(entryDocument);
-			DSSUtils.copy(toSignDocument.openStream(), outZip);
-
-			// Stores the signature
-			if (SignatureForm.XAdES.equals(asicSignatureForm)) {
-
-				final ZipEntry entrySignature = new ZipEntry(ZIP_ENTRY_METAINF_XADES_SIGNATURE);
-				outZip.putNextEntry(entrySignature);
-				// Creates the XAdES signature
-				final Document xmlSignatureDoc = DSSXMLUtils.buildDOM(signature);
-				final Element documentElement = xmlSignatureDoc.getDocumentElement();
-				final Element xmlSignatureElement = (Element) xmlSignatureDoc.removeChild(documentElement);
-
-				final Document xmlXAdESDoc = DSSXMLUtils.createDocument(ASICS_URI, ASICS_NS, xmlSignatureElement);
-				TransformerFactory.newInstance().newTransformer().transform(new DOMSource(xmlXAdESDoc), new StreamResult(outZip));
-			} else if (SignatureForm.CAdES.equals(asicSignatureForm)) {
-
-				final ZipEntry entrySignature = new ZipEntry(ZIP_ENTRY_METAINF_CADES_SIGNATURE);
-				outZip.putNextEntry(entrySignature);
-				DSSUtils.copy(signature.openStream(), outZip);
-			} else {
-				throw new DSSUnsupportedOperationException(asicSignatureForm.name() + ": This form of the signature is not supported.");
-			}
-			// Finishes the ZIP (with implicit finish/flush)
-			outZip.close();
-
-			// return the new toSignDocument = ASiC-S
-			final byte[] documentBytes = outBytes.toByteArray();
-			final String name = toSignDocumentName != null ? toSignDocumentName + ASICS_EXTENSION : null;
-			final InMemoryDocument inMemoryDocument = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
-			return inMemoryDocument;
-		} catch (Exception e) {
-
-			throw new DSSException(e);
-		}
-
-	}
-
-	@Override
-	@Deprecated
-	public InputStream toBeSigned(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
-
-		final byte[] dataToSign = getDataToSign(toSignDocument, parameters);
-		final InputStream toSignInputStream = DSSUtils.toInputStream(dataToSign);
-		return toSignInputStream;
-	}
-
-	@Override
-	public byte[] getDataToSign(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
-
-		final SignatureParameters specificParameters = getParameters(parameters);
-		final DocumentSignatureService signatureService = getSpecificService(specificParameters);
-		return signatureService.getDataToSign(toSignDocument, specificParameters);
-	}
-
-	protected DocumentSignatureService getSpecificService(final SignatureParameters specificParameters) {
-
-		final SignatureForm asicSignatureForm = specificParameters.aSiC().getAsicSignatureForm();
-		final DocumentSignatureService underlyingASiCService = specificParameters.getContext().getUnderlyingASiCService(certificateVerifier, asicSignatureForm);
-		underlyingASiCService.setTspSource(tspSource);
-		return underlyingASiCService;
+		// return the new toSignDocument = ASiC-S
+		final byte[] documentBytes = outBytes.toByteArray();
+		final String name = toSignDocumentName != null ? toSignDocumentName + ASICS_EXTENSION : null;
+		final InMemoryDocument inMemoryDocument = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
+		return inMemoryDocument;
 	}
 
 	@Override
@@ -353,5 +328,173 @@ public class ASiCSService extends AbstractSignatureService {
 
 			throw new DSSException(e);
 		}
+	}
+
+	/**
+	 * Creates a specific XAdES/CAdES signature parameters on the base of the provided parameters. Forces the signature packaging to
+	 * DETACHED
+	 *
+	 * @param parameters must provide signingToken, PrivateKeyEntry and date
+	 * @return new specific instance for XAdES
+	 */
+	private SignatureParameters getParameters(final SignatureParameters parameters) {
+
+		final SignatureParameters specificParameters = new SignatureParameters(parameters);
+		final SignatureLevel asicProfile = parameters.getSignatureLevel();
+		final SignatureForm asicSignatureForm = parameters.aSiC().getAsicSignatureForm();
+		SignatureLevel specificLevel;
+		switch (asicProfile) {
+
+			case ASiC_S_BASELINE_B:
+				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_B : SignatureLevel.CAdES_BASELINE_B;
+				break;
+			case ASiC_S_BASELINE_T:
+				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_T : SignatureLevel.CAdES_BASELINE_T;
+				break;
+			case ASiC_S_BASELINE_LT:
+				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LT : SignatureLevel.CAdES_BASELINE_LT;
+				break;
+			case ASiC_S_BASELINE_LTA:
+				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LTA : SignatureLevel.CAdES_BASELINE_LTA;
+				break;
+			case ASiC_E_BASELINE_B:
+				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_B : SignatureLevel.CAdES_BASELINE_B;
+				break;
+			case ASiC_E_BASELINE_T:
+				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_T : SignatureLevel.CAdES_BASELINE_T;
+				break;
+			case ASiC_E_BASELINE_LT:
+				specificLevel = asicSignatureForm == SignatureForm.XAdES ? SignatureLevel.XAdES_BASELINE_LT : SignatureLevel.CAdES_BASELINE_LT;
+				break;
+			default:
+				throw new DSSException("Unsupported format: " + asicProfile.name());
+		}
+		specificParameters.setSignatureLevel(specificLevel);
+		specificParameters.setSignaturePackaging(SignaturePackaging.DETACHED);
+		return specificParameters;
+	}
+
+	private void buildCAdES(final DSSDocument signature, final ZipOutputStream outZip) throws DSSException {
+
+		final ZipEntry entrySignature = new ZipEntry(ZIP_ENTRY_METAINF_CADES_SIGNATURE);
+		try {
+			outZip.putNextEntry(entrySignature);
+			final byte[] bytes = signature.getBytes();
+			outZip.write(bytes);
+			//DSSUtils.copy(signature.openStream(), outZip);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
+
+	private void storeMimetype(final ASiCParameters asicParameters, final ZipOutputStream outZip, final MimeType containedFileMimeType) throws DSSException {
+
+		final byte[] mimeTypeBytes = getMimeTypeBytes(asicParameters, containedFileMimeType);
+		final ZipEntry entryMimetype = getZipEntryMimeType(mimeTypeBytes);
+
+		writeZipEntry(outZip, mimeTypeBytes, entryMimetype);
+	}
+
+	private void writeZipEntry(final ZipOutputStream outZip, final byte[] mimeTypeBytes, final ZipEntry entryMimetype) throws DSSException {
+
+		try {
+			outZip.putNextEntry(entryMimetype);
+			outZip.write(mimeTypeBytes);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
+
+	private void storeSignedFile(final DSSDocument toSignDocument, final ZipOutputStream outZip) throws DSSException {
+
+		final String toSignDocumentName = toSignDocument.getName();
+		final ZipEntry entryDocument = new ZipEntry(toSignDocumentName != null ? toSignDocumentName : ZIP_ENTRY_DETACHED_FILE);
+		outZip.setLevel(ZipEntry.DEFLATED);
+
+		try {
+			outZip.putNextEntry(entryDocument);
+			DSSUtils.copy(toSignDocument.openStream(), outZip);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
+
+	private byte[] getMimeTypeBytes(final ASiCParameters asicParameters, final MimeType containedFileMimeType) {
+
+		final byte[] mimeTypeBytes;
+		final String asicParameterMimeType = asicParameters.getMimeType();
+		if (DSSUtils.isBlank(asicParameterMimeType)) {
+			mimeTypeBytes = containedFileMimeType.getCode().getBytes();
+		} else {
+			mimeTypeBytes = asicParameterMimeType.getBytes();
+		}
+		return mimeTypeBytes;
+	}
+
+	private ZipEntry getZipEntryMimeType(final byte[] mimeTypeBytes) {
+
+		final ZipEntry entryMimetype = new ZipEntry(ZIP_ENTRY_MIMETYPE);
+		entryMimetype.setMethod(ZipEntry.STORED);
+		entryMimetype.setSize(mimeTypeBytes.length);
+		entryMimetype.setCompressedSize(mimeTypeBytes.length);
+		final CRC32 crc = new CRC32();
+		crc.update(mimeTypeBytes);
+		entryMimetype.setCrc(crc.getValue());
+		return entryMimetype;
+	}
+
+	/**
+	 * This method creates a XAdES signature. When adding a new signature,  this one is appended to the already present signatures.
+	 *
+	 * @param contextSignature already present signatures
+	 * @param signature        signature being created
+	 * @param outZip           destination {@code ZipOutputStream}
+	 * @throws IOException
+	 * @throws TransformerException
+	 */
+	private void buildXAdES(final DSSDocument contextSignature, final DSSDocument signature, final ZipOutputStream outZip) throws DSSException {
+
+		try {
+
+			final ZipEntry entrySignature = new ZipEntry(ZIP_ENTRY_METAINF_XADES_SIGNATURE);
+			outZip.putNextEntry(entrySignature);
+			// Creates the XAdES signature
+			final Document xmlSignatureDoc = DSSXMLUtils.buildDOM(signature);
+			final Element documentElement = xmlSignatureDoc.getDocumentElement();
+			final Element xmlSignatureElement = (Element) xmlSignatureDoc.removeChild(documentElement);
+
+			final Document xmlXAdESDoc;
+			if (contextSignature != null) {
+
+				final Document contextXmlSignatureDoc = DSSXMLUtils.buildDOM(contextSignature);
+				final Element contextDocumentElement = contextXmlSignatureDoc.getDocumentElement();
+				contextXmlSignatureDoc.adoptNode(xmlSignatureElement);
+				contextDocumentElement.appendChild(xmlSignatureElement);
+				xmlXAdESDoc = contextXmlSignatureDoc;
+			} else {
+
+				xmlXAdESDoc = DSSXMLUtils.createDocument(ASICS_URI, ASICS_NS, xmlSignatureElement);
+			}
+			TransformerFactory.newInstance().newTransformer().transform(new DOMSource(xmlXAdESDoc), new StreamResult(outZip));
+		} catch (IOException e) {
+			throw new DSSException(e);
+		} catch (TransformerException e) {
+			throw new DSSException(e);
+		}
+	}
+
+
+	/**
+	 * This method returns the specific service associated with the container: XAdES or CAdES.
+	 *
+	 * @param specificParameters {@code DocumentSignatureService}
+	 * @return
+	 */
+	protected DocumentSignatureService getSpecificService(final SignatureParameters specificParameters) {
+
+		final SignatureForm asicSignatureForm = specificParameters.aSiC().getAsicSignatureForm();
+		final DocumentSignatureService underlyingASiCService = specificParameters.getContext().getUnderlyingASiCService(certificateVerifier, asicSignatureForm);
+		underlyingASiCService.setTspSource(tspSource);
+		return underlyingASiCService;
 	}
 }

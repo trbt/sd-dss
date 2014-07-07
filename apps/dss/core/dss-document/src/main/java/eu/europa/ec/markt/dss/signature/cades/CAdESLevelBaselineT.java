@@ -39,7 +39,7 @@ import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
  * This class holds the CAdES-T signature profile; it supports the inclusion of the mandatory unsigned
  * id-aa-signatureTimeStampToken attribute as specified in ETSI TS 101 733 V1.8.1, clause 6.1.1.
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 4167 $ - $Date: 2014-06-27 17:57:11 +0200 (Fri, 27 Jun 2014) $
  */
 
 public class CAdESLevelBaselineT extends CAdESSignatureExtension {
@@ -60,7 +60,7 @@ public class CAdESLevelBaselineT extends CAdESSignatureExtension {
 
         assertExtendSignaturePossible(cadesSignature);
 
-        AttributeTable unsignedAttributes = getUnsignedAttributes(signerInformation);
+        AttributeTable unsignedAttributes = CAdESSignature.getUnsignedAttributes(signerInformation);
         unsignedAttributes = addSignatureTimestampAttribute(signerInformation, unsignedAttributes, parameters);
 
         return SignerInformation.replaceUnsignedAttributes(signerInformation, unsignedAttributes);
@@ -70,18 +70,20 @@ public class CAdESLevelBaselineT extends CAdESSignatureExtension {
      * @param cadesSignature
      */
     protected void assertExtendSignaturePossible(CAdESSignature cadesSignature) throws DSSException {
-        final String exceptionMessage = "Cannot extend signature. The signedData is already extended with [%s].";
+
+	    final String exceptionMessage = "Cannot extend signature. The signedData is already extended with [%s].";
         if (cadesSignature.isDataForSignatureLevelPresent(SignatureLevel.CAdES_BASELINE_LTA)) {
             throw new DSSException(String.format(exceptionMessage, "CAdES LTA"));
         }
-        AttributeTable unsignedAttributes = getUnsignedAttributes(cadesSignature.getSignerInformation());
+        AttributeTable unsignedAttributes = CAdESSignature.getUnsignedAttributes(cadesSignature.getSignerInformation());
         if (unsignedAttributes.get(PKCSObjectIdentifiers.id_aa_ets_escTimeStamp) != null) {
             throw new DSSException(String.format(exceptionMessage, PKCSObjectIdentifiers.id_aa_ets_escTimeStamp.getId()));
         }
     }
 
     private AttributeTable addSignatureTimestampAttribute(SignerInformation signerInformation, AttributeTable unsignedAttributes, SignatureParameters parameters) {
-        ASN1Object signatureTimeStamp = getTimeStampAttributeValue(signatureTsa, signerInformation.getSignature(), parameters);
+
+	    ASN1Object signatureTimeStamp = getTimeStampAttributeValue(signatureTsa, signerInformation.getSignature(), parameters);
         return unsignedAttributes.add(PKCSObjectIdentifiers.id_aa_signatureTimeStampToken, signatureTimeStamp);
     }
 

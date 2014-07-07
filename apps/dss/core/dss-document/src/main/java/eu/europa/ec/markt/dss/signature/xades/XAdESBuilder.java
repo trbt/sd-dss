@@ -34,6 +34,8 @@ import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
+import eu.europa.ec.markt.dss.signature.DSSDocument;
+import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
 
 public class XAdESBuilder {
@@ -73,19 +75,17 @@ public class XAdESBuilder {
 
     /**
      * This method creates the ds:DigestValue DOM object.
-     *
-     * @param parentDom
+     *  @param parentDom
      * @param digestAlgorithm digest algorithm
-     * @param toDigestBytes   to digest array of bytes
+     * @param originalDocument   to digest array of bytes
      */
-    protected void incorporateDigestValue(final Element parentDom, final DigestAlgorithm digestAlgorithm, final byte[] toDigestBytes) {
+    protected void incorporateDigestValue(final Element parentDom, final DigestAlgorithm digestAlgorithm, final DSSDocument originalDocument) {
 
         // <ds:DigestValue>b/JEDQH2S1Nfe4Z3GSVtObN34aVB1kMrEbVQZswThfQ=</ds:DigestValue>
         final Element digestValueDom = documentDom.createElementNS(xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:DigestValue");
-        final byte[] digestBytes = DSSUtils.digest(digestAlgorithm, toDigestBytes);
-        final String base64EncodedDigestBytes = DSSUtils.base64Encode(digestBytes);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Digest value             --> " + base64EncodedDigestBytes);
+	    final String base64EncodedDigestBytes = originalDocument.getDigest(digestAlgorithm);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Digest value             --> " + base64EncodedDigestBytes);
         }
         final Text textNode = documentDom.createTextNode(base64EncodedDigestBytes);
         digestValueDom.appendChild(textNode);
@@ -109,8 +109,8 @@ public class XAdESBuilder {
 
         for (final X509Certificate certificate : certificates) {
 
-            final byte[] encodedSigningCertificate = DSSUtils.getEncoded(certificate);
-            incorporateDigestValue(certDigestDom, signingCertificateDigestMethod, encodedSigningCertificate);
+	        final InMemoryDocument inMemoryCertificate = new InMemoryDocument(DSSUtils.getEncoded(certificate));
+	        incorporateDigestValue(certDigestDom, signingCertificateDigestMethod, inMemoryCertificate);
 
             final Element issuerSerialDom = DSSXMLUtils.addElement(documentDom, certDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IssuerSerial");
 

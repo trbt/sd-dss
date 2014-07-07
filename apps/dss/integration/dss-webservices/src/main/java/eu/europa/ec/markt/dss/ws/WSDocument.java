@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 
 import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.MimeType;
@@ -36,7 +37,7 @@ import eu.europa.ec.markt.dss.signature.MimeType;
 /**
  * Container for any kind of document that is to be transferred to and from web service endpoints.
  *
- * @version $Revision: 4074 $ - $Date: 2014-06-09 19:45:51 +0200 (Mon, 09 Jun 2014) $
+ * @version $Revision: 4182 $ - $Date: 2014-07-02 14:40:17 +0200 (Wed, 02 Jul 2014) $
  */
 
 public class WSDocument implements DSSDocument {
@@ -154,6 +155,14 @@ public class WSDocument implements DSSDocument {
 		} catch (IOException e) {
 			throw new DSSException(e);
 		}
+	}
+
+	@Override
+	public String getDigest(final DigestAlgorithm digestAlgorithm) {
+
+		final byte[] digestBytes = DSSUtils.digest(digestAlgorithm, getBytes());
+		final String base64Encode = DSSUtils.base64Encode(digestBytes);
+		return base64Encode;
 	}
 
 	@Override

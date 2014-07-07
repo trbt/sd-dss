@@ -39,7 +39,6 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.NamespaceContext;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -61,6 +60,7 @@ import org.apache.xml.security.c14n.InvalidCanonicalizerException;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
@@ -82,7 +82,7 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 
 public final class DSSXMLUtils {
 
-	public static final String ID_ATTRIBUTE_NAME = "Id";
+	public static final String ID_ATTRIBUTE_NAME = "id";
 
 	private static DocumentBuilderFactory dbFactory;
 
@@ -280,6 +280,7 @@ public final class DSSXMLUtils {
 	/**
 	 * An ID attribute can only be dereferenced if it is declared in the validation context. This behaviour is caused by the fact that the attribute does not have attached type of
 	 * information. Another solution is to parse the XML against some DTD or XML schema. This process adds the necessary type of information to each ID attribute.
+	 * This method is useful to carry out tests with different signature provider.
 	 *
 	 * @param context
 	 * @param element
@@ -292,11 +293,7 @@ public final class DSSXMLUtils {
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
 
 				final Element childElement = (Element) node;
-				if (childElement.hasAttribute(ID_ATTRIBUTE_NAME)) {
-
-					// System.out.println("ID: " + childElement.getTagName() + "/" + childElement.getNamespaceURI());
-					context.setIdAttributeNS(childElement, null, ID_ATTRIBUTE_NAME);
-				}
+				setIDIdentifier(context, childElement);
 				recursiveIdBrowse(context, childElement);
 			}
 		}
@@ -316,11 +313,54 @@ public final class DSSXMLUtils {
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
 
 				final Element childElement = (Element) node;
-				if (childElement.hasAttribute(ID_ATTRIBUTE_NAME)) {
-					// System.out.println("ID: " + childElement.getTagName() + "/" + childElement.getNamespaceURI());
-					childElement.setIdAttribute(ID_ATTRIBUTE_NAME, true);
-				}
+				setIDIdentifier(childElement);
 				recursiveIdBrowse(childElement);
+			}
+		}
+	}
+
+	/**
+	 * If this method finds an attribute with names ID (case-insensitive) then declares it to be a user-determined ID attribute.
+	 *
+	 * @param childElement
+	 */
+	public static void setIDIdentifier(final DOMValidateContext context, final Element childElement) {
+
+		final NamedNodeMap attributes = childElement.getAttributes();
+		for (int jj = 0; jj < attributes.getLength(); jj++) {
+
+			final Node item = attributes.item(jj);
+			final String localName = item.getNodeName();
+			if (localName != null) {
+				final String id = localName.toLowerCase();
+				if (ID_ATTRIBUTE_NAME.equals(id)) {
+
+					context.setIdAttributeNS(childElement, null, localName);
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * If this method finds an attribute with names ID (case-insensitive) then declares it to be a user-determined ID attribute.
+	 *
+	 * @param childElement
+	 */
+	public static void setIDIdentifier(final Element childElement) {
+
+		final NamedNodeMap attributes = childElement.getAttributes();
+		for (int jj = 0; jj < attributes.getLength(); jj++) {
+
+			final Node item = attributes.item(jj);
+			final String localName = item.getNodeName();
+			if (localName != null) {
+				final String id = localName.toLowerCase();
+				if (ID_ATTRIBUTE_NAME.equals(id)) {
+
+					childElement.setIdAttribute(localName, true);
+					break;
+				}
 			}
 		}
 	}
@@ -410,7 +450,7 @@ public final class DSSXMLUtils {
 		} catch (IOException e) {
 			throw new DSSException(e);
 		} catch (ParserConfigurationException e) {
-			throw new DSSException(e);			
+			throw new DSSException(e);
 		} finally {
 			DSSUtils.closeQuietly(inputStream);
 		}
@@ -630,6 +670,35 @@ public final class DSSXMLUtils {
 		final Element newElement = newDocument.getDocumentElement();
 		newDocument.adoptNode(element);
 		newElement.appendChild(element);
+
+		return newDocument;
+	}
+
+
+	/**
+	 * Creates a DOM Document object of the specified type with its document elements.
+	 *
+	 * @param namespaceURI
+	 * @param qualifiedName
+	 * @param element1
+	 * @param element2
+	 * @return
+	 */
+	public static Document createDocument(final String namespaceURI, final String qualifiedName, final Element element1, final Element element2) {
+
+		DOMImplementation domImpl;
+		try {
+			domImpl = dbFactory.newDocumentBuilder().getDOMImplementation();
+		} catch (ParserConfigurationException e) {
+			throw new DSSException(e);
+		}
+		final Document newDocument = domImpl.createDocument(namespaceURI, qualifiedName, null);
+		final Element newElement = newDocument.getDocumentElement();
+		newDocument.adoptNode(element1);
+		newElement.appendChild(element1);
+
+		newDocument.adoptNode(element2);
+		newElement.appendChild(element2);
 
 		return newDocument;
 	}

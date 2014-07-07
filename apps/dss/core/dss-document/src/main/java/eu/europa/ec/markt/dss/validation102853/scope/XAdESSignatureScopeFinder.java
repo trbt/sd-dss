@@ -77,7 +77,7 @@ public class XAdESSignatureScopeFinder implements SignatureScopeFinder<XAdESSign
         unsignedObjects.addAll(getSignatureObjects(xadesSignature));
         Set<Element> signedObjects = new HashSet<Element>();
 
-        final List<Element> signatureReferences = getSignatureReferences(xadesSignature);
+        final List<Element> signatureReferences = xadesSignature.getSignatureReferences();
         for (final Element signatureReference : signatureReferences) {
             final String type = DSSXMLUtils.getValue(signatureReference, "@Type");
             final String uri = DSSXMLUtils.getValue(signatureReference, "@URI");
@@ -132,17 +132,6 @@ public class XAdESSignatureScopeFinder implements SignatureScopeFinder<XAdESSign
             }
         }
         return algorithms;
-    }
-
-    public List<Element> getSignatureReferences(final XAdESSignature xAdESSignature) {
-
-	    final NodeList list = DSSXMLUtils.getNodeList(xAdESSignature.getSignatureElement(), xAdESSignature.getXPathQueryHolder().XPATH_REFERENCE);
-        List<Element> references = new ArrayList<Element>(list.getLength());
-        for (int ii = 0; ii < list.getLength(); ii++) {
-            final Node node = list.item(ii);
-            references.add((Element) node);
-        }
-        return references;
     }
 
     public List<Element> getSignatureObjects(final XAdESSignature xAdESSignature) {

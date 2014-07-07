@@ -74,6 +74,8 @@ public class TimestampToken extends Token {
 
 	private List<TimestampReference> timestampedReferences;
 
+	private List<TimestampInclude> timestampIncludes;
+
 	/**
 	 * Defines for archive timestamp its type.
 	 */
@@ -202,7 +204,7 @@ public class TimestampToken extends Token {
 			if (!messageImprintIntact) {
 
 				// Produces very big output
-				LOG.error("Extracted data from the document: {...}"/*, DSSUtils.encodeHexString(data).substring(0, 1000)*/);
+				LOG.error("Extracted data from the document: {...} truncated", DSSUtils.encodeHexString(data).substring(0, 200));
 				LOG.error("Computed digest ({}) on the extracted data from the document : {}", new Object[]{digestAlgorithm, DSSUtils.encodeHexString(computedDigest)});
 				LOG.error("Digest present in TimestampToken: {}", DSSUtils.encodeHexString(timestampDigest));
 				LOG.error("Digest in TimestampToken matches digest of extracted data from document: {}", messageImprintIntact);
@@ -382,6 +384,14 @@ public class TimestampToken extends Token {
 		} catch (IOException e) {
 			throw new DSSException("CRL encoding error: " + e.getMessage(), e);
 		}
+	}
+
+	public List<TimestampInclude> getTimestampIncludes() {
+		return timestampIncludes;
+	}
+
+	public void setTimestampIncludes(List<TimestampInclude> timestampIncludes) {
+		this.timestampIncludes = timestampIncludes;
 	}
 
 	public List<CertificateToken> getCertificates() {

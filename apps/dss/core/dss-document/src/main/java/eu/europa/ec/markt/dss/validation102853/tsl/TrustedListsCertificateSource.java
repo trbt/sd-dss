@@ -20,9 +20,7 @@
 
 package eu.europa.ec.markt.dss.validation102853.tsl;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -35,8 +33,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -141,7 +137,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 	}
 
 	/**
-	 * This method method is not applicable for this kind of certificate source. You should use {@link
+	 * This method is not applicable for this kind of certificate source. You should use {@link
 	 * #addCertificate(java.security.cert.X509Certificate, eu.europa.ec.markt.dss.validation102853.condition.ServiceInfo)}
 	 *
 	 * @param cert the certificate you have to trust
@@ -260,11 +256,6 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
 			throw new DSSNullReturnedException(url);
 		}
-		if (url.toLowerCase().endsWith(".zip")) {
-
-			bytes = getZippedData(bytes);
-		}
-
 		final Document doc = DSSXMLUtils.buildDOM(bytes);
 
 		boolean coreValidity = true;
@@ -314,45 +305,6 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 		final TrustStatusList tsl = TrustServiceListFactory.newInstance(doc);
 		tsl.setWellSigned(coreValidity);
 		return tsl;
-	}
-
-	/**
-	 * Solution to manage (known) zipped data by convention a zipped tsl has a url with that suffix.
-	 *
-	 * @param bytes
-	 * @return
-	 * @throws java.io.IOException
-	 */
-	private byte[] getZippedData(final byte[] bytes) {
-
-		ZipInputStream zipStream = null;
-		try {
-
-			final InputStream duplicatedInputStream = new ByteArrayInputStream(bytes);
-			zipStream = new ZipInputStream(duplicatedInputStream);
-			while (true) {
-
-				final ZipEntry entry = zipStream.getNextEntry();
-				if (entry == null) {
-					break;
-				}
-				// by convention, the first file with xml suffix is used
-				if (entry.getName().toLowerCase().endsWith(".xml")) {
-
-					/**
-					 * If found, just use the zip stream as inputStream. Only the relevant part of the underlying stream will
-					 * be used and automatically closed.
-					 */
-					final byte[] zipBytes = DSSUtils.toByteArray(zipStream);
-					return zipBytes;
-				}
-			}
-		} catch (IOException e) {
-			LOG.warn("The data is assumed to be zip format; cannot not be read; continue as xml.", e);
-		} finally {
-			DSSUtils.closeQuietly(zipStream);
-		}
-		return bytes;
 	}
 
 	/**

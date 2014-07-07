@@ -86,8 +86,8 @@ class EnvelopingSignatureBuilder extends SignatureBuilder {
         final DigestAlgorithm digestAlgorithm = params.getDigestAlgorithm();
         incorporateDigestMethod(referenceDom, digestAlgorithm);
 
-        final byte[] origDocBytes = originalDocument.getBytes();
-        incorporateDigestValue(referenceDom, digestAlgorithm, origDocBytes);
+	    final InMemoryDocument inMemoryDocument = new InMemoryDocument(originalDocument.getBytes());
+	    incorporateDigestValue(referenceDom, digestAlgorithm, inMemoryDocument);
     }
 
     /**

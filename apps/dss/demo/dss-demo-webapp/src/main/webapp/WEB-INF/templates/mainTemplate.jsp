@@ -64,7 +64,7 @@
     </div>
     <footer role="contentinfo" class="full-row">
     	<div class="full-column">
-            <p><spring:message code="application.title"/> <spring:message code="application.version"/> - Arhs 2013 &copy;</p>
+            <p><spring:message code="application.title"/> <spring:message code="application.version"/> - Arhs 2011-14 &copy;</p>
         </div>
     </footer>
 

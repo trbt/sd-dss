@@ -1,5 +1,6 @@
 package eu.europa.ec.markt.dss.parameter;
 
+import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.validation102853.SignatureForm;
 
 /**
@@ -28,17 +29,32 @@ public class ASiCParameters {
 	 */
 	private SignatureForm asicSignatureForm = SignatureForm.XAdES;
 
+	/**
+	 * This variable contains already enclosed signature(s) when appending a new one.
+	 */
+	private DSSDocument enclosedSignature;
+
 	public ASiCParameters() {
 	}
 
+	/**
+	 * A copy constructor.
+	 *
+	 * @param source {@code ASiCParameters}
+	 */
 	public ASiCParameters(final ASiCParameters source) {
 
 		zipComment = source.zipComment;
 		mimeType = source.mimeType;
 		asicSignatureForm = source.asicSignatureForm;
-
+		enclosedSignature = source.enclosedSignature;
 	}
 
+	/**
+	 * Indicates if the ZIP comment must include the mime-type.
+	 *
+	 * @return {@code boolean}
+	 */
 	public boolean isZipComment() {
 		return zipComment;
 	}
@@ -61,7 +77,7 @@ public class ASiCParameters {
 	 *
 	 * @param mimeType the mimetype to  store
 	 */
-	public void setMimeType( final String mimeType) {
+	public void setMimeType(final String mimeType) {
 		this.mimeType = mimeType;
 	}
 
@@ -78,4 +94,21 @@ public class ASiCParameters {
 		this.asicSignatureForm = asicSignatureForm;
 	}
 
+	/**
+	 * This method allows to set the already existing signature. It is used when re-sign the ASIC-S container.
+	 *
+	 * @param signature extracted from the already existing container.
+	 */
+	public void setEnclosedSignature(final DSSDocument signature) {
+		this.enclosedSignature = signature;
+	}
+
+	/**
+	 * This method returns the already existing signature within a container.
+	 *
+	 * @return {@code DSSDocument} representing a signature
+	 */
+	public DSSDocument getEnclosedSignature() {
+		return enclosedSignature;
+	}
 }

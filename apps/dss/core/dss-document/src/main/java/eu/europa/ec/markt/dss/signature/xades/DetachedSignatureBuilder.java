@@ -88,7 +88,7 @@ class DetachedSignatureBuilder extends SignatureBuilder {
     }
 
     /**
-     * This method creates the first reference (this is a reference to the file to sign) witch is specific for each form
+     * This method creates the first reference (this is a reference to the file to sign) which is specific for each form
      * of signature. Here, the value of the URI is the name of the file to sign or if the information is not available
      * the URI will use the default value: "detached-file".
      *
@@ -108,8 +108,7 @@ class DetachedSignatureBuilder extends SignatureBuilder {
         incorporateDigestMethod(referenceDom, digestAlgorithm);
 
         // <ds:DigestValue>EGx5Dc+GjdzKf0Dqh9h3a+WlixaKpYkjCmXTA/3Y2J4=</ds:DigestValue>
-        final byte[] origDocBytes = originalDocument.getBytes();
-        incorporateDigestValue(referenceDom, digestAlgorithm, origDocBytes);
+        incorporateDigestValue(referenceDom, digestAlgorithm, originalDocument);
     }
 
     /**

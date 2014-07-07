@@ -51,6 +51,8 @@ public class XPathQueryHolder {
 	public final String XPATH_REFERENCE_TRANSFORM  = XPATH_REFERENCE + "/ds:Transforms/ds:Transform";
 	public final String XPATH_KEY_INFO = "./ds:KeyInfo";
 	public final String XPATH_X509_DATA = XPATH_KEY_INFO + "/ds:X509Data";
+    public final String XPATH__ALL_DATA_OBJECTS_TIMESTAMP = "xades:AllDataObjectsTimeStamp";
+    public final String XPATH__INDIVIDUAL_DATA_OBJECTS_TIMESTAMP = "xades:IndividualDataObjectsTimeStamp";
 
 	public final String XPATH_KEY_INFO_X509_CERTIFICATE = XPATH_X509_DATA + "/ds:X509Certificate";
 	public final String XPATH_X509_ISSUER_SERIAL = XPATH_X509_DATA + "/ds:X509IssuerSerial";
@@ -66,7 +68,9 @@ public class XPathQueryHolder {
 
 	public String XPATH_SIGNED_PROPERTIES = XPATH_QUALIFYING_PROPERTIES + "/xades:SignedProperties";
 	public String XPATH_SIGNED_SIGNATURE_PROPERTIES = XPATH_SIGNED_PROPERTIES + "/xades:SignedSignatureProperties";
-	public String XPATH_ALL_DATA_OBJECT_TIMESTAMP = XPATH_SIGNED_PROPERTIES + "/xades:SignedDataObjectProperties/xades:AllDataObjectsTimeStamp";
+    public String XPATH_SIGNED_DATA_OBJECT_PROPERTIES = XPATH_SIGNED_PROPERTIES + "/xades:SignedDataObjectProperties";
+	public String XPATH_ALL_DATA_OBJECTS_TIMESTAMP = XPATH_SIGNED_DATA_OBJECT_PROPERTIES + "/" + XPATH__ALL_DATA_OBJECTS_TIMESTAMP;
+    public String XPATH_INDIVIDUAL_DATA_OBJECTS_TIMESTAMP = XPATH_SIGNED_DATA_OBJECT_PROPERTIES + "/" + XPATH__INDIVIDUAL_DATA_OBJECTS_TIMESTAMP;
 	public String XPATH_SIGNING_TIME = XPATH_SIGNED_SIGNATURE_PROPERTIES + "/xades:SigningTime";
 	public String XPATH_SIGNING_CERTIFICATE_CERT = XPATH_SIGNED_SIGNATURE_PROPERTIES + "/xades:SigningCertificate/xades:Cert";
 	public String XPATH_CERT_DIGEST = XPATH_SIGNING_CERTIFICATE_CERT + "/xades:CertDigest";
@@ -78,8 +82,9 @@ public class XPathQueryHolder {
 	public String XPATH__POLICY_ID = "./xades:SignaturePolicyId/xades:SigPolicyId/xades:Identifier";
 	public String XPATH__POLICY_DIGEST_METHOD = "./xades:SignaturePolicyId/xades:SigPolicyHash/ds:DigestMethod/@Algorithm";
 	public String XPATH__POLICY_DIGEST_VALUE = "./xades:SignaturePolicyId/xades:SigPolicyHash/ds:DigestValue";
+    public String XPATH__INCLUDE = "./xades:Include";
 
-	public String XPATH__X509_ISSUER_NAME = "./xades:IssuerSerial/ds:X509IssuerName";
+    public String XPATH__X509_ISSUER_NAME = "./xades:IssuerSerial/ds:X509IssuerName";
 	public String XPATH__X509_SERIAL_NUMBER = "./xades:IssuerSerial/ds:X509SerialNumber";
 	public String XPATH__CERT_DIGEST = "./xades:CertDigest";
 	public String XPATH__DIGEST_METHOD = "./ds:DigestMethod";

@@ -114,7 +114,7 @@ class EnvelopedSignatureBuilder extends SignatureBuilder {
 			LOG.trace("Canonicalization method  -->" + signedInfoCanonicalizationMethod);
 			LOG.trace("Canonicalized REF_1      --> " + new String(canonicalizedBytes));
 		}
-		incorporateDigestValue(referenceDom, digestAlgorithm, canonicalizedBytes);
+		incorporateDigestValue(referenceDom, digestAlgorithm, new InMemoryDocument(canonicalizedBytes));
 	}
 
 	/**

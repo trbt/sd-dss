@@ -74,7 +74,7 @@ public class CAdESLevelBaselineLTA extends CAdESSignatureExtension {
                                                    final SignatureParameters parameters) throws DSSException {
 
         CAdESSignature cadesSignature = new CAdESSignature(cmsSignedData, signerInformation, parameters.getOriginalDocument());
-        AttributeTable unsignedAttributes = getUnsignedAttributes(signerInformation);
+        AttributeTable unsignedAttributes = CAdESSignature.getUnsignedAttributes(signerInformation);
         unsignedAttributes = addArchiveTimestampV3Attribute(cadesSignature, cmsSignedData, signerInformation, parameters, unsignedAttributes);
         SignerInformation newSignerInformation = SignerInformation.replaceUnsignedAttributes(signerInformation, unsignedAttributes);
         return newSignerInformation;

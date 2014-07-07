@@ -2337,10 +2337,10 @@ public final class DSSUtils {
 	/**
 	 * This method returns the {@code X500Principal} corresponding to the given string or {@code null} if the conversion is not possible.
 	 *
-	 * @param x500PrincipalString  a {@code String} representation of the {@code X500Principal}
+	 * @param x500PrincipalString a {@code String} representation of the {@code X500Principal}
 	 * @return {@code X500Principal} or null
 	 */
-	public static  X500Principal getX500PrincipalOrNull(final String x500PrincipalString) {
+	public static X500Principal getX500PrincipalOrNull(final String x500PrincipalString) {
 
 		try {
 			final X500Principal x500Principal = new X500Principal(x500PrincipalString);
@@ -2868,7 +2868,7 @@ public final class DSSUtils {
 				input.close();
 				input = new ASN1InputStream(content);
 				final ASN1Sequence seq = (ASN1Sequence) input.readObject();
-                /* Sequence of QCStatement */
+			    /* Sequence of QCStatement */
 				for (int ii = 0; ii < seq.size(); ii++) {
 
 					final QCStatement statement = QCStatement.getInstance(seq.getObjectAt(ii));
@@ -2883,6 +2883,20 @@ public final class DSSUtils {
 			}
 		}
 		return extensionIdList;
+	}
+
+	/**
+	 * This method closes the given {@code OutputStream} and throws a {@code DSSException} when the operation fails.
+	 *
+	 * @param outputStream {@code OutputStream} to be closed
+	 */
+	public static void close(final OutputStream outputStream) {
+
+		try {
+			outputStream.close();
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
 	}
 }
 

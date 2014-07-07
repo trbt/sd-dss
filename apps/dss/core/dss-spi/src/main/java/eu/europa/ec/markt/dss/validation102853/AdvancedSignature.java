@@ -193,10 +193,10 @@ public interface AdvancedSignature {
 	public List<TimestampToken> getContentTimestamps();
 
 	/**
-	 * Return the content timestamp data (timestamped or to be).
+	 * Returns the content timestamp data (timestamped or to be).
 	 *
 	 * @param timestampToken
-	 * @return
+	 * @return {@code byte} array representing the canonicalized data to be timestamped
 	 */
 	public byte[] getContentTimestampData(final TimestampToken timestampToken);
 
@@ -211,7 +211,7 @@ public interface AdvancedSignature {
 	 * Returns the data (signature value) that was timestamped by the SignatureTimeStamp for the given timestamp.
 	 *
 	 * @param timestampToken
-	 * @return
+	 * @return {@code byte} array representing the canonicalized data to be timestamped
 	 */
 	public byte[] getSignatureTimestampData(final TimestampToken timestampToken);
 
@@ -227,7 +227,7 @@ public interface AdvancedSignature {
 	 * element), the signature time-stamp(s) present in the AdES-T form, the certification path references and the
 	 * revocation status references.
 	 *
-	 * @return The byte array digested to create a TimeStamp X1
+	 * @return {@code byte} array representing the canonicalized data to be timestamped
 	 */
 	public byte[] getTimestampX1Data(final TimestampToken timestampToken);
 
@@ -243,7 +243,7 @@ public interface AdvancedSignature {
 	 * Returns the data to be time-stamped which contains the concatenation of CompleteCertificateRefs and
 	 * CompleteRevocationRefs elements (XAdES example).
 	 *
-	 * @return The byte array digested to create a TimeStamp X2
+	 * @return {@code byte} array representing the canonicalized data to be timestamped
 	 */
 	public byte[] getTimestampX2Data(final TimestampToken timestampToken);
 
@@ -259,7 +259,7 @@ public interface AdvancedSignature {
 	 * timestamp.
 	 *
 	 * @param timestampToken null when adding a new archive timestamp
-	 * @return
+	 * @return {@code byte} array representing the canonicalized data to be timestamped
 	 */
 	public byte[] getArchiveTimestampData(final TimestampToken timestampToken);
 

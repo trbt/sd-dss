@@ -39,7 +39,7 @@ import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
-import eu.europa.ec.markt.dss.validation102853.SignatureForm;
+import eu.europa.ec.markt.dss.validation102853.TimestampToken;
 
 /**
  * Parameters for a Signature creation/extension
@@ -48,6 +48,11 @@ import eu.europa.ec.markt.dss.validation102853.SignatureForm;
  */
 
 public class SignatureParameters {
+
+	/**
+	 * This variable is used to ensure the uniqueness of the signature in the same document.
+	 */
+	protected static int signatureCounter = 0;
 
 	/**
 	 * This parameter is used in one shot signature process. Cannot be used with 3-steps signature process.
@@ -63,6 +68,11 @@ public class SignatureParameters {
 	 * This field contains the signing certificate.
 	 */
 	private X509Certificate signingCertificate;
+
+	/**
+	 * This variable indicates if it is possible to sign with an expired certificate.
+	 */
+	private boolean signWithExpiredCertificate = false;
 
 	/**
 	 * This field contains the chain of certificates. It includes the signing certificate.
@@ -106,10 +116,15 @@ public class SignatureParameters {
 	private DigestAlgorithm timestampDigestAlgorithm = DigestAlgorithm.SHA256;
 	private DigestAlgorithm archiveTimestampDigestAlgorithm = DigestAlgorithm.SHA256;
 
+	private List<TimestampToken> contentTimestamps;
+
 	public SignatureParameters() {
 
 	}
 
+	/**
+	 * The document to be signed
+	 */
 	private DSSDocument originalDocument;
 
 	/**
@@ -140,23 +155,53 @@ public class SignatureParameters {
 		signatureLevel = source.signatureLevel;
 		signingToken = source.signingToken;
 		signingCertificate = source.signingCertificate;
+		signWithExpiredCertificate = source.signWithExpiredCertificate;
 		signingToken = source.signingToken;
 		timestampDigestAlgorithm = source.timestampDigestAlgorithm;
+		contentTimestamps = source.getContentTimestamps();
+
 		// This is a simple copy of reference and not of the object content!
 		context = source.context;
 	}
 
+	/**
+	 * This method returns the document to sign. In the case of the DETACHED signature this is the detached document.
+	 *
+	 * @return
+	 */
 	public DSSDocument getOriginalDocument() {
 		return originalDocument;
 	}
 
 	/**
-	 * This is the document to sign. In the case of the DETACHED signature this is the detached document.
+	 * When signing this method is internally invoked by the {@code AbstractSignatureService} and the related variable {@code originalDocument} is overwritten by the service
+	 * parameter. In the case of the DETACHED signature this is the detached document. In the case of ASiC-S this is the document to be signed.<p />
+	 * When extending this method must be invoked to indicate the {@code originalDocument}.
 	 *
 	 * @param document
 	 */
 	public void setOriginalDocument(final DSSDocument document) {
 		this.originalDocument = document;
+	}
+
+	/**
+	 * Returns the list of the {@code TimestampToken} to be incorporated within the signature and representing the content-timestamp.
+	 *
+	 * @return {@code List} of {@code TimestampToken}
+	 */
+	public List<TimestampToken> getContentTimestamps() {
+		return contentTimestamps;
+	}
+
+	public void setContentTimestamps(final List<TimestampToken> contentTimestamps) {
+		this.contentTimestamps = contentTimestamps;
+	}
+
+	public void addContentTimestamp(final TimestampToken contentTimestamp) {
+		if (contentTimestamps == null) {
+			contentTimestamps = new ArrayList<TimestampToken>();
+		}
+		this.contentTimestamps.add(contentTimestamp);
 	}
 
 	/**
@@ -170,7 +215,7 @@ public class SignatureParameters {
 
 			return deterministicId;
 		}
-		final int dssId = signingCertificate == null ? 0 : CertificateIdentifier.getId(signingCertificate);
+		final int dssId = (signingCertificate == null ? 0 : CertificateIdentifier.getId(signingCertificate)) + signatureCounter++;
 		deterministicId = DSSUtils.getDeterministicId(bLevelParams.getSigningDate(), dssId);
 		return deterministicId;
 	}
@@ -215,6 +260,24 @@ public class SignatureParameters {
 
 			this.certificateChain.add(0, signingCertificate);
 		}
+	}
+
+	/**
+	 * Indicates if it is possible to sign with an expired certificate. The default value is false.
+	 *
+	 * @return
+	 */
+	public boolean isSignWithExpiredCertificate() {
+		return signWithExpiredCertificate;
+	}
+
+	/**
+	 * Allows to change the default behaviour regarding the use of an expired certificate.
+	 *
+	 * @param signWithExpiredCertificate
+	 */
+	public void setSignWithExpiredCertificate(final boolean signWithExpiredCertificate) {
+		this.signWithExpiredCertificate = signWithExpiredCertificate;
 	}
 
 	/**
@@ -317,22 +380,15 @@ public class SignatureParameters {
 	}
 
 	/**
-	 * Set signature level
+	 * Set signature level. This field cannot be null.
 	 *
 	 * @param signatureLevel the value
-	 * @deprecated Use the {@link eu.europa.ec.markt.dss.signature.SignatureLevel} enumeration instead
 	 */
-	@Deprecated
-	public void setSignatureProfile(final String signatureLevel) {
-		setSignatureLevel(SignatureLevel.valueByName(signatureLevel));
-	}
+	public void setSignatureLevel(final SignatureLevel signatureLevel) throws DSSNullException {
 
-	/**
-	 * Set signature level
-	 *
-	 * @param signatureLevel the value
-	 */
-	public void setSignatureLevel(final SignatureLevel signatureLevel) {
+		if (signatureLevel == null) {
+			throw new DSSNullException(SignatureLevel.class);
+		}
 		this.signatureLevel = signatureLevel;
 	}
 
@@ -500,6 +556,7 @@ public class SignatureParameters {
 			  "signingToken=" + signingToken +
 			  ", privateKeyEntry=" + privateKeyEntry +
 			  ", signingCertificate=" + signingCertificate +
+			  ", signWithExpiredCertificate=" + signWithExpiredCertificate +
 			  ", certificateChain=" + certificateChain +
 			  ", context=" + context +
 			  ", signatureLevel=" + signatureLevel +
@@ -515,6 +572,7 @@ public class SignatureParameters {
 			  ", deterministicId='" + deterministicId + '\'' +
 			  ", timestampDigestAlgorithm=" + timestampDigestAlgorithm +
 			  ", archiveTimestampDigestAlgorithm=" + archiveTimestampDigestAlgorithm +
+			  ", contentTimestamps=" + contentTimestamps +
 			  ", originalDocument=" + originalDocument +
 			  '}';
 	}

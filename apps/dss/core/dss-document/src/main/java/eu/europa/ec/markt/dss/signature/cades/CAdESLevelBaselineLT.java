@@ -117,8 +117,8 @@ public class CAdESLevelBaselineLT extends CAdESSignatureExtension {
         }
         otherRevocationInfoFormatStoreBasic = new CollectionStore(newOtherRevocationInfoFormatStore);
 
-        final CMSSignedDataGeneratorBuilder cmsSignedDataGeneratorBuilder = new CMSSignedDataGeneratorBuilder();
-        cmsSignedData = cmsSignedDataGeneratorBuilder
+        final CMSSignedDataBuilder cmsSignedDataBuilder = new CMSSignedDataBuilder(certificateVerifier);
+        cmsSignedData = cmsSignedDataBuilder
               .regenerateCMSSignedData(cmsSignedData, parameters, certificatesStore, attributeCertificatesStore, crlsStore, otherRevocationInfoFormatStoreBasic,
                     otherRevocationInfoFormatStoreOcsp);
         return cmsSignedData;
