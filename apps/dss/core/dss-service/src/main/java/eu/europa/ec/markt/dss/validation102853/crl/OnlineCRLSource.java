@@ -50,187 +50,187 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
  * Note that for the HTTP kind of URLs you can provide dedicated data loader. If the data loader is not provided the standard load from URI is
  * provided. For FTP the standard load from URI is provided. For LDAP kind of URLs an internal implementation using apache-ldap-api is provided.
  *
- * @version $Revision: 3693 $ - $Date: 2014-04-01 10:03:05 +0200 (Tue, 01 Apr 2014) $
+ * @version $Revision: 4208 $ - $Date: 2014-07-08 09:19:31 +0200 (Tue, 08 Jul 2014) $
  */
 
 public class OnlineCRLSource extends CommonCRLSource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OnlineCRLSource.class);
+	private static final Logger LOG = LoggerFactory.getLogger(OnlineCRLSource.class);
 
-    private String preferredProtocol;
+	private String preferredProtocol;
 
-    private DataLoader dataLoader;
+	private DataLoader dataLoader;
 
-    /**
-     * The default constructor. A {@code CommonsDataLoader is created}.
-     */
-    public OnlineCRLSource() {
+	/**
+	 * The default constructor. A {@code CommonsDataLoader is created}.
+	 */
+	public OnlineCRLSource() {
 
-        dataLoader = new CommonsDataLoader();
-    }
+		dataLoader = new CommonsDataLoader();
+	}
 
-    /**
-     * This constructor allows to set the {@code DataLoader}.
-     *
-     * @param dataLoader
-     */
-    public OnlineCRLSource(final DataLoader dataLoader) {
+	/**
+	 * This constructor allows to set the {@code DataLoader}.
+	 *
+	 * @param dataLoader
+	 */
+	public OnlineCRLSource(final DataLoader dataLoader) {
 
-        this.dataLoader = dataLoader;
-    }
+		this.dataLoader = dataLoader;
+	}
 
-    /**
-     * This method allows to set the preferred protocol. This parameter is used used when retrieving the CRL to choose the canal.<br/>
-     * Possible values are: http, ldap, ftp
-     *
-     * @param preferredProtocol
-     */
-    public void setPreferredProtocol(final String preferredProtocol) {
+	/**
+	 * This method allows to set the preferred protocol. This parameter is used used when retrieving the CRL to choose the canal.<br/>
+	 * Possible values are: http, ldap, ftp
+	 *
+	 * @param preferredProtocol
+	 */
+	public void setPreferredProtocol(final String preferredProtocol) {
 
-        this.preferredProtocol = preferredProtocol;
-    }
+		this.preferredProtocol = preferredProtocol;
+	}
 
-    /**
-     * Set the DataLoader to use for query the CRL server
-     *
-     * @param urlDataLoader
-     */
-    public void setDataLoader(final DataLoader urlDataLoader) {
+	/**
+	 * Set the DataLoader to use for query the CRL server
+	 *
+	 * @param urlDataLoader
+	 */
+	public void setDataLoader(final DataLoader urlDataLoader) {
 
-        this.dataLoader = urlDataLoader;
-    }
+		this.dataLoader = urlDataLoader;
+	}
 
-    @Override
-    public CRLToken findCrl(final CertificateToken certificateToken) throws DSSException {
+	@Override
+	public CRLToken findCrl(final CertificateToken certificateToken) throws DSSException {
 
-        if (certificateToken == null) {
+		if (certificateToken == null) {
 
-            return null;
-        }
-        final CertificateToken issuerToken = certificateToken.getIssuerToken();
-        if (issuerToken == null) {
+			return null;
+		}
+		final CertificateToken issuerToken = certificateToken.getIssuerToken();
+		if (issuerToken == null) {
 
-            return null;
-        }
-        final String crlUrl = getCrlUrl(certificateToken);
-        LOG.info("CRL's URL for " + certificateToken.getAbbreviation() + " : " + crlUrl);
-        if (crlUrl == null) {
+			return null;
+		}
+		final String crlUrl = getCrlUrl(certificateToken);
+		LOG.info("CRL's URL for " + certificateToken.getAbbreviation() + " : " + crlUrl);
+		if (crlUrl == null) {
 
-            return null;
-        }
-        X509CRL x509CRL = downloadCrl(crlUrl);
-        if (x509CRL == null) {
-            return null;
-        }
-        final CRLValidity crlValidity = isValidCRL(x509CRL, issuerToken);
-        final CRLToken crlToken = new CRLToken(certificateToken, crlValidity);
-        crlToken.setSourceURL(crlUrl);
-        return crlToken;
-    }
+			return null;
+		}
+		X509CRL x509CRL = downloadCrl(crlUrl);
+		if (x509CRL == null) {
+			return null;
+		}
+		final CRLValidity crlValidity = isValidCRL(x509CRL, issuerToken);
+		final CRLToken crlToken = new CRLToken(certificateToken, crlValidity);
+		crlToken.setSourceURL(crlUrl);
+		return crlToken;
+	}
 
-    /**
-     * Download a CRL from any location with any protocol.
-     *
-     * @param downloadUrl
-     * @return
-     */
-    private X509CRL downloadCrl(final String downloadUrl) {
+	/**
+	 * Download a CRL from any location with any protocol.
+	 *
+	 * @param downloadUrl
+	 * @return
+	 */
+	private X509CRL downloadCrl(final String downloadUrl) {
 
-        if (downloadUrl != null) {
+		if (downloadUrl != null) {
 
-            try {
+			try {
 
-                final byte[] bytes = dataLoader.get(downloadUrl);
-                if (bytes != null && bytes.length > 0) {
+				final byte[] bytes = dataLoader.get(downloadUrl);
+				if (bytes != null && bytes.length > 0) {
 
-                    final X509CRL crl = DSSUtils.loadCRL(bytes);
-                    return crl;
-                }
-            } catch (DSSException e) {
-                LOG.warn(e.getMessage());
-            }
-        }
-        return null;
-    }
+					final X509CRL crl = DSSUtils.loadCRL(bytes);
+					return crl;
+				}
+			} catch (DSSException e) {
+				LOG.warn(e.getMessage());
+			}
+		}
+		return null;
+	}
 
-    /**
-     * Gives back the CRL URI meta-data found within the given X509 certificate.
-     *
-     * @param certificateToken the X509 certificate.
-     * @return the CRL URI, or <code>null</code> if the extension is not present.
-     * @throws DSSException
-     */
-    public String getCrlUrl(final CertificateToken certificateToken) throws DSSException {
+	/**
+	 * Gives back the CRL URI meta-data found within the given X509 certificate.
+	 *
+	 * @param certificateToken the X509 certificate.
+	 * @return the CRL URI, or <code>null</code> if the extension is not present.
+	 * @throws DSSException
+	 */
+	public String getCrlUrl(final CertificateToken certificateToken) throws DSSException {
 
-        final byte[] crlDistributionPointsValue = certificateToken.getCRLDistributionPoints();
-        if (null == crlDistributionPointsValue) {
+		final byte[] crlDistributionPointsValue = certificateToken.getCRLDistributionPoints();
+		if (null == crlDistributionPointsValue) {
 
-            return null;
-        }
-        ASN1InputStream ais1 = null;
-        ASN1InputStream ais2 = null;
-        try {
+			return null;
+		}
+		ASN1InputStream ais1 = null;
+		ASN1InputStream ais2 = null;
+		try {
 
-            List<String> urls = new ArrayList<String>();
-            final ByteArrayInputStream bais = new ByteArrayInputStream(crlDistributionPointsValue);
-            ais1 = new ASN1InputStream(bais);
-            final DEROctetString oct = (DEROctetString) (ais1.readObject());
-            ais2 = new ASN1InputStream(oct.getOctets());
-            final ASN1Sequence seq = (ASN1Sequence) ais2.readObject();
-            final CRLDistPoint distPoint = CRLDistPoint.getInstance(seq);
-            final DistributionPoint[] distributionPoints = distPoint.getDistributionPoints();
-            for (final DistributionPoint distributionPoint : distributionPoints) {
+			List<String> urls = new ArrayList<String>();
+			final ByteArrayInputStream bais = new ByteArrayInputStream(crlDistributionPointsValue);
+			ais1 = new ASN1InputStream(bais);
+			final DEROctetString oct = (DEROctetString) (ais1.readObject());
+			ais2 = new ASN1InputStream(oct.getOctets());
+			final ASN1Sequence seq = (ASN1Sequence) ais2.readObject();
+			final CRLDistPoint distPoint = CRLDistPoint.getInstance(seq);
+			final DistributionPoint[] distributionPoints = distPoint.getDistributionPoints();
+			for (final DistributionPoint distributionPoint : distributionPoints) {
 
-                final DistributionPointName distributionPointName = distributionPoint.getDistributionPoint();
-                if (DistributionPointName.FULL_NAME != distributionPointName.getType()) {
+				final DistributionPointName distributionPointName = distributionPoint.getDistributionPoint();
+				if (DistributionPointName.FULL_NAME != distributionPointName.getType()) {
 
-                    continue;
-                }
-                final GeneralNames generalNames = (GeneralNames) distributionPointName.getName();
-                final GeneralName[] names = generalNames.getNames();
-                for (final GeneralName name : names) {
+					continue;
+				}
+				final GeneralNames generalNames = (GeneralNames) distributionPointName.getName();
+				final GeneralName[] names = generalNames.getNames();
+				for (final GeneralName name : names) {
 
-                    if (name.getTagNo() != GeneralName.uniformResourceIdentifier) {
+					if (name.getTagNo() != GeneralName.uniformResourceIdentifier) {
 
-                        LOG.debug("Not a uniform resource identifier");
-                        continue;
-                    }
-                    final String urlStr;
-                    if (name.toASN1Primitive() instanceof DERTaggedObject) {
+						LOG.debug("Not a uniform resource identifier");
+						continue;
+					}
+					final String urlStr;
+					if (name.toASN1Primitive() instanceof DERTaggedObject) {
 
-                        final DERTaggedObject taggedObject = (DERTaggedObject) name.toASN1Primitive();
-                        final DERIA5String derStr = DERIA5String.getInstance(taggedObject.getObject());
-                        urlStr = derStr.getString();
-                    } else {
+						final DERTaggedObject taggedObject = (DERTaggedObject) name.toASN1Primitive();
+						final DERIA5String derStr = DERIA5String.getInstance(taggedObject.getObject());
+						urlStr = derStr.getString();
+					} else {
 
-                        final DERIA5String derStr = DERIA5String.getInstance(name.toASN1Primitive());
-                        urlStr = derStr.getString();
-                    }
-                    urls.add(urlStr);
-                }
-                if (preferredProtocol != null) {
+						final DERIA5String derStr = DERIA5String.getInstance(name.toASN1Primitive());
+						urlStr = derStr.getString();
+					}
+					urls.add(urlStr);
+				}
+			}
+			if (preferredProtocol != null) {
 
-                    for (final String url : urls) {
+				for (final String url : urls) {
 
-                        if (url.startsWith(preferredProtocol)) {
-                            return url;
-                        }
-                    }
-                }
-                if (urls.size() > 0) {
+					if (url.startsWith(preferredProtocol)) {
+						return url;
+					}
+				}
+			}
+			if (urls.size() > 0) {
 
-                    final String url = urls.get(0);
-                    return url;
-                }
-            }
-            return null;
-        } catch (IOException e) {
+				final String url = urls.get(0);
+				return url;
+			}
+			return null;
+		} catch (IOException e) {
 
-            throw new DSSException(e);
-        } finally {
+			throw new DSSException(e);
+		} finally {
 
-            DSSUtils.closeQuietly(ais1);
-            DSSUtils.closeQuietly(ais2);
-        }
-    }
+			DSSUtils.closeQuietly(ais1);
+			DSSUtils.closeQuietly(ais2);
+		}
+	}
 }
