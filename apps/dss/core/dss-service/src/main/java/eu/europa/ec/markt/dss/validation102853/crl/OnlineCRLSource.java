@@ -44,21 +44,28 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.https.CommonsDataLoader;
 import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.Protocol;
 
 /**
  * Online CRL repository. This CRL repository implementation will download the CRLs from the given CRL URIs.
  * Note that for the HTTP kind of URLs you can provide dedicated data loader. If the data loader is not provided the standard load from URI is
  * provided. For FTP the standard load from URI is provided. For LDAP kind of URLs an internal implementation using apache-ldap-api is provided.
  *
- * @version $Revision: 4208 $ - $Date: 2014-07-08 09:19:31 +0200 (Tue, 08 Jul 2014) $
+ * @version $Revision: 4211 $ - $Date: 2014-07-08 09:53:52 +0200 (Tue, 08 Jul 2014) $
  */
 
 public class OnlineCRLSource extends CommonCRLSource {
 
 	private static final Logger LOG = LoggerFactory.getLogger(OnlineCRLSource.class);
 
-	private String preferredProtocol;
+	/**
+	 * If the multiple protocols are available to retrieve the revocation data, then that indicated by this variable is used first.
+	 */
+	private Protocol preferredProtocol;
 
+	/**
+	 * The component that allows to retrieve the data using any protocol: HTTP, HTTPS, FTP, LDAP.
+	 */
 	private DataLoader dataLoader;
 
 	/**
@@ -72,7 +79,7 @@ public class OnlineCRLSource extends CommonCRLSource {
 	/**
 	 * This constructor allows to set the {@code DataLoader}.
 	 *
-	 * @param dataLoader
+	 * @param dataLoader the component that allows to retrieve the data using any protocol: HTTP, HTTPS, FTP, LDAP.
 	 */
 	public OnlineCRLSource(final DataLoader dataLoader) {
 
@@ -83,9 +90,9 @@ public class OnlineCRLSource extends CommonCRLSource {
 	 * This method allows to set the preferred protocol. This parameter is used used when retrieving the CRL to choose the canal.<br/>
 	 * Possible values are: http, ldap, ftp
 	 *
-	 * @param preferredProtocol
+	 * @param preferredProtocol {@code Protocol} that is used first to retrieve the revocation data
 	 */
-	public void setPreferredProtocol(final String preferredProtocol) {
+	public void setPreferredProtocol(final Protocol preferredProtocol) {
 
 		this.preferredProtocol = preferredProtocol;
 	}
@@ -93,11 +100,11 @@ public class OnlineCRLSource extends CommonCRLSource {
 	/**
 	 * Set the DataLoader to use for query the CRL server
 	 *
-	 * @param urlDataLoader
+	 * @param dataLoader the component that allows to retrieve the data using any protocol: HTTP, HTTPS, FTP, LDAP.
 	 */
-	public void setDataLoader(final DataLoader urlDataLoader) {
+	public void setDataLoader(final DataLoader dataLoader) {
 
-		this.dataLoader = urlDataLoader;
+		this.dataLoader = dataLoader;
 	}
 
 	@Override
@@ -131,13 +138,12 @@ public class OnlineCRLSource extends CommonCRLSource {
 	/**
 	 * Download a CRL from any location with any protocol.
 	 *
-	 * @param downloadUrl
-	 * @return
+	 * @param downloadUrl The string representation on an URL to be used to obtain the revocation data through the CRL canal.
+	 * @return {@code X509CRL}
 	 */
 	private X509CRL downloadCrl(final String downloadUrl) {
 
 		if (downloadUrl != null) {
-
 			try {
 
 				final byte[] bytes = dataLoader.get(downloadUrl);
@@ -157,7 +163,7 @@ public class OnlineCRLSource extends CommonCRLSource {
 	 * Gives back the CRL URI meta-data found within the given X509 certificate.
 	 *
 	 * @param certificateToken the X509 certificate.
-	 * @return the CRL URI, or <code>null</code> if the extension is not present.
+	 * @return the CRL URI, or {@code null} if the extension is not present.
 	 * @throws DSSException
 	 */
 	public String getCrlUrl(final CertificateToken certificateToken) throws DSSException {
@@ -213,7 +219,7 @@ public class OnlineCRLSource extends CommonCRLSource {
 
 				for (final String url : urls) {
 
-					if (url.startsWith(preferredProtocol)) {
+					if (preferredProtocol.isTheSame(url)) {
 						return url;
 					}
 				}
