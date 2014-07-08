@@ -534,27 +534,30 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	@Override
 	public SignatureProductionPlace getSignatureProductionPlace() {
 
-		final NodeList list = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_PRODUCTION_PLACE);
-		if (list.getLength() == 0) {
+		final NodeList nodeList = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_PRODUCTION_PLACE);
+		if (nodeList.getLength() == 0 || nodeList.item(0) == null) {
 
 			return null;
 		}
 		final SignatureProductionPlace signatureProductionPlace = new SignatureProductionPlace();
+		final NodeList list = nodeList.item(0).getChildNodes();
 		for (int ii = 0; ii < list.getLength(); ii++) {
 
-			final String name = list.item(ii).getNodeName();
+			final Node item = list.item(ii);
+			final String name = item.getLocalName();
+			final String nodeValue = item.getTextContent();
 			if (XPathQueryHolder.XMLE_CITY.equals(name)) {
 
-				signatureProductionPlace.setCity(name);
+				signatureProductionPlace.setCity(nodeValue);
 			} else if (XPathQueryHolder.XMLE_STATE_OR_PROVINCE.equals(name)) {
 
-				signatureProductionPlace.setStateOrProvince(name);
+				signatureProductionPlace.setStateOrProvince(nodeValue);
 			} else if (XPathQueryHolder.XMLE_POSTAL_CODE.equals(name)) {
 
-				signatureProductionPlace.setPostalCode(name);
+				signatureProductionPlace.setPostalCode(nodeValue);
 			} else if (XPathQueryHolder.XMLE_COUNTRY_NAME.equals(name)) {
 
-				signatureProductionPlace.setCountryName(name);
+				signatureProductionPlace.setCountryName(nodeValue);
 			}
 		}
 		return signatureProductionPlace;
@@ -883,29 +886,34 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 			canonicalizationMethod = DEFAULT_TIMESTAMP_CREATION_CANONICALIZATION_METHOD;
 		}
 
-		//prepare list of references
-		List<Element> references = getSignatureReferences();
-
 		//get include elements from signature
 		List<TimestampInclude> includes = timestampToken.getTimestampIncludes();
 
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
 		for (TimestampInclude include : includes) {
 			//retrieve reference element
 			//-> go through references and check for one whose URI matches the URI of include
-			for (Element reference : references) {
-				if (reference.getAttribute("Id").equals(include.getURI())) {
-					byte[] canonicalizedElement = DSSXMLUtils.canonicalizeSubtree(canonicalizationMethod, reference);
+			for (final Reference reference : references) {
+				String id = include.getURI();
+
+				if (reference.getId().equals(id)) {
+					//byte[] canonicalizedElement = DSSXMLUtils.canonicalizeSubtree(canonicalizationMethod, reference);
 					try {
-						buffer.write(canonicalizedElement);
+						final byte[] referencedBytes = reference.getReferencedBytes();
+						//					byte[] canonicalizedElement = DSSXMLUtils.canonicalizeSubtree(canonicalizationMethod, referenceElement);
+						outputStream.write(referencedBytes);
 					} catch (IOException e) {
-						throw new DSSException("Failed in digests concatenation " + e);
+						throw new DSSException(e);
+					} catch (ReferenceNotInitializedException e) {
+						throw new DSSException(e);
+					} catch (XMLSignatureException e) {
+						throw new DSSException(e);
 					}
 				}
 			}
 		}
-		byte[] octetStream = buffer.toByteArray();
+		byte[] octetStream = outputStream.toByteArray();
 
 		return octetStream;
 	}
@@ -1011,7 +1019,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	public boolean checkTimestampTokenIncludes(TimestampToken timestampToken) {
 		List<TimestampInclude> timestampIncludes = timestampToken.getTimestampIncludes();
 		for (TimestampInclude timestampInclude : timestampIncludes) {
-			if (timestampInclude.isReferencedData()) {
+			if (!timestampInclude.isReferencedData()) {
 				return false;
 			}
 		}
