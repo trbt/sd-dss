@@ -38,6 +38,7 @@ import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.ResourceLoader;
 import eu.europa.ec.markt.dss.exception.DSSCannotFetchDataException;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.validation102853.loader.Protocol;
 
 public class FileCacheDataLoader extends CommonsDataLoader {
 
@@ -105,7 +106,7 @@ public class FileCacheDataLoader extends CommonsDataLoader {
 	protected boolean isNetworkProtocol(final String urlString) {
 
 		final String normalizedUrl = urlString.trim().toLowerCase();
-		return normalizedUrl.startsWith(HTTP) || normalizedUrl.startsWith(LDAP) || normalizedUrl.startsWith(FTP);
+		return Protocol.isHttpUrl(normalizedUrl) || Protocol.isLdapUrl(normalizedUrl) || Protocol.isFtpUrl(normalizedUrl);
 	}
 
 	private File getCacheFile(final String fileName) {

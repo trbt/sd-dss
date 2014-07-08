@@ -27,16 +27,10 @@ import eu.europa.ec.markt.dss.exception.DSSCannotFetchDataException;
 /**
  * Component that allows to retrieve the data using any protocol: HTTP, HTTPS, FTP, LDAP.
  *
- * @version $Revision: 3710 $ - $Date: 2014-04-10 11:09:53 +0200 (Thu, 10 Apr 2014) $
+ * @version $Revision: 4209 $ - $Date: 2014-07-08 09:29:30 +0200 (Tue, 08 Jul 2014) $
  */
 
 public interface DataLoader extends Serializable {
-
-    public static final String FILE = "file";
-    public static final String HTTP = "http";
-    public static final String HTTPS = "https";
-    public static final String LDAP = "ldap";
-    public static final String FTP = "ftp";
 
     /**
      * Execute a HTTP GET operation

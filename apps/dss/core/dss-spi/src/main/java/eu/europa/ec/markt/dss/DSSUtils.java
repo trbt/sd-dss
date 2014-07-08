@@ -121,6 +121,7 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.utils.Base64;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
+import eu.europa.ec.markt.dss.validation102853.loader.Protocol;
 
 public final class DSSUtils {
 
@@ -910,7 +911,7 @@ public final class DSSUtils {
 				final DERIA5String str = (DERIA5String) ((DERTaggedObject) gn.toASN1Primitive()).getObject();
 				accessLocation = str.getString();
 				// The HTTP protocol is preferred.
-				if (accessLocation.startsWith(DataLoader.HTTP)) {
+				if (Protocol.isHttpUrl(accessLocation)) {
 					// LOG.debug("access location: " + accessLocation);
 					break;
 				}
