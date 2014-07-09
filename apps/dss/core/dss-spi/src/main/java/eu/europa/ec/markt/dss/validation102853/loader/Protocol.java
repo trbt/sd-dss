@@ -73,7 +73,7 @@ public enum Protocol {
 	 * @return true or false
 	 */
 	public static boolean isFileUrl(final String urlString) {
-		return urlString.startsWith(FILE.name);
+		return urlString !=null && urlString.startsWith(FILE.name);
 	}
 
 	/**
@@ -83,7 +83,7 @@ public enum Protocol {
 	 * @return true or false
 	 */
 	public static boolean isHttpUrl(final String urlString) {
-		return urlString.startsWith(HTTP.name);
+		return urlString !=null && urlString.startsWith(HTTP.name);
 	}
 
 	/**
@@ -93,7 +93,7 @@ public enum Protocol {
 	 * @return true or false
 	 */
 	public static boolean isFtpUrl(final String urlString) {
-		return urlString.startsWith(FTP.name);
+		return urlString !=null && urlString.startsWith(FTP.name);
 	}
 
 	/**
@@ -103,6 +103,39 @@ public enum Protocol {
 	 * @return true or false
 	 */
 	public static boolean isLdapUrl(final String urlString) {
-		return urlString.startsWith(LDAP.name);
+		return urlString !=null && urlString.startsWith(LDAP.name);
+	}
+
+	/**
+	 * Indicates if the given URL uses the current protocol
+	 *
+	 * @param urlString to be checked
+	 * @return true or false
+	 */
+	public boolean isTheSame(final String urlString) {
+
+		return urlString != null && urlString.startsWith(name);
+	}
+
+	/**
+	 * This method try to retrieve the protocol indicated by the given URL string.
+	 *
+	 * @param urlString to be analysed
+	 * @return found {@code Protocol} or {@code null}
+	 */
+	public static Protocol getFrom(final String urlString) {
+
+		if (HTTP.isTheSame(urlString)) {
+			return HTTP;
+		} else if (HTTPS.isTheSame(urlString)) {
+			return HTTPS;
+		} else if (LDAP.isTheSame(urlString)) {
+			return LDAP;
+		} else if (FTP.isTheSame(urlString)) {
+			return FTP;
+		} else if (FILE.isTheSame(urlString)) {
+			return FILE;
+		}
+		return null;
 	}
 }
