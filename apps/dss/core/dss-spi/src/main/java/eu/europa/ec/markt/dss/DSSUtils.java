@@ -151,17 +151,6 @@ public final class DSSUtils {
 	public static final int INDEX_NOT_FOUND = -1;
 
 	/**
-	 * Chunk separator per RFC 2045 section 2.1.
-	 * <p/>
-	 * <p>
-	 * N.B. The next major release may break compatibility and make this field private.
-	 * </p>
-	 *
-	 * @see <a href="http://www.ietf.org/rfc/rfc2045.txt">RFC 2045 section 2.1</a>
-	 */
-	static final byte[] CHUNK_SEPARATOR = {'\r', '\n'};
-
-	/**
 	 * The empty String {@code ""}.
 	 *
 	 * @since 2.0
@@ -2372,17 +2361,13 @@ public final class DSSUtils {
 		final HashMap<String, String> secondStringStringHashMap = get(secondX500Principal);
 		final boolean containsAll = firstStringStringHashMap.entrySet().containsAll(secondStringStringHashMap.entrySet());
 
-		//        final String firstRfc2253Name = firstX500Principal.getName(X500Principal.RFC2253);
-		//        final String secondRfc2253Name = secondX500Principal.getName(X500Principal.RFC2253);
-		//        if (firstRfc2253Name.equals(secondRfc2253Name)) {
-		//            return true;
-		//        }
-		//        final String firstCanonicalName = firstX500Principal.getName(X500Principal.CANONICAL);
-		//        final String secondCanonicalName = secondX500Principal.getName(X500Principal.CANONICAL);
-		//        final boolean equals = firstCanonicalName.equals(secondCanonicalName);
 		return containsAll;
 	}
 
+	/**
+	 * @param x509SubjectName
+	 * @return
+	 */
 	public static X500Principal getX500Principal(String x509SubjectName) {
 
 		final X500Principal x500Principal = new X500Principal(x509SubjectName);
@@ -2400,6 +2385,18 @@ public final class DSSUtils {
 		final X500Principal x500Principal = x509Certificate.getSubjectX500Principal();
 		final String utf8Name = getUtf8String(x500Principal);
 		// System.out.println(">>> " + x500Principal.getName() + "-------" + utf8Name);
+		final X500Principal x500PrincipalNormalized = new X500Principal(utf8Name);
+		return x500PrincipalNormalized;
+	}
+
+
+	/**
+	 * @param x500Principal to be normalized
+	 * @return {@code X500Principal} normalized
+	 */
+	public static X500Principal getX500Principal(final X500Principal x500Principal) {
+
+		final String utf8Name = getUtf8String(x500Principal);
 		final X500Principal x500PrincipalNormalized = new X500Principal(utf8Name);
 		return x500PrincipalNormalized;
 	}
@@ -2869,7 +2866,7 @@ public final class DSSUtils {
 				input.close();
 				input = new ASN1InputStream(content);
 				final ASN1Sequence seq = (ASN1Sequence) input.readObject();
-			    /* Sequence of QCStatement */
+				/* Sequence of QCStatement */
 				for (int ii = 0; ii < seq.size(); ii++) {
 
 					final QCStatement statement = QCStatement.getInstance(seq.getObjectAt(ii));
@@ -2898,6 +2895,22 @@ public final class DSSUtils {
 		} catch (IOException e) {
 			throw new DSSException(e);
 		}
+	}
+
+	/**
+	 * Returns the file extension based on the position of the '.' in the path. The paths as "xxx.y/toto" are not handled.
+	 *
+	 * @param path to be analysed
+	 * @return the file extension or null
+	 */
+	public static String getFileExtension(final String path) {
+
+		String extension = null;
+		int lastIndexOf = path.lastIndexOf('.');
+		if (lastIndexOf > 0) {
+			extension = path.substring(lastIndexOf + 1);
+		}
+		return extension;
 	}
 }
 

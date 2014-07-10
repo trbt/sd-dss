@@ -23,13 +23,17 @@
  * Contractor: ARHS-Developments
  *
  * $HeadURL: http://forge.aris-lux.lan/svn/dgmarktdss/trunk/apps/dss/core/dss-spi/src/main/java/eu/europa/ec/markt/dss/signature/MimeType.java $
- * $Revision: 4058 $
- * $Date: 2014-06-07 20:31:53 +0200 (Sat, 07 Jun 2014) $
+ * $Revision: 4224 $
+ * $Date: 2014-07-10 06:56:48 +0200 (Thu, 10 Jul 2014) $
  * $Author: bielecro $
  */
 package eu.europa.ec.markt.dss.signature;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import eu.europa.ec.markt.dss.DSSUtils;
 
 /**
  * TODO
@@ -37,13 +41,21 @@ import java.io.File;
  * <p> DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
- * @version $Revision: 4058 $ - $Date: 2014-06-07 20:31:53 +0200 (Sat, 07 Jun 2014) $
+ * @version $Revision: 4224 $ - $Date: 2014-07-10 06:56:48 +0200 (Thu, 10 Jul 2014) $
  */
 public enum MimeType {
 
 	BINARY("application/octet-stream"), XML("text/xml"), PDF("application/pdf"), PKCS7("application/pkcs7-signature"), ASICS("application/vnd.etsi.asic-s+zip"), TEXT("text/plain");
 
 	private String code;
+
+	private static Map<String, MimeType> fileExtensions = new HashMap<String, MimeType>() {{
+		put("xml", XML);
+		put("pdf", PDF);
+		put("asics", ASICS);
+		put("scs", ASICS);
+		put("txt", TEXT);
+	}};
 
 	/**
 	 * The default constructor for MimeTypes.
@@ -61,18 +73,13 @@ public enum MimeType {
 
 	public static MimeType fromFileName(final String name) {
 
-		final String lowerCaseName = name.toLowerCase();
-		if (lowerCaseName.endsWith(".xml")) {
-			return XML;
-		} else if (lowerCaseName.endsWith(".pdf")) {
-			return PDF;
-		} else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs")) {
-			return ASICS;
-		} else if (lowerCaseName.endsWith(".txt")) {
-			return TEXT;
-		} else {
-			return BINARY;
+		final String inLowerCaseName = name.toLowerCase();
+		final String fileExtension = DSSUtils.getFileExtension(inLowerCaseName);
+		final MimeType mimeType = fileExtensions.get(fileExtension);
+		if (mimeType != null) {
+			return mimeType;
 		}
+		return BINARY;
 	}
 
 	/**
@@ -83,19 +90,9 @@ public enum MimeType {
 	 */
 	public static MimeType fromFile(final File file) {
 
-		final String lowerCaseName = file.getName().toLowerCase();
-		if (lowerCaseName.endsWith(".xml")) {
-			return XML;
-		} else if (lowerCaseName.endsWith(".pdf")) {
-			return PDF;
-		} else if (lowerCaseName.endsWith(".asics") || lowerCaseName.endsWith(".scs") || lowerCaseName.endsWith(".zip") || lowerCaseName.endsWith(".7z")) {
-
-			return ASICS;
-		} else if (lowerCaseName.endsWith(".txt")) {
-			return TEXT;
-		} else {
-			return BINARY;
-		}
+		final String fileName = file.getName();
+		final MimeType mimeType = fromFileName(fileName);
+		return mimeType;
 	}
 
 	public static MimeType fromCode(final String mimeTypeString) {
@@ -107,5 +104,15 @@ public enum MimeType {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * This method allows to define a new relationship between a file extension and a {@code MimeType}.
+	 *
+	 * @param extension to be defined. Example: "txt", note that there is no point before the extension name.
+	 */
+	public void defineFileExtension(final String extension) {
+
+		fileExtensions.put(extension, this);
 	}
 }
