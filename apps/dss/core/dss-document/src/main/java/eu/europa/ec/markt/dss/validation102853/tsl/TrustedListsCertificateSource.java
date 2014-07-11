@@ -461,7 +461,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 					LOG.trace("------> " + trustService.getStatus());
 				}
 
-					for (final Object digitalIdentity : trustService.getDigitalIdentity()) {
+				for (final Object digitalIdentity : trustService.getDigitalIdentity()) {
 
 					try {
 
@@ -485,8 +485,8 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 						}
 					} catch (DSSException e) {
 
-					// There is a problem when loading the certificate, we continue with the next one.
-					LOG.warn(e.getLocalizedMessage());
+						// There is a problem when loading the certificate, we continue with the next one.
+						LOG.warn(e.getLocalizedMessage());
 					}
 				}
 			}

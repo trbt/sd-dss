@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2014 European Commission, Directorate-General Internal Market and Services (DG MARKT), B-1049 Bruxelles/Brussel
  *
- * Developed by: 2014 ARHS Developments S.A. (rue Nicolas Bove 2B, L-1253 Luxembourg) http://www.arhs-developments.com
+ * Developed by: 2014 ARHS Developments S.A. (rue Nicolas Bové 2B, L-1253 Luxembourg) http://www.arhs-developments.com
  *
  * This file is part of the "DSS - Digital Signature Services" project.
  *

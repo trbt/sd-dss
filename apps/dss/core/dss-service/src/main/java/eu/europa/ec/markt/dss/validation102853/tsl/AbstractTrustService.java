@@ -117,9 +117,8 @@ abstract class AbstractTrustService {
 	 */
 	List<Object> getDigitalIdentity() {
 
-
-			final List<Object> certs = new ArrayList<Object>();
-			for (final DigitalIdentityType digitalIdentity : getServiceDigitalIdentity().getDigitalId()) {
+		final List<Object> certs = new ArrayList<Object>();
+		for (final DigitalIdentityType digitalIdentity : getServiceDigitalIdentity().getDigitalId()) {
 
 			try {
 				final byte[] x509CertificateBytes = digitalIdentity.getX509Certificate();
@@ -140,8 +139,8 @@ abstract class AbstractTrustService {
 			} catch (DSSException e) {
 				LOG.warn(e.getLocalizedMessage());
 			}
-			}
-			return certs;
+		}
+		return certs;
 	}
 
 	/**
