@@ -1709,7 +1709,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 			case CAdES_BASELINE_LTA:
 				dataForProfilePresent = unsignedAttributes.get(OID.id_aa_ets_archiveTimestampV3) != null;
 				// break omitted purposely
-			case CADES_101733_A:
+			case CAdES_101733_A:
 				if (signatureLevel != SignatureLevel.CAdES_BASELINE_LTA) {
 					dataForProfilePresent &= unsignedAttributes.get(OID.id_aa_ets_archiveTimestampV2) != null;
 				}
@@ -1729,13 +1729,13 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 				final int ltInfoSize = crlStoreSize + ocspStoreSize + basicOcspStoreSize;
 				dataForProfilePresent &= (ltInfoSize > 0);
 				// break omitted purposely
-			case CADES_101733_X:
+			case CAdES_101733_X:
 				if (!signatureLevel.toString().contains("BASELINE")) {
 					dataForProfilePresent &= (unsignedAttributes.get(PKCSObjectIdentifiers.id_aa_ets_certCRLTimestamp) != null || unsignedAttributes
 						  .get(PKCSObjectIdentifiers.id_aa_ets_escTimeStamp) != null);
 				}
 				// break omitted purposely
-			case CADES_101733_C:
+			case CAdES_101733_C:
 				if (!signatureLevel.toString().contains("BASELINE")) {
 					dataForProfilePresent &= unsignedAttributes.get(PKCSObjectIdentifiers.id_aa_ets_certificateRefs) != null;
 					dataForProfilePresent &= isDataForSignatureLevelPresent(SignatureLevel.CAdES_BASELINE_T);
@@ -1755,6 +1755,6 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 	}
 
 	public SignatureLevel[] getSignatureLevels() {
-		return new SignatureLevel[]{SignatureLevel.CAdES_BASELINE_B, SignatureLevel.CAdES_BASELINE_T, SignatureLevel.CADES_101733_C, SignatureLevel.CADES_101733_X, SignatureLevel.CAdES_BASELINE_LT, SignatureLevel.CADES_101733_A, SignatureLevel.CAdES_BASELINE_LTA};
+		return new SignatureLevel[]{SignatureLevel.CAdES_BASELINE_B, SignatureLevel.CAdES_BASELINE_T, SignatureLevel.CAdES_101733_C, SignatureLevel.CAdES_101733_X, SignatureLevel.CAdES_BASELINE_LT, SignatureLevel.CAdES_101733_A, SignatureLevel.CAdES_BASELINE_LTA};
 	}
 }
