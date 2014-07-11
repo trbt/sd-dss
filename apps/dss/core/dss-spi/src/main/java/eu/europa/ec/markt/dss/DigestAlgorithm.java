@@ -33,7 +33,7 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Supported Algorithms
  *
- * @version $Revision: 3966 $ - $Date: 2014-05-25 19:32:19 +0200 (Sun, 25 May 2014) $
+ * @version $Revision: 4211 $ - $Date: 2014-07-08 09:53:52 +0200 (Tue, 08 Jul 2014) $
  */
 public enum DigestAlgorithm {
 
@@ -67,32 +67,29 @@ public enum DigestAlgorithm {
 		private final static Map<String, DigestAlgorithm> ALGORITHMS = registerAlgorithms();
 
 		private static Map<ASN1ObjectIdentifier, DigestAlgorithm> registerOIDAlgorithms() {
+
 			final Map<ASN1ObjectIdentifier, DigestAlgorithm> map = new HashMap<ASN1ObjectIdentifier, DigestAlgorithm>();
-
-			for (final DigestAlgorithm digestAlgo : values()) {
-				map.put(digestAlgo.oid, digestAlgo);
+			for (final DigestAlgorithm digestAlgorithm : values()) {
+				map.put(digestAlgorithm.oid, digestAlgorithm);
 			}
-
 			return map;
 		}
 
 		private static Map<String, DigestAlgorithm> registerXMLAlgorithms() {
+
 			final Map<String, DigestAlgorithm> map = new HashMap<String, DigestAlgorithm>();
-
-			for (final DigestAlgorithm digestAlgo : values()) {
-				map.put(digestAlgo.xmlId, digestAlgo);
+			for (final DigestAlgorithm digestAlgorithm : values()) {
+				map.put(digestAlgorithm.xmlId, digestAlgorithm);
 			}
-
 			return map;
 		}
 
 		private static Map<String, DigestAlgorithm> registerAlgorithms() {
+
 			final Map<String, DigestAlgorithm> map = new HashMap<String, DigestAlgorithm>();
-
-			for (final DigestAlgorithm digestAlgo : values()) {
-				map.put(digestAlgo.name, digestAlgo);
+			for (final DigestAlgorithm digestAlgorithm : values()) {
+				map.put(digestAlgorithm.name, digestAlgorithm);
 			}
-
 			return map;
 		}
 	}
@@ -104,6 +101,7 @@ public enum DigestAlgorithm {
 	 * @return
 	 */
 	public static DigestAlgorithm forName(final String name) {
+
 		final String c14nName = DSSUtils.replaceStrStr(name, "-", "");
 		final DigestAlgorithm algorithm = Registry.ALGORITHMS.get(c14nName);
 		if (algorithm == null) {
@@ -165,6 +163,7 @@ public enum DigestAlgorithm {
 	 * @return
 	 */
 	public static DigestAlgorithm forXML(final String xmlName) {
+
 		final DigestAlgorithm algorithm = Registry.XML_ALGORITHMS.get(xmlName);
 		if (algorithm == null) {
 			throw new DSSException("Unsupported algorithm: " + xmlName);
@@ -189,6 +188,7 @@ public enum DigestAlgorithm {
 	}
 
 	private DigestAlgorithm(final String name, final String oid, final String xmlId) {
+
 		this.name = name;
 		this.oid = new ASN1ObjectIdentifier(oid);
 		this.xmlId = xmlId;
@@ -221,6 +221,7 @@ public enum DigestAlgorithm {
 	 * @return the AlgorithmIdentifier
 	 */
 	public AlgorithmIdentifier getAlgorithmIdentifier() {
+
 	    /*
 	     * The recommendation (cf. RFC 3380 section 2.1) is to omit the parameter for SHA-1, but some implementations still expect a
 		 * NULL there. Therefore we always include a NULL parameter even with SHA-1, despite the recommendation, because the RFC
