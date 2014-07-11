@@ -32,8 +32,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.w3c.dom.Element;
 
 import eu.europa.ec.markt.dss.DSSUtils;
-import eu.europa.ec.markt.dss.exception.DSSEncodingException;
-import eu.europa.ec.markt.dss.exception.DSSEncodingException.MSG;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.validation102853.condition.CompositeCondition;
@@ -119,11 +117,11 @@ abstract class AbstractTrustService {
 	 */
 	List<Object> getDigitalIdentity() {
 
-		try {
 
 			final List<Object> certs = new ArrayList<Object>();
 			for (final DigitalIdentityType digitalIdentity : getServiceDigitalIdentity().getDigitalId()) {
 
+			try {
 				final byte[] x509CertificateBytes = digitalIdentity.getX509Certificate();
 				if (x509CertificateBytes != null) {
 
@@ -139,13 +137,11 @@ abstract class AbstractTrustService {
 						certs.add(x500Principal);
 					}
 				}
+			} catch (DSSException e) {
+				LOG.warn(e.getLocalizedMessage());
+			}
 			}
 			return certs;
-		} catch (DSSException e) {
-
-			LOG.debug(e.getMessage(), e);
-			throw new DSSEncodingException(MSG.CERTIFICATE_CANNOT_BE_READ, e);
-		}
 	}
 
 	/**

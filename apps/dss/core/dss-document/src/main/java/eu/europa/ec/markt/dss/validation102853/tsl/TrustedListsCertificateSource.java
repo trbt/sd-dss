@@ -43,7 +43,6 @@ import org.w3c.dom.Document;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
-import eu.europa.ec.markt.dss.exception.DSSEncodingException;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNotApplicableMethodException;
 import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
@@ -461,9 +460,10 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 					LOG.trace("------> " + trustService.getType());
 					LOG.trace("------> " + trustService.getStatus());
 				}
-				try {
 
 					for (final Object digitalIdentity : trustService.getDigitalIdentity()) {
+
+					try {
 
 						X509Certificate x509Certificate = null;
 						if (digitalIdentity instanceof X509Certificate) {
@@ -483,11 +483,11 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
 							addCertificate(x509Certificate, trustService, trustServiceProvider, trustStatusList.isWellSigned());
 						}
-					}
-				} catch (DSSEncodingException e) {
+					} catch (DSSException e) {
 
 					// There is a problem when loading the certificate, we continue with the next one.
 					LOG.warn(e.getLocalizedMessage());
+					}
 				}
 			}
 		}

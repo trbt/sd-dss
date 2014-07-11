@@ -2368,12 +2368,16 @@ public final class DSSUtils {
 	 * @param x509SubjectName
 	 * @return
 	 */
-	public static X500Principal getX500Principal(String x509SubjectName) {
+	public static X500Principal getX500Principal(String x509SubjectName) throws DSSException {
 
-		final X500Principal x500Principal = new X500Principal(x509SubjectName);
-		final String utf8String = getUtf8String(x500Principal);
-		final X500Principal normalizedX500Principal = new X500Principal(utf8String);
-		return normalizedX500Principal;
+		try {
+			final X500Principal x500Principal = new X500Principal(x509SubjectName);
+			final String utf8String = getUtf8String(x500Principal);
+			final X500Principal normalizedX500Principal = new X500Principal(utf8String);
+			return normalizedX500Principal;
+		} catch (IllegalArgumentException e) {
+			throw new DSSException(e);
+		}
 	}
 
 	/**
