@@ -47,209 +47,209 @@ import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 import eu.europa.ec.markt.dss.validation102853.RevocationToken;
 import eu.europa.ec.markt.dss.validation102853.TokenValidationExtraInfo;
 
+/**
+ * This class represents a CRL and provides the information about its validity.
+ */
 public class CRLToken extends RevocationToken {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CRLToken.class);
+	private static final Logger LOG = LoggerFactory.getLogger(CRLToken.class);
 
-    private final CRLValidity crlValidity;
+	/**
+	 * The reference to the related {@code CRLValidity}
+	 */
+	private final CRLValidity crlValidity;
 
-    private String sourceURL;
+	/**
+	 * The Url which was used to obtain the CRL.
+	 */
+	private String sourceURL;
 
-    /**
-     * The constructor to be used when the issuing certificate is unknown where creating the revocation token. It can happened when extracting data from signature.
-     *
-     * @param crlValidity
-     */
-    public CRLToken(final CertificateToken certificateToken, final CRLValidity crlValidity) {
+	/**
+	 * The constructor to be used with the certificate which is managed by the CRL and the {@code CRLValidity}.
+	 *
+	 * @param certificateToken the {@code CertificateToken} which is managed by this CRL.
+	 * @param crlValidity      {@code CRLValidity} containing the information about the validity of the CRL
+	 */
+	public CRLToken(final CertificateToken certificateToken, final CRLValidity crlValidity) {
 
-        ensureNotNull(crlValidity);
-        this.crlValidity = crlValidity;
-        setDefaultValues();
-        setRevocationStatus(certificateToken);
-    }
+		ensureNotNull(crlValidity);
+		this.crlValidity = crlValidity;
+		setDefaultValues();
+		setRevocationStatus(certificateToken);
+		LOG.debug("+CRLToken");
+	}
 
-    private void ensureNotNull(final CRLValidity crlValidity) {
+	private void ensureNotNull(final CRLValidity crlValidity) {
 
-        if (crlValidity == null) {
+		if (crlValidity == null) {
 
-            throw new DSSNullException(CRLValidity.class);
-        }
-        if (crlValidity.x509CRL == null) {
+			throw new DSSNullException(CRLValidity.class);
+		}
+		if (crlValidity.x509CRL == null) {
 
-            throw new DSSNullException(X509CRL.class);
-        }
-    }
+			throw new DSSNullException(X509CRL.class);
+		}
+	}
 
-    private void setDefaultValues() {
+	private void setDefaultValues() {
 
-        final X509CRL x509crl = crlValidity.x509CRL;
-        final String sigAlgOID = x509crl.getSigAlgOID();
-        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.forOID(sigAlgOID);
-        this.algoUsedToSignToken = signatureAlgorithm;
-        this.issuingTime = x509crl.getThisUpdate();
-        this.nextUpdate = x509crl.getNextUpdate();
-        issuerX500Principal = x509crl.getIssuerX500Principal();
-        this.extraInfo = new TokenValidationExtraInfo();
+		final X509CRL x509crl = crlValidity.x509CRL;
+		final String sigAlgOID = x509crl.getSigAlgOID();
+		final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.forOID(sigAlgOID);
+		this.algoUsedToSignToken = signatureAlgorithm;
+		this.issuingTime = x509crl.getThisUpdate();
+		this.nextUpdate = x509crl.getNextUpdate();
+		issuerX500Principal = x509crl.getIssuerX500Principal();
+		this.extraInfo = new TokenValidationExtraInfo();
 
-        issuerToken = crlValidity.issuerToken;
-        signatureValid = crlValidity.signatureIntact;
-        signatureInvalidityReason = crlValidity.signatureInvalidityReason;
-    }
+		issuerToken = crlValidity.issuerToken;
+		signatureValid = crlValidity.signatureIntact;
+		signatureInvalidityReason = crlValidity.signatureInvalidityReason;
+	}
 
-    private void setRevocationStatus(final CertificateToken certificateToken) {
+	/**
+	 * @param certificateToken the {@code CertificateToken} which is managed by this CRL.
+	 */
+	private void setRevocationStatus(final CertificateToken certificateToken) {
 
-        final CertificateToken issuerToken = certificateToken.getIssuerToken();
-        if (!issuerToken.equals(crlValidity.issuerToken)) {
+		final CertificateToken issuerToken = certificateToken.getIssuerToken();
+		if (!issuerToken.equals(crlValidity.issuerToken)) {
 
-            throw new DSSException("The CRLToken is not signed by the same issuer as the CertificateToken to be verified!");
-        }
+			throw new DSSException("The CRLToken is not signed by the same issuer as the CertificateToken to be verified!");
+		}
 
-        final BigInteger serialNumber = certificateToken.getSerialNumber();
-        X509CRL x509crl = crlValidity.x509CRL;
-        final X509CRLEntry crlEntry = x509crl.getRevokedCertificate(serialNumber);
-        status = null == crlEntry;
-        if (!status) {
+		final BigInteger serialNumber = certificateToken.getSerialNumber();
+		final X509CRL x509crl = crlValidity.x509CRL;
+		final X509CRLEntry crlEntry = x509crl.getRevokedCertificate(serialNumber);
+		status = null == crlEntry;
+		if (!status) {
 
-            revocationDate = crlEntry.getRevocationDate();
+			revocationDate = crlEntry.getRevocationDate();
 
-            final String revocationReason = DSSRevocationUtils.getRevocationReason(crlEntry);
-            reason = revocationReason;
-        }
-    }
+			final String revocationReason = DSSRevocationUtils.getRevocationReason(crlEntry);
+			reason = revocationReason;
+		}
+	}
 
-    /**
-     * @return the x509crl
-     */
-    public X509CRL getX509crl() {
+	/**
+	 * @return the x509crl
+	 */
+	public X509CRL getX509crl() {
 
-        return crlValidity.x509CRL;
-    }
+		return crlValidity.x509CRL;
+	}
 
-    /**
-     * @return the a copy of x509crl as a X509CRLHolder
-     */
-    public X509CRLHolder getX509CrlHolder() {
-        try {
-            final X509CRL x509crl = getX509crl();
-            final TBSCertList tbsCertList = TBSCertList.getInstance(x509crl.getTBSCertList());
-            final AlgorithmIdentifier sigAlgOID = new AlgorithmIdentifier(new ASN1ObjectIdentifier(x509crl.getSigAlgOID()));
-            final byte[] signature = x509crl.getSignature();
-            final X509CRLHolder x509crlHolder = new X509CRLHolder(new CertificateList(new DERSequence(new ASN1Encodable[]{tbsCertList, sigAlgOID, new DERBitString(signature)})));
-            return x509crlHolder;
-        } catch (CRLException e) {
-            throw new DSSException(e);
-        }
-    }
+	/**
+	 * @return the a copy of x509crl as a X509CRLHolder
+	 */
+	public X509CRLHolder getX509CrlHolder() {
 
-    public String getSourceURL() {
+		try {
+			final X509CRL x509crl = getX509crl();
+			final TBSCertList tbsCertList = TBSCertList.getInstance(x509crl.getTBSCertList());
+			final AlgorithmIdentifier sigAlgOID = new AlgorithmIdentifier(new ASN1ObjectIdentifier(x509crl.getSigAlgOID()));
+			final byte[] signature = x509crl.getSignature();
+			final X509CRLHolder x509crlHolder = new X509CRLHolder(new CertificateList(new DERSequence(new ASN1Encodable[]{tbsCertList, sigAlgOID, new DERBitString(signature)})));
+			return x509crlHolder;
+		} catch (CRLException e) {
+			throw new DSSException(e);
+		}
+	}
 
-        return sourceURL;
-    }
+	public String getSourceURL() {
 
-    /**
-     * This sets the revocation data source URL. It is only used in case of {@code OnlineCRLSource}.
-     *
-     * @param sourceURL
-     */
-    public void setSourceURL(final String sourceURL) {
+		return sourceURL;
+	}
 
-        this.sourceURL = sourceURL;
-    }
+	/**
+	 * This sets the revocation data source URL. It is only used in case of {@code OnlineCRLSource}.
+	 *
+	 * @param sourceURL the URL which was used to retrieve this CRL
+	 */
+	public void setSourceURL(final String sourceURL) {
 
-    /**
-     *
-     */
-    private void addInfoNotValidSignature() {
+		this.sourceURL = sourceURL;
+	}
 
-        extraInfo.add("The CRL signature is not valid!");
-    }
+	@Override
+	protected boolean isSignedBy(final CertificateToken issuerToken) {
 
-    /**
-     *
-     */
-    private void addInfoNoKeyUsageExtension() {
+		throw new DSSNotApplicableMethodException(this.getClass());
+	}
 
-        extraInfo.add("No KeyUsage extension for CRL issuing certificate!");
-    }
+	/**
+	 * This method returns the DSS abbreviation of the CRLToken. It is used for debugging purpose.
+	 *
+	 * @return the DSS abbreviation of the CRLToken
+	 */
+	public String getAbbreviation() {
 
-    @Override
-    protected boolean isSignedBy(final CertificateToken issuerToken) {
+		return "CRLToken[" + (issuingTime == null ? "?" : DSSUtils.formatInternal(issuingTime)) + ", signedBy=" + (issuerToken == null ? "?" : issuerToken
+			  .getDSSIdAsString()) + "]";
+	}
 
-        throw new DSSNotApplicableMethodException(this.getClass());
-    }
+	@Override
+	public byte[] getEncoded() {
 
-    /**
-     * This method returns the DSS abbreviation of the CRLToken. It is used for debugging purpose.
-     *
-     * @return
-     */
-    public String getAbbreviation() {
+		try {
 
-        return "CRLToken[" + (issuingTime == null ? "?" : DSSUtils.formatInternal(issuingTime)) + ", signedBy=" + (issuerToken == null ? "?" : issuerToken
-              .getDSSIdAsString()) + "]";
-    }
+			return crlValidity.x509CRL.getEncoded();
+		} catch (CRLException e) {
+			throw new DSSException("CRL encoding error: " + e.getMessage(), e);
+		}
+	}
 
-    @Override
-    public byte[] getEncoded() {
+	/**
+	 * Indicates if the token signature is intact and the signing certificate has cRLSign key usage bit set.
+	 *
+	 * @return {@code true} or {@code false}
+	 */
+	@Override
+	public boolean isValid() {
 
-        try {
+		return crlValidity.isValid();
+	}
 
-            return crlValidity.x509CRL.getEncoded();
-        } catch (CRLException e) {
-            throw new DSSException("CRL encoding error: " + e.getMessage(), e);
-        }
-    }
+	/**
+	 * Gets the thisUpdate date from the CRL.
+	 *
+	 * @return the thisUpdate date from the CRL.
+	 */
+	public Date getThisUpdate() {
 
-    /**
-     * Indicates if the token signature is intact and the signing certificate has cRLSign key usage bit set.
-     *
-     * @return
-     */
-    public boolean isValid() {
+		return crlValidity.x509CRL.getThisUpdate();
+	}
 
-        return crlValidity.isValid();
-    }
+	@Override
+	public String toString(String indentStr) {
 
-    /**
-     * Gets the thisUpdate date from the CRL.
-     *
-     * @return the thisUpdate date from the CRL.
-     */
-    public Date getThisUpdate() {
+		try {
 
-        return crlValidity.x509CRL.getThisUpdate();
-    }
+			StringBuilder out = new StringBuilder();
+			out.append(indentStr).append("CRLToken[\n");
+			indentStr += "\t";
+			out.append(indentStr).append("Version: ").append(crlValidity.x509CRL.getVersion()).append('\n');
+			out.append(indentStr).append("Issuing time: ").append(issuingTime == null ? "?" : DSSUtils.formatInternal(issuingTime)).append('\n');
+			out.append(indentStr).append("Signature algorithm: ").append(algoUsedToSignToken == null ? "?" : algoUsedToSignToken).append('\n');
+			out.append(indentStr).append("Status: ").append(getStatus()).append('\n');
+			if (issuerToken != null) {
+				out.append(indentStr).append("Issuer's certificate: ").append(issuerToken.getDSSIdAsString()).append('\n');
+			}
+			List<String> validationExtraInfo = extraInfo.getValidationInfo();
+			if (validationExtraInfo.size() > 0) {
 
-    @Override
-    public String toString(String indentStr) {
+				for (String info : validationExtraInfo) {
 
-        try {
+					out.append('\n').append(indentStr).append("\t- ").append(info);
+				}
+				out.append('\n');
+			}
+			indentStr = indentStr.substring(1);
+			out.append(indentStr).append("]");
+			return out.toString();
+		} catch (Exception e) {
 
-            StringBuffer out = new StringBuffer();
-            out.append(indentStr).append("CRLToken[\n");
-            indentStr += "\t";
-            out.append(indentStr).append("Version: ").append(crlValidity.x509CRL.getVersion()).append('\n');
-            out.append(indentStr).append("Issuing time: ").append(issuingTime == null ? "?" : DSSUtils.formatInternal(issuingTime)).append('\n');
-            out.append(indentStr).append("Signature algorithm: ").append(algoUsedToSignToken == null ? "?" : algoUsedToSignToken).append('\n');
-            out.append(indentStr).append("Status: ").append(getStatus()).append('\n');
-            if (issuerToken != null) {
-                out.append(indentStr).append("Issuer's certificate: ").append(issuerToken.getDSSIdAsString()).append('\n');
-            }
-            List<String> validationExtraInfo = extraInfo.getValidationInfo();
-            if (validationExtraInfo.size() > 0) {
-
-                for (String info : validationExtraInfo) {
-
-                    out.append('\n').append(indentStr).append("\t- ").append(info);
-                }
-                out.append('\n');
-            }
-            indentStr = indentStr.substring(1);
-            out.append(indentStr).append("]");
-            return out.toString();
-        } catch (Exception e) {
-
-            return ((Object) this).toString();
-        }
-    }
+			return ((Object) this).toString();
+		}
+	}
 }

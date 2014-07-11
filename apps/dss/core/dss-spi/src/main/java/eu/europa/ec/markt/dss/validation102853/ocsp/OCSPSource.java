@@ -36,9 +36,9 @@ public interface OCSPSource {
     /**
      * Gets an OCSPResp for the given certificate / issuer's certificate couple.
      *
-     * @param cert       The certificate for which the request is made
-     * @param issuerCert The issuer's certificate of the certificate
+     * @param x509Certificate       The certificate for which the request is made
+     * @param issuerX509Certificate The issuer's certificate of the certificate
      * @return An OCSPResp containing information about the validity of the cert
      */
-    BasicOCSPResp getOCSPResponse(final X509Certificate cert, final X509Certificate issuerCert);
+    BasicOCSPResp getOCSPResponse(final X509Certificate x509Certificate, final X509Certificate issuerX509Certificate);
 }

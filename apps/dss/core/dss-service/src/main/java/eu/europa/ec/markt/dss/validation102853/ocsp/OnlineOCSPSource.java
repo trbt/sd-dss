@@ -48,8 +48,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.europa.ec.markt.dss.DSSRevocationUtils;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.validation102853.https.OCSPDataLoader;
 import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 
@@ -96,7 +98,7 @@ public class OnlineOCSPSource implements OCSPSource {
 	/**
 	 * Set the DataLoader to use for querying the OCSP server.
 	 *
-	 * @param dataLoader
+	 * @param dataLoader the component that allows to retrieve the OCSP response using HTTP.
 	 */
 	public void setDataLoader(final DataLoader dataLoader) {
 
@@ -104,15 +106,15 @@ public class OnlineOCSPSource implements OCSPSource {
 	}
 
 	@Override
-	public BasicOCSPResp getOCSPResponse(final X509Certificate cert, final X509Certificate issuerCert) {
+	public BasicOCSPResp getOCSPResponse(final X509Certificate x509Certificate, final X509Certificate issuerX509Certificate) {
 
 		if (dataLoader == null) {
 
-			throw new DSSException("The DataLoader must be set. Use setDataLoader method first.");
+			throw new DSSNullException(DataLoader.class);
 		}
 		try {
 
-			final String ocspUri = getAccessLocation(cert);
+			final String ocspUri = getAccessLocation(x509Certificate);
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("OCSP URI: " + ocspUri);
 			}
@@ -120,13 +122,9 @@ public class OnlineOCSPSource implements OCSPSource {
 
 				return null;
 			}
-			final byte[] content = buildOCSPRequest(cert, issuerCert);
+			final byte[] content = buildOCSPRequest(x509Certificate, issuerX509Certificate);
 
 			final byte[] ocspRespBytes = dataLoader.post(ocspUri, content);
-
-			//            System.out.println();
-			//            System.out.println(DSSUtils.toHex(ocspRespBytes));
-			//            System.out.println();
 
 			final OCSPResp ocspResp = new OCSPResp(ocspRespBytes);
 /*
@@ -162,11 +160,11 @@ public class OnlineOCSPSource implements OCSPSource {
 		return null;
 	}
 
-	private byte[] buildOCSPRequest(final X509Certificate cert, final X509Certificate issuerCert) throws DSSException {
+	private byte[] buildOCSPRequest(final X509Certificate x509Certificate, final X509Certificate issuerX509Certificate) throws DSSException {
 
 		try {
 
-			final CertificateID certId = DSSUtils.getOCSPCertificateID(cert, issuerCert);
+			final CertificateID certId = DSSRevocationUtils.getOCSPCertificateID(x509Certificate, issuerX509Certificate);
 			final OCSPReqBuilder ocspReqBuilder = new OCSPReqBuilder();
 			ocspReqBuilder.addRequest(certId);
 

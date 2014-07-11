@@ -177,7 +177,18 @@ public class OCSPToken extends RevocationToken {
         return true;
     }
 
-    /**
+	/**
+	 * Indicates if the token signature is intact.
+	 *
+	 * @return {@code true} or {@code false}
+	 */
+	@Override
+	public boolean isValid() {
+
+		return signatureValid;
+	}
+
+	/**
      * This method returns the DSS abbreviation of the certificate. It is used for debugging purpose.
      *
      * @return

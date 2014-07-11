@@ -77,7 +77,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.Protocol;
  * HTTP & HTTPS: using HttpClient which is more flexible for HTTPS without having to add the certificate to the JVM TrustStore. It takes into account a proxy management through
  * {@code ProxyPreferenceManager}. The authentication is also supported.<p/>
  *
- * @version $Revision: 4209 $ - $Date: 2014-07-08 09:29:30 +0200 (Tue, 08 Jul 2014) $
+ * @version $Revision: 4213 $ - $Date: 2014-07-08 14:15:06 +0200 (Tue, 08 Jul 2014) $
  */
 public class CommonsDataLoader implements DataLoader {
 
@@ -136,6 +136,7 @@ public class CommonsDataLoader implements DataLoader {
 	}
 
 	private RegistryBuilder<ConnectionSocketFactory> setConnectionManagerSchemeHttps(RegistryBuilder<ConnectionSocketFactory> socketFactoryRegistryBuilder) throws DSSException {
+
 		try {
 			// TODO: (Bob: 2013 Dec 03) To be replaced: SSLSocketFactory deprecated!!!
 			SSLSocketFactory sslSocketFactory = new SSLSocketFactory(new OptimistTrustStrategy(), new OptimistX509HostnameVerifier());
@@ -256,7 +257,7 @@ public class CommonsDataLoader implements DataLoader {
 
 		if (Protocol.isFileUrl(urlString)) {
 			return fileGet(urlString);
-		} else if (Protocol.isHttp(urlString)) {
+		} else if (Protocol.isHttpUrl(urlString)) {
 			return httpGet(urlString);
 		} else if (Protocol.isFtpUrl(urlString)) {
 			return ftpGet(urlString);

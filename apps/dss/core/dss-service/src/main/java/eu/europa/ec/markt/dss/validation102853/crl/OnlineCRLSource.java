@@ -51,7 +51,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.Protocol;
  * Note that for the HTTP kind of URLs you can provide dedicated data loader. If the data loader is not provided the standard load from URI is
  * provided. For FTP the standard load from URI is provided. For LDAP kind of URLs an internal implementation using apache-ldap-api is provided.
  *
- * @version $Revision: 4211 $ - $Date: 2014-07-08 09:53:52 +0200 (Tue, 08 Jul 2014) $
+ * @version $Revision: 4213 $ - $Date: 2014-07-08 14:15:06 +0200 (Tue, 08 Jul 2014) $
  */
 
 public class OnlineCRLSource extends CommonCRLSource {
@@ -74,16 +74,18 @@ public class OnlineCRLSource extends CommonCRLSource {
 	public OnlineCRLSource() {
 
 		dataLoader = new CommonsDataLoader();
+		LOG.debug("+OnlineCRLSource with the default data loader.");
 	}
 
 	/**
-	 * This constructor allows to set the {@code DataLoader}.
+	 * This constructor allows to set a specific {@code DataLoader}.
 	 *
 	 * @param dataLoader the component that allows to retrieve the data using any protocol: HTTP, HTTPS, FTP, LDAP.
 	 */
 	public OnlineCRLSource(final DataLoader dataLoader) {
 
 		this.dataLoader = dataLoader;
+		LOG.debug("+OnlineCRLSource with the specific data loader.");
 	}
 
 	/**
@@ -98,7 +100,7 @@ public class OnlineCRLSource extends CommonCRLSource {
 	}
 
 	/**
-	 * Set the DataLoader to use for query the CRL server
+	 * Set the DataLoader to use for querying the CRL server
 	 *
 	 * @param dataLoader the component that allows to retrieve the data using any protocol: HTTP, HTTPS, FTP, LDAP.
 	 */
@@ -125,7 +127,7 @@ public class OnlineCRLSource extends CommonCRLSource {
 
 			return null;
 		}
-		X509CRL x509CRL = downloadCrl(crlUrl);
+		final X509CRL x509CRL = downloadCrl(crlUrl);
 		if (x509CRL == null) {
 			return null;
 		}

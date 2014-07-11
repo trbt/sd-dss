@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSRevocationUtils;
-import eu.europa.ec.markt.dss.DSSUtils;
 
 /**
  * Abstract class that helps to implement an OCSPSource with an already loaded list of BasicOCSPResp
@@ -44,7 +43,7 @@ public abstract class OfflineOCSPSource implements OCSPSource {
     private static final Logger LOG = LoggerFactory.getLogger(OfflineOCSPSource.class);
 
     @Override
-    final public BasicOCSPResp getOCSPResponse(final X509Certificate cert, final X509Certificate issuerCert) {
+    final public BasicOCSPResp getOCSPResponse(final X509Certificate x509Certificate, final X509Certificate issuerX509Certificate) {
 
         /**
          * TODO: (Bob 2013.05.08) Does the OCSP responses always use SHA1?<br>
@@ -60,7 +59,7 @@ public abstract class OfflineOCSPSource implements OCSPSource {
          */
         Date bestUpdate = null;
         BasicOCSPResp bestBasicOCSPResp = null;
-        final CertificateID certId = DSSUtils.getOCSPCertificateID(cert, issuerCert);
+        final CertificateID certId = DSSRevocationUtils.getOCSPCertificateID(x509Certificate, issuerX509Certificate);
         for (final BasicOCSPResp basicOCSPResp : getContainedOCSPResponses()) {
 
             for (final SingleResp singleResp : basicOCSPResp.getResponses()) {
