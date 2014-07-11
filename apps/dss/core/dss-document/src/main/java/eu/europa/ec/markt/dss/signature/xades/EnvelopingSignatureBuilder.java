@@ -21,6 +21,7 @@
 package eu.europa.ec.markt.dss.signature.xades;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
+import javax.xml.crypto.dsig.XMLSignature;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -72,14 +73,14 @@ class EnvelopingSignatureBuilder extends SignatureBuilder {
     protected void incorporateReference1() throws DSSException {
 
         //<ds:Reference Id="signed-data-ref" Type="http://www.w3.org/2000/09/xmldsig#Object" URI="#signed-data-idfc5ff27ee49763d9ba88ba5bbc49f732">
-        final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Reference");
+        final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, XMLSignature.XMLNS, "ds:Reference");
         referenceDom.setAttribute("Id", "signed-data-ref");
         referenceDom.setAttribute("Type", "http://www.w3.org/2000/09/xmldsig#Object");
         referenceDom.setAttribute("URI", "#signed-data-" + deterministicId);
 
-        final Element transformsDom = DSSXMLUtils.addElement(documentDom, referenceDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transforms");
+        final Element transformsDom = DSSXMLUtils.addElement(documentDom, referenceDom, XMLSignature.XMLNS, "ds:Transforms");
 
-        final Element transform1Dom = DSSXMLUtils.addElement(documentDom, transformsDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transform");
+        final Element transform1Dom = DSSXMLUtils.addElement(documentDom, transformsDom, XMLSignature.XMLNS, "ds:Transform");
         transform1Dom.setAttribute("Algorithm", CanonicalizationMethod.BASE64);
 
         // <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
@@ -113,7 +114,7 @@ class EnvelopingSignatureBuilder extends SignatureBuilder {
 
         // <ds:Object>
         final String base64EncodedOriginalDocument = DSSUtils.base64Encode(originalDocument);
-        final Element objectDom = DSSXMLUtils.addTextElement(documentDom, signatureDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Object", base64EncodedOriginalDocument);
+        final Element objectDom = DSSXMLUtils.addTextElement(documentDom, signatureDom, XMLSignature.XMLNS, "ds:Object", base64EncodedOriginalDocument);
         objectDom.setAttribute("Id", "signed-data-" + deterministicId);
 
         byte[] documentBytes = DSSXMLUtils.transformDomToByteArray(documentDom);

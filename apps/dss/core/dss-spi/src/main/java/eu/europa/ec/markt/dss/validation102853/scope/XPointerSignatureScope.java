@@ -21,26 +21,25 @@
 package eu.europa.ec.markt.dss.validation102853.scope;
 
 /**
- * This class describes the scope of the signature
+ *
  */
-public abstract class SignatureScope {
+public class XPointerSignatureScope extends SignatureScope {
 
 	/**
-	 * The name of the item on which this signature scope applies
+	 * XPointer query
 	 */
-	private final String name;
+	private final String uri;
 
-	protected SignatureScope(final String name) {
-		this.name = name;
+	protected XPointerSignatureScope(final String xmlId, final String uri) {
+
+		super(xmlId);
+		this.uri = uri;
 	}
 
-	public String getName() {
-		return name;
-	}
+	@Override
+	public String getDescription() {
 
-	public abstract String getDescription();
-
-	public String getType() {
-		return getClass().getSimpleName();
+		String description = "The XML element with ID '" + getName() + "' is an XPointer query.";
+		return description;
 	}
 }

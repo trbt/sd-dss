@@ -27,20 +27,18 @@ import org.w3c.dom.Element;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
+import eu.europa.ec.markt.dss.XAdESNamespaces;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.TimestampToken;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
 import eu.europa.ec.markt.dss.validation102853.ValidationContext;
-import eu.europa.ec.markt.dss.validation102853.crl.ListCRLSource;
-import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
-import eu.europa.ec.markt.dss.validation102853.ocsp.ListOCSPSource;
 import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 
 /**
  * Holds level A aspects of XAdES
  *
- * @version $Revision: 3971 $ - $Date: 2014-05-26 09:10:46 +0200 (Mon, 26 May 2014) $
+ * @version $Revision: 4235 $ - $Date: 2014-07-11 15:44:15 +0200 (Fri, 11 Jul 2014) $
  */
 
 public class XAdESLevelBaselineLTA extends XAdESLevelBaselineLT {
@@ -98,7 +96,7 @@ public class XAdESLevelBaselineLTA extends XAdESLevelBaselineLT {
      */
     private void incorporateTimestampValidationData(final ValidationContext validationContext) {
 
-        final Element timeStampValidationDataDom = DSSXMLUtils.addElement(documentDom, unsignedSignaturePropertiesDom, xPathQueryHolder.XADES141_NAMESPACE, "xades141:TimeStampValidationData");
+        final Element timeStampValidationDataDom = DSSXMLUtils.addElement(documentDom, unsignedSignaturePropertiesDom, XAdESNamespaces.XAdES141, "xades141:TimeStampValidationData");
 
         incorporateCertificateValues(timeStampValidationDataDom, validationContext);
 

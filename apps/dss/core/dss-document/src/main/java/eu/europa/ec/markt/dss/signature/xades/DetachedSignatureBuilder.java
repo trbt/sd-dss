@@ -21,6 +21,7 @@
 package eu.europa.ec.markt.dss.signature.xades;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
+import javax.xml.crypto.dsig.XMLSignature;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -98,7 +99,7 @@ class DetachedSignatureBuilder extends SignatureBuilder {
     protected void incorporateReference1() throws DSSException {
 
         //<ds:Reference Id="detached-ref-id" URI="xml_example.xml">
-        final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Reference");
+        final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, XMLSignature.XMLNS, "ds:Reference");
         referenceDom.setAttribute("Id", "detached-ref-id");
         final String fileURI = fileName != null ? fileName : "";
         referenceDom.setAttribute("URI", fileURI);

@@ -1,5 +1,7 @@
 package eu.europa.ec.markt.dss.validation102853.xades;
 
+import eu.europa.ec.markt.dss.XAdESNamespaces;
+
 /**
  * TODO
  * <p/>
@@ -10,12 +12,14 @@ package eu.europa.ec.markt.dss.validation102853.xades;
  */
 public class XAdES111XPathQueryHolder extends XPathQueryHolder {
 
-	public String XADES111_NAMESPACE = "http://uri.etsi.org/01903/v1.1.1#";
-
 	public XAdES111XPathQueryHolder() {
+
+		XADES_SIGNED_PROPERTIES = "http://uri.etsi.org/01903/v1.1.1#SignedProperties";
 
 		XPATH_QUALIFYING_PROPERTIES = XPATH_OBJECT + "/xades111:QualifyingProperties";
 		XPATH__QUALIFYING_PROPERTIES = "./xades111:QualifyingProperties";
+
+		XPATH__QUALIFYING_PROPERTIES_SIGNED_PROPERTIES = XPATH__QUALIFYING_PROPERTIES + "/xades111:SignedProperties";
 
 		XPATH_SIGNED_PROPERTIES = XPATH_QUALIFYING_PROPERTIES + "/xades111:SignedProperties";
 		XPATH_SIGNED_SIGNATURE_PROPERTIES = XPATH_SIGNED_PROPERTIES + "/xades111:SignedSignatureProperties";
@@ -46,7 +50,7 @@ public class XAdES111XPathQueryHolder extends XPathQueryHolder {
 	@Override
 	public boolean canUseThisXPathQueryHolder(final String namespace) {
 
-		boolean canUse = XADES111_NAMESPACE.equals(namespace);
+		boolean canUse = XAdESNamespaces.XAdES111.equals(namespace);
 		return canUse;
 	}
 }

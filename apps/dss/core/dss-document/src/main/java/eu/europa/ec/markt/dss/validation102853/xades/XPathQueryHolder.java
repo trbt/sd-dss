@@ -1,6 +1,6 @@
 package eu.europa.ec.markt.dss.validation102853.xades;
 
-import javax.xml.crypto.dsig.XMLSignature;
+import eu.europa.ec.markt.dss.XAdESNamespaces;
 
 /**
  * This class hold all XPath queries schema-dependent. It was created to cope with old signatures bases on http://uri.etsi.org/01903/v1.1.1.
@@ -28,13 +28,9 @@ public class XPathQueryHolder {
 	public static final String XMLE_ARCHIVE_TIME_STAMP = "ArchiveTimeStamp";
 	public static final String XMLE_ARCHIVE_TIME_STAMP_V2 = "ArchiveTimeStampV2";
 
-	public static final String XMLDSIG_NAMESPACE = XMLSignature.XMLNS;
+	public String XADES_SIGNED_PROPERTIES = "http://uri.etsi.org/01903#SignedProperties";
 
-	public static final String XADES_NAMESPACE = "http://uri.etsi.org/01903/v1.3.2#";
-	public static final String XADES141_NAMESPACE = "http://uri.etsi.org/01903/v1.4.1#";
-
-	public static final String XADES_SIGNED_PROPERTIES = "http://uri.etsi.org/01903#SignedProperties";
-	public static final String XADES_COUNTERSIGNED_SIGNATURE = "http://uri.etsi.org/01903#CountersignedSignature";
+	public String XADES_COUNTERSIGNED_SIGNATURE = "http://uri.etsi.org/01903#CountersignedSignature";
 
 	public String XPATH_CV = "/xades:CertificateValues";
 	public String XPATH_EX509C = "/xades:EncapsulatedX509Certificate";
@@ -47,12 +43,12 @@ public class XPathQueryHolder {
 	public final String XPATH_SIGNED_INFO = "./ds:SignedInfo";
 	public final String XPATH_SIGNATURE_METHOD = XPATH_SIGNED_INFO + "/ds:SignatureMethod";
 	public final String XPATH_SIGNATURE_VALUE = "./ds:SignatureValue";
-	public final String XPATH_REFERENCE  = XPATH_SIGNED_INFO + "/ds:Reference";
-	public final String XPATH_REFERENCE_TRANSFORM  = XPATH_REFERENCE + "/ds:Transforms/ds:Transform";
+	public final String XPATH_REFERENCE = XPATH_SIGNED_INFO + "/ds:Reference";
+	public final String XPATH_REFERENCE_TRANSFORM = XPATH_REFERENCE + "/ds:Transforms/ds:Transform";
 	public final String XPATH_KEY_INFO = "./ds:KeyInfo";
 	public final String XPATH_X509_DATA = XPATH_KEY_INFO + "/ds:X509Data";
-    public final String XPATH__ALL_DATA_OBJECTS_TIMESTAMP = "xades:AllDataObjectsTimeStamp";
-    public final String XPATH__INDIVIDUAL_DATA_OBJECTS_TIMESTAMP = "xades:IndividualDataObjectsTimeStamp";
+	public final String XPATH__ALL_DATA_OBJECTS_TIMESTAMP = "xades:AllDataObjectsTimeStamp";
+	public final String XPATH__INDIVIDUAL_DATA_OBJECTS_TIMESTAMP = "xades:IndividualDataObjectsTimeStamp";
 
 	public final String XPATH_KEY_INFO_X509_CERTIFICATE = XPATH_X509_DATA + "/ds:X509Certificate";
 	public final String XPATH_X509_ISSUER_SERIAL = XPATH_X509_DATA + "/ds:X509IssuerSerial";
@@ -66,11 +62,13 @@ public class XPathQueryHolder {
 	 * This is not used anymore. See
 	 */
 
+	public String XPATH__QUALIFYING_PROPERTIES_SIGNED_PROPERTIES = XPATH__QUALIFYING_PROPERTIES + "/xades:SignedProperties";
+
 	public String XPATH_SIGNED_PROPERTIES = XPATH_QUALIFYING_PROPERTIES + "/xades:SignedProperties";
 	public String XPATH_SIGNED_SIGNATURE_PROPERTIES = XPATH_SIGNED_PROPERTIES + "/xades:SignedSignatureProperties";
-    public String XPATH_SIGNED_DATA_OBJECT_PROPERTIES = XPATH_SIGNED_PROPERTIES + "/xades:SignedDataObjectProperties";
+	public String XPATH_SIGNED_DATA_OBJECT_PROPERTIES = XPATH_SIGNED_PROPERTIES + "/xades:SignedDataObjectProperties";
 	public String XPATH_ALL_DATA_OBJECTS_TIMESTAMP = XPATH_SIGNED_DATA_OBJECT_PROPERTIES + "/" + XPATH__ALL_DATA_OBJECTS_TIMESTAMP;
-    public String XPATH_INDIVIDUAL_DATA_OBJECTS_TIMESTAMP = XPATH_SIGNED_DATA_OBJECT_PROPERTIES + "/" + XPATH__INDIVIDUAL_DATA_OBJECTS_TIMESTAMP;
+	public String XPATH_INDIVIDUAL_DATA_OBJECTS_TIMESTAMP = XPATH_SIGNED_DATA_OBJECT_PROPERTIES + "/" + XPATH__INDIVIDUAL_DATA_OBJECTS_TIMESTAMP;
 	public String XPATH_SIGNING_TIME = XPATH_SIGNED_SIGNATURE_PROPERTIES + "/xades:SigningTime";
 	public String XPATH_SIGNING_CERTIFICATE_CERT = XPATH_SIGNED_SIGNATURE_PROPERTIES + "/xades:SigningCertificate/xades:Cert";
 	public String XPATH_CERT_DIGEST = XPATH_SIGNING_CERTIFICATE_CERT + "/xades:CertDigest";
@@ -82,9 +80,9 @@ public class XPathQueryHolder {
 	public String XPATH__POLICY_ID = "./xades:SignaturePolicyId/xades:SigPolicyId/xades:Identifier";
 	public String XPATH__POLICY_DIGEST_METHOD = "./xades:SignaturePolicyId/xades:SigPolicyHash/ds:DigestMethod/@Algorithm";
 	public String XPATH__POLICY_DIGEST_VALUE = "./xades:SignaturePolicyId/xades:SigPolicyHash/ds:DigestValue";
-    public String XPATH__INCLUDE = "./xades:Include";
+	public String XPATH__INCLUDE = "./xades:Include";
 
-    public String XPATH__X509_ISSUER_NAME = "./xades:IssuerSerial/ds:X509IssuerName";
+	public String XPATH__X509_ISSUER_NAME = "./xades:IssuerSerial/ds:X509IssuerName";
 	public String XPATH__X509_SERIAL_NUMBER = "./xades:IssuerSerial/ds:X509SerialNumber";
 	public String XPATH__CERT_DIGEST = "./xades:CertDigest";
 	public String XPATH__DIGEST_METHOD = "./ds:DigestMethod";
@@ -157,7 +155,7 @@ public class XPathQueryHolder {
 	 */
 	public boolean canUseThisXPathQueryHolder(final String namespace) {
 
-		boolean canUse = XADES_NAMESPACE.equals(namespace);
+		boolean canUse = XAdESNamespaces.XAdES.equals(namespace);
 		return canUse;
 	}
 }

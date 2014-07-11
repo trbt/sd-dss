@@ -62,166 +62,173 @@ import org.w3c.dom.NodeList;
  */
 public class XPointerResourceResolver extends ResourceResolverSpi {
 
-    private static Log log = LogFactory.getLog(XPointerResourceResolver.class);
+	private static Log LOG = LogFactory.getLog(XPointerResourceResolver.class);
 
-    private static final String XP_OPEN = "xpointer(";
+	private static final String XP_OPEN = "xpointer(";
 
-    private static final String XNS_OPEN = "xmlns(";
+	private static final String XNS_OPEN = "xmlns(";
 
-    private XPathFactory xPathFactory;
+	private XPathFactory xPathFactory;
 
-    private Node baseNode;
+	private Node baseNode;
 
-    public XPointerResourceResolver(Node baseNode) {
+	public XPointerResourceResolver(Node baseNode) {
 
-        this.xPathFactory = XPathFactory.newInstance();
-        this.baseNode = baseNode;
-    }
+		this.xPathFactory = XPathFactory.newInstance();
+		this.baseNode = baseNode;
+	}
 
-    @Override
-    public boolean engineCanResolveURI(final ResourceResolverContext context) {
+	@Override
+	public boolean engineCanResolveURI(final ResourceResolverContext context) {
 
-        final Attr uriAttr = context.attr;
-        final String baseUri = context.baseUri;
+		final Attr uriAttr = context.attr;
+		final String uri = uriAttr.getNodeValue();
+		final boolean xPointerQuery = isXPointerQuery(uri, false);
+		if (LOG.isDebugEnabled()) {
 
-        final String uriValue = uriAttr.getNodeValue();
+			LOG.debug("Decoded Uri= " + uri);
+			final String baseUri = context.baseUri;
+			LOG.debug("Base Uri= " + baseUri);
+		}
+		return xPointerQuery;
+	}
 
-        if (uriValue.isEmpty() || uriValue.charAt(0) != '#') {
-            return false;
-        }
+	/**
+	 * Indicates if the given URI is an XPointer query.
+	 *
+	 * @param uriValue URI to be analysed
+	 * @return true if it is an XPointer query
+	 */
+	public static boolean isXPointerQuery(String uriValue, final boolean strict) {
 
-        final String xpURI;
-        try {
+		if (uriValue.isEmpty() || uriValue.charAt(0) != '#') {
+			return false;
+		}
 
-            xpURI = URLDecoder.decode(uriValue, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            log.warn("utf-8 not a valid encoding", e);
-            return false;
-        }
+		final String decodedUri;
+		try {
 
-        final String parts[] = xpURI.substring(1).split("\\s");
+			decodedUri = URLDecoder.decode(uriValue, "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			LOG.warn("utf-8 not a valid encoding", e);
+			return false;
+		}
+		final String parts[] = decodedUri.substring(1).split("\\s");
+		// plain ID reference.
+		if (parts.length == 1 && !parts[0].startsWith(XNS_OPEN)) {
+			return strict ? false : true;
+		}
+		int ii = 0;
+		for (; ii < parts.length - 1; ++ii) {
 
-        // plain ID reference.
-        if (parts.length == 1 && !parts[0].startsWith(XNS_OPEN)) {
-            return true;
-        }
+			if (!parts[ii].endsWith(")") || !parts[ii].startsWith(XNS_OPEN)) {
+				return false;
+			}
+		}
+		if (!parts[ii].endsWith(")") || !parts[ii].startsWith(XP_OPEN)) {
+			return false;
+		}
+		return true;
+	}
 
-        int ii = 0;
-        for (; ii < parts.length - 1; ++ii) {
+	@Override
+	public XMLSignatureInput engineResolveURI(ResourceResolverContext context) throws ResourceResolverException {
 
-            if (!parts[ii].endsWith(")") || !parts[ii].startsWith(XNS_OPEN)) {
-                return false;
-            }
-        }
+		final Attr uriAttr = context.attr;
+		final String baseUri = context.baseUri;
 
-        if (!parts[ii].endsWith(")") || !parts[ii].startsWith(XP_OPEN)) {
-            return false;
-        }
+		String uriValue = uriAttr.getNodeValue();
 
-        log.debug("xpURI=" + xpURI);
-        log.debug("baseUri=" + baseUri);
+		if (uriValue.charAt(0) != '#') {
+			return null;
+		}
 
-        return true;
-    }
+		String xpURI;
+		try {
+			xpURI = URLDecoder.decode(uriValue, "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			LOG.warn("utf-8 not a valid encoding", e);
+			return null;
+		}
 
-    @Override
-    public XMLSignatureInput engineResolveURI(ResourceResolverContext context) throws ResourceResolverException {
+		String parts[] = xpURI.substring(1).split("\\s");
 
-        final Attr uriAttr = context.attr;
-        final String baseUri = context.baseUri;
+		int i = 0;
 
-        String uriValue = uriAttr.getNodeValue();
+		DSigNamespaceContext nsContext = null;
 
-        if (uriValue.charAt(0) != '#') {
-            return null;
-        }
+		if (parts.length > 1) {
+			nsContext = new DSigNamespaceContext();
 
-        String xpURI;
-        try {
-            xpURI = URLDecoder.decode(uriValue, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            log.warn("utf-8 not a valid encoding", e);
-            return null;
-        }
+			for (; i < parts.length - 1; ++i) {
+				if (!parts[i].endsWith(")") || !parts[i].startsWith(XNS_OPEN)) {
+					return null;
+				}
 
-        String parts[] = xpURI.substring(1).split("\\s");
+				String mapping = parts[i].substring(XNS_OPEN.length(), parts[i].length() - 1);
 
-        int i = 0;
+				int pos = mapping.indexOf('=');
 
-        DSigNamespaceContext nsContext = null;
+				if (pos <= 0 || pos >= mapping.length() - 1) {
+					throw new ResourceResolverException("malformed namespace part of XPointer expression", uriAttr, baseUri);
+				}
 
-        if (parts.length > 1) {
-            nsContext = new DSigNamespaceContext();
+				nsContext.addNamespace(mapping.substring(0, pos), mapping.substring(pos + 1));
+			}
+		}
 
-            for (; i < parts.length - 1; ++i) {
-                if (!parts[i].endsWith(")") || !parts[i].startsWith(XNS_OPEN)) {
-                    return null;
-                }
+		try {
+			Node node = null;
+			NodeList nodes = null;
 
-                String mapping = parts[i].substring(XNS_OPEN.length(), parts[i].length() - 1);
+			// plain ID reference.
+			if (i == 0 && !parts[i].startsWith(XP_OPEN)) {
+				node = this.baseNode.getOwnerDocument().getElementById(parts[i]);
+			} else {
+				if (!parts[i].endsWith(")") || !parts[i].startsWith(XP_OPEN)) {
+					return null;
+				}
 
-                int pos = mapping.indexOf('=');
+				XPath xp = this.xPathFactory.newXPath();
 
-                if (pos <= 0 || pos >= mapping.length() - 1) {
-                    throw new ResourceResolverException("malformed namespace part of XPointer expression", uriAttr, baseUri);
-                }
+				if (nsContext != null) {
+					xp.setNamespaceContext(nsContext);
+				}
 
-                nsContext.addNamespace(mapping.substring(0, pos), mapping.substring(pos + 1));
-            }
-        }
+				nodes = (NodeList) xp.evaluate(parts[i].substring(XP_OPEN.length(), parts[i].length() - 1), this.baseNode, XPathConstants.NODESET);
 
-        try {
-            Node node = null;
-            NodeList nodes = null;
+				if (nodes.getLength() == 0) {
+					return null;
+				}
+				if (nodes.getLength() == 1) {
+					node = nodes.item(0);
+				}
+			}
 
-            // plain ID reference.
-            if (i == 0 && !parts[i].startsWith(XP_OPEN)) {
-                node = this.baseNode.getOwnerDocument().getElementById(parts[i]);
-            } else {
-                if (!parts[i].endsWith(")") || !parts[i].startsWith(XP_OPEN)) {
-                    return null;
-                }
+			XMLSignatureInput result = null;
 
-                XPath xp = this.xPathFactory.newXPath();
+			if (node != null) {
+				result = new XMLSignatureInput(node);
+			} else if (nodes != null) {
+				Set<Node> nodeSet = new HashSet<Node>(nodes.getLength());
 
-                if (nsContext != null) {
-                    xp.setNamespaceContext(nsContext);
-                }
+				for (int j = 0; j < nodes.getLength(); ++j) {
+					nodeSet.add(nodes.item(j));
+				}
 
-                nodes = (NodeList) xp.evaluate(parts[i].substring(XP_OPEN.length(), parts[i].length() - 1), this.baseNode, XPathConstants.NODESET);
+				result = new XMLSignatureInput(nodeSet);
+			} else {
+				return null;
+			}
 
-                if (nodes.getLength() == 0) {
-                    return null;
-                }
-                if (nodes.getLength() == 1) {
-                    node = nodes.item(0);
-                }
-            }
+			result.setMIMEType("text/xml");
+			result.setExcludeComments(true);
+			result.setSourceURI((baseUri != null) ? baseUri.concat(uriValue) : uriValue);
 
-            XMLSignatureInput result = null;
+			return result;
 
-            if (node != null) {
-                result = new XMLSignatureInput(node);
-            } else if (nodes != null) {
-                Set<Node> nodeSet = new HashSet<Node>(nodes.getLength());
-
-                for (int j = 0; j < nodes.getLength(); ++j) {
-                    nodeSet.add(nodes.item(j));
-                }
-
-                result = new XMLSignatureInput(nodeSet);
-            } else {
-                return null;
-            }
-
-            result.setMIMEType("text/xml");
-            result.setExcludeComments(true);
-            result.setSourceURI((baseUri != null) ? baseUri.concat(uriValue) : uriValue);
-
-            return result;
-
-        } catch (XPathExpressionException e) {
-            throw new ResourceResolverException("malformed XPath inside XPointer expression", e, uriAttr, baseUri);
-        }
-    }
+		} catch (XPathExpressionException e) {
+			throw new ResourceResolverException("malformed XPath inside XPointer expression", e, uriAttr, baseUri);
+		}
+	}
 }

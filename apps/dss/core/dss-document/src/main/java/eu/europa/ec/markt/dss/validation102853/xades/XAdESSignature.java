@@ -66,6 +66,7 @@ import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.EncryptionAlgorithm;
 import eu.europa.ec.markt.dss.SignatureAlgorithm;
+import eu.europa.ec.markt.dss.XAdESNamespaces;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNotETSICompliantException;
 import eu.europa.ec.markt.dss.exception.DSSNullReturnedException;
@@ -250,7 +251,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 				final String localName = childElement.getLocalName();
 				// final String nodeName = childElement.getNodeName();
 				// System.out.println(tagName + "-->" + namespaceURI);
-				if (XPathQueryHolder.XMLE_TRANSFORM.equals(localName) && XPathQueryHolder.XMLDSIG_NAMESPACE.equals(namespaceURI)) {
+				if (XPathQueryHolder.XMLE_TRANSFORM.equals(localName) && javax.xml.crypto.dsig.XMLSignature.XMLNS.equals(namespaceURI)) {
 					continue;
 				} else if (XPathQueryHolder.XMLE_QUALIFYING_PROPERTIES.equals(localName)) {
 
@@ -944,7 +945,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 
 			//Take, the first ds:Reference element within ds:SignedInfo if and only if the Type attribute does not
 			//have the value "http://uri.etsi.org/01903#SignedProperties".
-			if (!XPathQueryHolder.XADES_SIGNED_PROPERTIES.equals(reference.getType())) {
+			if (!xPathQueryHolder.XADES_SIGNED_PROPERTIES.equals(reference.getType())) {
 
 				//				//if reference element is a nodeset, canonicalize it using the algorithm mentioned in canonicalizationMethod
 				try {
@@ -1722,7 +1723,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 					 */
 
 					final Document document = DSSXMLUtils.buildDOM();
-					final Element rootElement = document.createElementNS(xPathQueryHolder.XADES141_NAMESPACE, "xades141:toto");
+					final Element rootElement = document.createElementNS(XAdESNamespaces.XAdES141, "xades141:toto");
 					document.appendChild(rootElement);
 
 					final Node node1 = node.cloneNode(true);
@@ -1992,13 +1993,39 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 		return null;
 	}
 
+	/**
+	 *
+	 * @return
+	 */
 	public List<Element> getSignatureReferences() {
 
 		final NodeList list = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_REFERENCE);
 		List<Element> references = new ArrayList<Element>(list.getLength());
 		for (int ii = 0; ii < list.getLength(); ii++) {
+
 			final Node node = list.item(ii);
 			references.add((Element) node);
+		}
+		return references;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public List<Element> getSignatureObjects() {
+
+		final NodeList list = DSSXMLUtils.getNodeList(signatureElement, XPathQueryHolder.XPATH_OBJECT);
+		final List<Element> references = new ArrayList<Element>(list.getLength());
+		for (int ii = 0; ii < list.getLength(); ii++) {
+
+			final Node node = list.item(ii);
+			final Element element = (Element) node;
+			if (DSSXMLUtils.getElement(element, xPathQueryHolder.XPATH__QUALIFYING_PROPERTIES_SIGNED_PROPERTIES) != null) {
+				// ignore signed properties
+				continue;
+			}
+			references.add(element);
 		}
 		return references;
 	}

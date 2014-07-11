@@ -100,10 +100,10 @@ public final class DSSXMLUtils {
 		namespaces = new HashMap<String, String>();
 		namespaces.put("ds", XMLSignature.XMLNS);
 		namespaces.put("dsig", XMLSignature.XMLNS);
-		namespaces.put("xades", "http://uri.etsi.org/01903/v1.3.2#");
-		namespaces.put("xades141", "http://uri.etsi.org/01903/v1.4.1#");
-		namespaces.put("xades122", "http://uri.etsi.org/01903/v1.2.2#");
-		namespaces.put("xades111", "http://uri.etsi.org/01903/v1.1.1#");
+		namespaces.put("xades", XAdESNamespaces.XAdES); // 1.3.2
+		namespaces.put("xades141", XAdESNamespaces.XAdES141);
+		namespaces.put("xades122", XAdESNamespaces.XAdES122);
+		namespaces.put("xades111", XAdESNamespaces.XAdES111);
 
 		namespacePrefixMapper = new NamespaceContextMap(namespaces);
 	}
@@ -317,6 +317,30 @@ public final class DSSXMLUtils {
 				recursiveIdBrowse(childElement);
 			}
 		}
+	}
+
+	/**
+	 * If this method finds an attribute with names ID (case-insensitive) then it is returned. If there is more than one ID attributes then the first one is returned.
+	 *
+	 * @param element to be checked
+	 * @return the ID attribute value or null
+	 */
+	public static String getIDIdentifier(final Element element) {
+
+		final NamedNodeMap attributes = element.getAttributes();
+		for (int jj = 0; jj < attributes.getLength(); jj++) {
+
+			final Node item = attributes.item(jj);
+			final String localName = item.getNodeName();
+			if (localName != null) {
+				final String id = localName.toLowerCase();
+				if (ID_ATTRIBUTE_NAME.equals(id)) {
+
+					return item.getTextContent();
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

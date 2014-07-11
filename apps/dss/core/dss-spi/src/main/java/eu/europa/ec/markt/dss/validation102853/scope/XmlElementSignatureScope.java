@@ -22,36 +22,41 @@ package eu.europa.ec.markt.dss.validation102853.scope;
 
 import java.util.List;
 
+/**
+ *
+ */
 public class XmlElementSignatureScope extends SignatureScope {
-    private final List<String> transformations;
 
-    protected XmlElementSignatureScope(String xmlId, final List<String> transformations) {
-        super(xmlId);
-        this.transformations = transformations;
-    }
+	private final List<String> transformations;
 
-    @Override
-    public String getDescription() {
-        String description = "The XML element with ID '" + getName() + "'";
-        if (transformations.isEmpty()) {
-            return description;
-        } else {
-            return addTransformationDescription(description);
-        }
+	protected XmlElementSignatureScope(String xmlId, final List<String> transformations) {
+		super(xmlId);
+		this.transformations = transformations;
+	}
 
-    }
+	@Override
+	public String getDescription() {
 
-    protected String addTransformationDescription(String description) {
-        StringBuilder result = new StringBuilder();
-        result.append(description).append(" with transformations: ");
-        for (final String transformation : transformations) {
-            result.append(transformation).append("; ");
-        }
-        result.delete(result.length() - 2, result.length()).append(".");
-        return result.toString();
-    }
+		String description = "The XML element with ID '" + getName() + "'";
+		if (transformations.isEmpty()) {
+			return description;
+		} else {
+			return addTransformationDescription(description);
+		}
+	}
 
-    protected List<String> getTransformations() {
-        return transformations;
-    }
+	protected String addTransformationDescription(final String description) {
+
+		StringBuilder result = new StringBuilder();
+		result.append(description).append(" with transformations: ");
+		for (final String transformation : transformations) {
+			result.append(transformation).append("; ");
+		}
+		result.delete(result.length() - 2, result.length()).append(".");
+		return result.toString();
+	}
+
+	protected List<String> getTransformations() {
+		return transformations;
+	}
 }

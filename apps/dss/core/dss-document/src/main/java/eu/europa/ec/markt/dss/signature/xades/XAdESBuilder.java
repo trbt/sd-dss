@@ -24,6 +24,8 @@ import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import javax.xml.crypto.dsig.XMLSignature;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -33,6 +35,7 @@ import org.w3c.dom.Text;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
+import eu.europa.ec.markt.dss.XAdESNamespaces;
 import eu.europa.ec.markt.dss.parameter.SignatureParameters;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
@@ -67,7 +70,7 @@ public class XAdESBuilder {
     protected void incorporateDigestMethod(final Element parentDom, final DigestAlgorithm digestAlgorithm) {
 
         // <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-        final Element digestMethodDom = documentDom.createElementNS(xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:DigestMethod");
+        final Element digestMethodDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:DigestMethod");
         final String digestAlgorithmXmlId = digestAlgorithm.getXmlId();
         digestMethodDom.setAttribute("Algorithm", digestAlgorithmXmlId);
         parentDom.appendChild(digestMethodDom);
@@ -82,7 +85,7 @@ public class XAdESBuilder {
     protected void incorporateDigestValue(final Element parentDom, final DigestAlgorithm digestAlgorithm, final DSSDocument originalDocument) {
 
         // <ds:DigestValue>b/JEDQH2S1Nfe4Z3GSVtObN34aVB1kMrEbVQZswThfQ=</ds:DigestValue>
-        final Element digestValueDom = documentDom.createElementNS(xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:DigestValue");
+        final Element digestValueDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:DigestValue");
 	    final String base64EncodedDigestBytes = originalDocument.getDigest(digestAlgorithm);
         if (LOG.isTraceEnabled()) {
             LOG.trace("Digest value             --> " + base64EncodedDigestBytes);
@@ -100,9 +103,9 @@ public class XAdESBuilder {
      */
     protected void incorporateCertificateRef(final Element signingCertificateDom, final List<X509Certificate> certificates) {
 
-        final Element certDom = DSSXMLUtils.addElement(documentDom, signingCertificateDom, xPathQueryHolder.XADES_NAMESPACE, "xades:Cert");
+        final Element certDom = DSSXMLUtils.addElement(documentDom, signingCertificateDom, XAdESNamespaces.XAdES, "xades:Cert");
 
-        final Element certDigestDom = DSSXMLUtils.addElement(documentDom, certDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CertDigest");
+        final Element certDigestDom = DSSXMLUtils.addElement(documentDom, certDom, XAdESNamespaces.XAdES, "xades:CertDigest");
 
         final DigestAlgorithm signingCertificateDigestMethod = params.bLevel().getSigningCertificateDigestMethod();
         incorporateDigestMethod(certDigestDom, signingCertificateDigestMethod);
@@ -112,13 +115,13 @@ public class XAdESBuilder {
 	        final InMemoryDocument inMemoryCertificate = new InMemoryDocument(DSSUtils.getEncoded(certificate));
 	        incorporateDigestValue(certDigestDom, signingCertificateDigestMethod, inMemoryCertificate);
 
-            final Element issuerSerialDom = DSSXMLUtils.addElement(documentDom, certDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IssuerSerial");
+            final Element issuerSerialDom = DSSXMLUtils.addElement(documentDom, certDom, XAdESNamespaces.XAdES, "xades:IssuerSerial");
 
-            final Element x509IssuerNameDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:X509IssuerName");
+            final Element x509IssuerNameDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, XMLSignature.XMLNS, "ds:X509IssuerName");
             final String issuerX500PrincipalName = DSSUtils.getIssuerX500PrincipalName(certificate);
             DSSXMLUtils.setTextNode(documentDom, x509IssuerNameDom, issuerX500PrincipalName);
 
-            final Element x509SerialNumberDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:X509SerialNumber");
+            final Element x509SerialNumberDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, XMLSignature.XMLNS, "ds:X509SerialNumber");
             final BigInteger serialNumber = certificate.getSerialNumber();
             final String serialNumberString = new String(serialNumber.toString());
             DSSXMLUtils.setTextNode(documentDom, x509SerialNumberDom, serialNumberString);

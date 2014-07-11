@@ -28,12 +28,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import javax.xml.crypto.dsig.XMLSignature;
+
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
+import eu.europa.ec.markt.dss.XAdESNamespaces;
+import eu.europa.ec.markt.dss.validation102853.toolbox.XPointerResourceResolver;
 import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
 
@@ -42,111 +45,107 @@ import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
  */
 public class XAdESSignatureScopeFinder implements SignatureScopeFinder<XAdESSignature> {
 
-    private final List<String> transformationToIgnore = new ArrayList<String>();
+	private final List<String> transformationToIgnore = new ArrayList<String>();
 
-    private final Map<String, String> presentableTransformationNames = new HashMap<String, String>();
+	private final Map<String, String> presentableTransformationNames = new HashMap<String, String>();
 
-    public XAdESSignatureScopeFinder() {
-        // @see http://www.w3.org/TR/xmldsig-core/#sec-TransformAlg
+	public XAdESSignatureScopeFinder() {
 
-        // those transformations don't change the content of the document in a meaningfull way for the signature
-        transformationToIgnore.add("http://www.w3.org/2000/09/xmldsig#enveloped-signature");
-        transformationToIgnore.add("http://www.w3.org/2000/09/xmldsig#base64");
-        transformationToIgnore.add("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments");
-        transformationToIgnore.add("http://www.w3.org/2006/12/xml-c14n11#WithComments");
-        transformationToIgnore.add("http://www.w3.org/2001/10/xml-exc-c14n#WithComments");
-
-
-        // those transformations change the document and must be reported
-        presentableTransformationNames.put("http://www.w3.org/2002/06/xmldsig-filter2", "XPath filtering");
-        presentableTransformationNames.put("http://www.w3.org/TR/1999/REC-xpath-19991116", "XPath filtering");
-        presentableTransformationNames.put("http://www.w3.org/TR/1999/REC-xslt-19991116", "XSLT Transform");
-
-        presentableTransformationNames.put("http://www.w3.org/TR/2001/REC-xml-c14n-20010315", "Canonical XML 1.0 (omits comments)");
-        presentableTransformationNames.put("http://www.w3.org/2006/12/xml-c14n11#", "Canonical XML 1.1 (omits comments)");
-        presentableTransformationNames.put("http://www.w3.org/2001/10/xml-exc-c14n#", "Exclusive Canonical XML (omits comments)");
-    }
+		// @see http://www.w3.org/TR/xmldsig-core/#sec-TransformAlg
+		// those transformations don't change the content of the document
+		transformationToIgnore.add("http://www.w3.org/2000/09/xmldsig#enveloped-signature");
+		transformationToIgnore.add("http://www.w3.org/2000/09/xmldsig#base64");
+		transformationToIgnore.add("http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments");
+		transformationToIgnore.add("http://www.w3.org/2006/12/xml-c14n11#WithComments");
+		transformationToIgnore.add("http://www.w3.org/2001/10/xml-exc-c14n#WithComments");
 
 
-    @Override
-    public List<SignatureScope> findSignatureScope(final XAdESSignature xadesSignature) {
+		// those transformations change the document and must be reported
+		presentableTransformationNames.put("http://www.w3.org/2002/06/xmldsig-filter2", "XPath filtering");
+		presentableTransformationNames.put("http://www.w3.org/TR/1999/REC-xpath-19991116", "XPath filtering");
+		presentableTransformationNames.put("http://www.w3.org/TR/1999/REC-xslt-19991116", "XSLT Transform");
 
-        List<SignatureScope> result = new ArrayList<SignatureScope>();
+		presentableTransformationNames.put("http://www.w3.org/TR/2001/REC-xml-c14n-20010315", "Canonical XML 1.0 (omits comments)");
+		presentableTransformationNames.put("http://www.w3.org/2006/12/xml-c14n11#", "Canonical XML 1.1 (omits comments)");
+		presentableTransformationNames.put("http://www.w3.org/2001/10/xml-exc-c14n#", "Exclusive Canonical XML (omits comments)");
+	}
 
-        Set<Element> unsignedObjects = new HashSet<Element>();
-        unsignedObjects.addAll(getSignatureObjects(xadesSignature));
-        Set<Element> signedObjects = new HashSet<Element>();
+	@Override
+	public List<SignatureScope> findSignatureScope(final XAdESSignature xadesSignature) {
 
-        final List<Element> signatureReferences = xadesSignature.getSignatureReferences();
-        for (final Element signatureReference : signatureReferences) {
-            final String type = DSSXMLUtils.getValue(signatureReference, "@Type");
-            final String uri = DSSXMLUtils.getValue(signatureReference, "@URI");
-            final List<String> transformations = getTransformationNames(signatureReference);
+		final List<SignatureScope> result = new ArrayList<SignatureScope>();
 
-            if (StringUtils.isBlank(uri)) {
-                // self contained document
-                result.add(new XmlRootSignatureScope(transformations));
-            } else if (StringUtils.startsWith(uri, "#")) {
-                // internal reference
-                final String xmlIdOfSignedElement = uri.substring(1);
-                Element signedElement = DSSXMLUtils.getElement(xadesSignature.getSignatureElement(), XPathQueryHolder.XPATH_OBJECT + "[@Id='" + xmlIdOfSignedElement + "']");
-                if (signedElement != null) {
-                    if (unsignedObjects.remove(signedElement)) {
-                        signedObjects.add(signedElement);
-                        result.add(new XmlElementSignatureScope(xmlIdOfSignedElement, transformations));
-                    }
-                } else {
-                    signedElement = DSSXMLUtils
-                          .getElement(xadesSignature.getSignatureElement().getOwnerDocument().getDocumentElement(), "//*" + "[@Id='" + xmlIdOfSignedElement + "']");
-                    if (signedElement != null) {
+		final Set<Element> unsignedObjects = new HashSet<Element>();
+		unsignedObjects.addAll(xadesSignature.getSignatureObjects());
+		final Set<Element> signedObjects = new HashSet<Element>();
 
-                        final String namespaceURI = signedElement.getNamespaceURI();
-                        if (namespaceURI == null || (!namespaceURI.equals("http://uri.etsi.org/01903/v1.3.2#") && !namespaceURI.equals("http://www.w3.org/2000/09/xmldsig#"))) {
-                            signedObjects.add(signedElement);
-                            result.add(new XmlElementSignatureScope(xmlIdOfSignedElement, transformations));
-                        }
-                    }
-                }
-            } else {
-                // detached file
-                result.add(new FullSignatureScope(uri));
-            }
-        }
-        return result;
-    }
+		final List<Element> signatureReferences = xadesSignature.getSignatureReferences();
+		for (final Element signatureReference : signatureReferences) {
 
-    private List<String> getTransformationNames(final Element signatureReference) {
+			final String type = DSSXMLUtils.getValue(signatureReference, "@Type");
+			if (xadesSignature.getXPathQueryHolder().XADES_SIGNED_PROPERTIES.equals(type)) {
+				continue;
+			}
+			final String uri = DSSXMLUtils.getValue(signatureReference, "@URI");
+			final List<String> transformations = getTransformationNames(signatureReference);
+			if (DSSUtils.isBlank(uri)) {
+				// self contained document
+				result.add(new XmlRootSignatureScope(transformations));
+			} else if (uri.startsWith("#")) {
+				// internal reference
+				final boolean xPointerQuery = XPointerResourceResolver.isXPointerQuery(uri, true);
+				if (xPointerQuery) {
 
-	    final NodeList nodeList = DSSXMLUtils.getNodeList(signatureReference, "./ds:Transforms/ds:Transform");
-        List<String> algorithms = new ArrayList<String>(nodeList.getLength());
-        for (int ii = 0; ii < nodeList.getLength(); ii++) {
-            Element transformation = (Element) nodeList.item(ii);
-            final String algorithm = DSSXMLUtils.getValue(transformation, "@Algorithm");
-            if (transformationToIgnore.contains(algorithm)) {
-                continue;
-            }
-            if (presentableTransformationNames.containsKey(algorithm)) {
-                algorithms.add(presentableTransformationNames.get(algorithm));
-            } else {
-                algorithms.add(algorithm);
-            }
-        }
-        return algorithms;
-    }
+					final String id = DSSXMLUtils.getIDIdentifier(signatureReference);
+					final XPointerSignatureScope xPointerSignatureScope = new XPointerSignatureScope(id, uri);
+					result.add(xPointerSignatureScope);
+					continue;
+				}
+				final String xmlIdOfSignedElement = uri.substring(1);
+				final String xPathString = XPathQueryHolder.XPATH_OBJECT + "[@Id='" + xmlIdOfSignedElement + "']";
+				Element signedElement = DSSXMLUtils.getElement(xadesSignature.getSignatureElement(), xPathString);
+				if (signedElement != null) {
+					if (unsignedObjects.remove(signedElement)) {
+						signedObjects.add(signedElement);
+						result.add(new XmlElementSignatureScope(xmlIdOfSignedElement, transformations));
+					}
+				} else {
+					signedElement = DSSXMLUtils
+						  .getElement(xadesSignature.getSignatureElement().getOwnerDocument().getDocumentElement(), "//*" + "[@Id='" + xmlIdOfSignedElement + "']");
+					if (signedElement != null) {
 
-    public List<Element> getSignatureObjects(final XAdESSignature xAdESSignature) {
+						final String namespaceURI = signedElement.getNamespaceURI();
+						if (namespaceURI == null || (!XAdESNamespaces.exists(namespaceURI) && !namespaceURI.equals(XMLSignature.XMLNS))) {
+							signedObjects.add(signedElement);
+							result.add(new XmlElementSignatureScope(xmlIdOfSignedElement, transformations));
+						}
+					}
+				}
+			} else {
+				// detached file
+				result.add(new FullSignatureScope(uri));
+			}
+		}
+		return result;
+	}
 
-	    final NodeList list = DSSXMLUtils.getNodeList(xAdESSignature.getSignatureElement(), XPathQueryHolder.XPATH_OBJECT);
-        List<Element> references = new ArrayList<Element>(list.getLength());
-        for (int ii = 0; ii < list.getLength(); ii++) {
-            final Node node = list.item(ii);
-            final Element element = (Element) node;
-            if (DSSXMLUtils.getElement(element, "./xades:QualifyingProperties/xades:SignedProperties") != null) {
-                // ignore signed properties
-                continue;
-            }
-            references.add(element);
-        }
-        return references;
-    }
+	private List<String> getTransformationNames(final Element signatureReference) {
+
+		final NodeList nodeList = DSSXMLUtils.getNodeList(signatureReference, "./ds:Transforms/ds:Transform");
+		final List<String> algorithms = new ArrayList<String>(nodeList.getLength());
+		for (int ii = 0; ii < nodeList.getLength(); ii++) {
+
+			final Element transformation = (Element) nodeList.item(ii);
+			final String algorithm = DSSXMLUtils.getValue(transformation, "@Algorithm");
+			if (transformationToIgnore.contains(algorithm)) {
+				continue;
+			}
+			if (presentableTransformationNames.containsKey(algorithm)) {
+				algorithms.add(presentableTransformationNames.get(algorithm));
+			} else {
+				algorithms.add(algorithm);
+			}
+		}
+		return algorithms;
+	}
 }

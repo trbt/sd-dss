@@ -41,6 +41,7 @@ import org.w3c.dom.Element;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
+import eu.europa.ec.markt.dss.XAdESNamespaces;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
@@ -54,7 +55,7 @@ import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 /**
  * Contains XAdES-C profile aspects
  *
- * @version $Revision: 4182 $ - $Date: 2014-07-02 14:40:17 +0200 (Wed, 02 Jul 2014) $
+ * @version $Revision: 4235 $ - $Date: 2014-07-11 15:44:15 +0200 (Fri, 11 Jul 2014) $
  */
 
 public class XAdESLevelC extends XAdESLevelBaselineT {
@@ -88,7 +89,7 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 		// ...<xades:IssueTime>2012-03-13T13:58:28.000-03:00</xades:IssueTime>
 		// ...<xades:Number>4415260066222</xades:Number>
 
-		final Element crlRefsDom = DSSXMLUtils.addElement(documentDom, completeRevocationRefsDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CRLRefs");
+		final Element crlRefsDom = DSSXMLUtils.addElement(documentDom, completeRevocationRefsDom, XAdESNamespaces.XAdES, "xades:CRLRefs");
 
 		for (final RevocationToken revocationToken : processedRevocationTokens) {
 
@@ -96,9 +97,9 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 
 				final X509CRL crl = ((CRLToken) revocationToken).getX509crl();
 
-				final Element crlRefDom = DSSXMLUtils.addElement(documentDom, crlRefsDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CRLRef");
+				final Element crlRefDom = DSSXMLUtils.addElement(documentDom, crlRefsDom, XAdESNamespaces.XAdES, "xades:CRLRef");
 
-				final Element digestAlgAndValueDom = DSSXMLUtils.addElement(documentDom, crlRefDom, xPathQueryHolder.XADES_NAMESPACE, "xades:DigestAlgAndValue");
+				final Element digestAlgAndValueDom = DSSXMLUtils.addElement(documentDom, crlRefDom, XAdESNamespaces.XAdES, "xades:DigestAlgAndValue");
 				// TODO: to be added as field to eu.europa.ec.markt.dss.parameter.SignatureParameters.
 				DigestAlgorithm digestAlgorithm = DigestAlgorithm.SHA1;
 				incorporateDigestMethod(digestAlgAndValueDom, digestAlgorithm);
@@ -106,17 +107,17 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 				final InMemoryDocument inMemoryDocument = new InMemoryDocument(revocationToken.getEncoded());
 				incorporateDigestValue(digestAlgAndValueDom, digestAlgorithm, inMemoryDocument);
 
-				// final Element crlIdentifierDom = DSSXMLUtils.addElement(documentDom, crlRefDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CRLIdentifier");
+				// final Element crlIdentifierDom = DSSXMLUtils.addElement(documentDom, crlRefDom, XAdESNamespaces.XAdES, "xades:CRLIdentifier");
 				// crlIdentifierDom.setAttribute("URI",".crl");
 				final String issuerX500PrincipalName = crl.getIssuerX500Principal().getName();
-				DSSXMLUtils.addTextElement(documentDom, crlRefDom, xPathQueryHolder.XADES_NAMESPACE, "xades:Issuer", issuerX500PrincipalName);
+				DSSXMLUtils.addTextElement(documentDom, crlRefDom, XAdESNamespaces.XAdES, "xades:Issuer", issuerX500PrincipalName);
 
 				final Date thisUpdate = crl.getThisUpdate();
 				XMLGregorianCalendar xmlGregorianCalendar = DSSXMLUtils.createXMLGregorianCalendar(thisUpdate);
 				final String thisUpdateAsXmlFormat = xmlGregorianCalendar.toXMLFormat();
-				DSSXMLUtils.addTextElement(documentDom, crlRefDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IssueTime", thisUpdateAsXmlFormat);
+				DSSXMLUtils.addTextElement(documentDom, crlRefDom, XAdESNamespaces.XAdES, "xades:IssueTime", thisUpdateAsXmlFormat);
 
-				// DSSXMLUtils.addTextElement(documentDom, crlRefDom, xPathQueryHolder.XADES_NAMESPACE, "xades:Number", ???);
+				// DSSXMLUtils.addTextElement(documentDom, crlRefDom, XAdESNamespaces.XAdES, "xades:Number", ???);
 			}
 		}
 	}
@@ -145,7 +146,7 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 		// ............<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
 		// ............<ds:DigestValue>O1uHdchN+zFzbGrBg2FP3/idD0k=</ds:DigestValue>
 
-		final Element ocspRefsDom = DSSXMLUtils.addElement(documentDom, completeRevocationRefsDom, xPathQueryHolder.XADES_NAMESPACE, "xades:OCSPRefs");
+		final Element ocspRefsDom = DSSXMLUtils.addElement(documentDom, completeRevocationRefsDom, XAdESNamespaces.XAdES, "xades:OCSPRefs");
 
 		for (RevocationToken revocationToken : processedRevocationTokens) {
 
@@ -153,10 +154,10 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 
 				BasicOCSPResp basicOcspResp = ((OCSPToken) revocationToken).getBasicOCSPResp();
 
-				final Element ocspRefDom = DSSXMLUtils.addElement(documentDom, ocspRefsDom, xPathQueryHolder.XADES_NAMESPACE, "xades:OCSPRef");
+				final Element ocspRefDom = DSSXMLUtils.addElement(documentDom, ocspRefsDom, XAdESNamespaces.XAdES, "xades:OCSPRef");
 
-				final Element ocspIdentifierDom = DSSXMLUtils.addElement(documentDom, ocspRefDom, xPathQueryHolder.XADES_NAMESPACE, "xades:OCSPIdentifier");
-				final Element responderIDDom = DSSXMLUtils.addElement(documentDom, ocspIdentifierDom, xPathQueryHolder.XADES_NAMESPACE, "xades:ResponderID");
+				final Element ocspIdentifierDom = DSSXMLUtils.addElement(documentDom, ocspRefDom, XAdESNamespaces.XAdES, "xades:OCSPIdentifier");
+				final Element responderIDDom = DSSXMLUtils.addElement(documentDom, ocspIdentifierDom, XAdESNamespaces.XAdES, "xades:ResponderID");
 
 				final RespID responderId = basicOcspResp.getResponderId();
 				final ResponderID responderIdAsASN1Object = responderId.toASN1Object();
@@ -166,20 +167,20 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 					final ASN1OctetString keyHashOctetString = (ASN1OctetString) derTaggedObject.getObject();
 					final byte[] keyHashOctetStringBytes = keyHashOctetString.getOctets();
 					final String base65EncodedKeyHashOctetStringBytes = DSSUtils.base64Encode(keyHashOctetStringBytes);
-					DSSXMLUtils.addTextElement(documentDom, responderIDDom, xPathQueryHolder.XADES_NAMESPACE, "xades:ByKey", base65EncodedKeyHashOctetStringBytes);
+					DSSXMLUtils.addTextElement(documentDom, responderIDDom, XAdESNamespaces.XAdES, "xades:ByKey", base65EncodedKeyHashOctetStringBytes);
 				} else {
 
 					final ASN1Primitive derObject = derTaggedObject.getObject();
 					final X500Name name = X500Name.getInstance(derObject);
-					DSSXMLUtils.addTextElement(documentDom, responderIDDom, xPathQueryHolder.XADES_NAMESPACE, "xades:ByName", name.toString());
+					DSSXMLUtils.addTextElement(documentDom, responderIDDom, XAdESNamespaces.XAdES, "xades:ByName", name.toString());
 				}
 
 				final Date producedAt = basicOcspResp.getProducedAt();
 				final XMLGregorianCalendar xmlGregorianCalendar = DSSXMLUtils.createXMLGregorianCalendar(producedAt);
 				final String producedAtXmlEncoded = xmlGregorianCalendar.toXMLFormat();
-				DSSXMLUtils.addTextElement(documentDom, ocspIdentifierDom, xPathQueryHolder.XADES_NAMESPACE, "xades:ProducedAt", producedAtXmlEncoded);
+				DSSXMLUtils.addTextElement(documentDom, ocspIdentifierDom, XAdESNamespaces.XAdES, "xades:ProducedAt", producedAtXmlEncoded);
 
-				final Element digestAlgAndValueDom = DSSXMLUtils.addElement(documentDom, ocspRefDom, xPathQueryHolder.XADES_NAMESPACE, "xades:DigestAlgAndValue");
+				final Element digestAlgAndValueDom = DSSXMLUtils.addElement(documentDom, ocspRefDom, XAdESNamespaces.XAdES, "xades:DigestAlgAndValue");
 				// TODO: to be added as field to eu.europa.ec.markt.dss.parameter.SignatureParameters.
 				DigestAlgorithm digestAlgorithm = DigestAlgorithm.SHA1;
 				incorporateDigestMethod(digestAlgAndValueDom, digestAlgorithm);
@@ -222,9 +223,9 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 			// .........<xades:CertDigest>
 
 			final Element completeCertificateRefsDom = DSSXMLUtils
-				  .addElement(documentDom, unsignedSignaturePropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CompleteCertificateRefs");
+				  .addElement(documentDom, unsignedSignaturePropertiesDom, XAdESNamespaces.XAdES, "xades:CompleteCertificateRefs");
 
-			final Element certRefsDom = DSSXMLUtils.addElement(documentDom, completeCertificateRefsDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CertRefs");
+			final Element certRefsDom = DSSXMLUtils.addElement(documentDom, completeCertificateRefsDom, XAdESNamespaces.XAdES, "xades:CertRefs");
 
 			final CertificateToken certificateToken = xadesSignature.getSigningCertificateToken();
 			final Set<CertificateToken> processedCertificateTokens = validationContext.getProcessedCertificates();
@@ -250,7 +251,7 @@ public class XAdESLevelC extends XAdESLevelBaselineT {
 
 			// <xades:CompleteRevocationRefs>
 			final Element completeRevocationRefsDom = DSSXMLUtils
-				  .addElement(documentDom, unsignedSignaturePropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CompleteRevocationRefs");
+				  .addElement(documentDom, unsignedSignaturePropertiesDom, XAdESNamespaces.XAdES, "xades:CompleteRevocationRefs");
 			incorporateCRLRefs(completeRevocationRefsDom, validationContext.getProcessedRevocations());
 			incorporateOCSPRefs(completeRevocationRefsDom, validationContext.getProcessedRevocations());
 		}

@@ -78,16 +78,16 @@ class EnvelopedSignatureBuilder extends SignatureBuilder {
 		final DSSReference reference = references.get(0);
 
 		// <ds:Reference Id="xml_ref_id" URI="">
-		final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Reference");
+		final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, XMLSignature.XMLNS, "ds:Reference");
 		referenceDom.setAttribute("Id", reference.getId());
 		referenceDom.setAttribute("URI", reference.getUri());
 
-		final Element transformsDom = DSSXMLUtils.addElement(documentDom, referenceDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transforms");
+		final Element transformsDom = DSSXMLUtils.addElement(documentDom, referenceDom, XMLSignature.XMLNS, "ds:Transforms");
 
 		final List<DSSTransform> transforms = reference.getTransforms();
 		for (final DSSTransform transform : transforms) {
 
-			final Element transformDom = DSSXMLUtils.addElement(documentDom, transformsDom, xPathQueryHolder.XMLDSIG_NAMESPACE, "ds:Transform");
+			final Element transformDom = DSSXMLUtils.addElement(documentDom, transformsDom, XMLSignature.XMLNS, "ds:Transform");
 			transformDom.setAttribute("Algorithm", transform.getAlgorithm());
 			final String elementName = transform.getElementName();
 			if (elementName != null && !elementName.isEmpty()) {

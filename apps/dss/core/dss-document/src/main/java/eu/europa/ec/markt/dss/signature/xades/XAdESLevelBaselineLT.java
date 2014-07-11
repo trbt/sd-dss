@@ -26,6 +26,7 @@ import org.w3c.dom.Element;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
+import eu.europa.ec.markt.dss.XAdESNamespaces;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
@@ -40,7 +41,7 @@ import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 /**
  * XL profile of XAdES signature
  *
- * @version $Revision: 3924 $ - $Date: 2014-05-20 10:19:38 +0200 (Tue, 20 May 2014) $
+ * @version $Revision: 4235 $ - $Date: 2014-07-11 15:44:15 +0200 (Fri, 11 Jul 2014) $
  */
 
 public class XAdESLevelBaselineLT extends XAdESLevelBaselineT {
@@ -147,7 +148,7 @@ public class XAdESLevelBaselineLT extends XAdESLevelBaselineT {
 
         if (!revocationsForInclusion.isEmpty()) {
 
-            final Element revocationValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, xPathQueryHolder.XADES_NAMESPACE, "xades:RevocationValues");
+            final Element revocationValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, XAdESNamespaces.XAdES, "xades:RevocationValues");
 
             incorporateOcspTokens(revocationValuesDom, revocationsForInclusion.ocspTokens);
             incorporateCrlTokens(revocationValuesDom, revocationsForInclusion.crlTokens);
@@ -161,13 +162,13 @@ public class XAdESLevelBaselineLT extends XAdESLevelBaselineT {
             return;
         }
         // ...<xades:CRLValues/>
-        final Element crlValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, xPathQueryHolder.XADES_NAMESPACE, "xades:CRLValues");
+        final Element crlValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, XAdESNamespaces.XAdES, "xades:CRLValues");
 
         for (final RevocationToken revocationToken : crlTokens) {
 
             final byte[] encodedCRL = revocationToken.getEncoded();
             final String base64EncodedCRL = DSSUtils.base64Encode(encodedCRL);
-            DSSXMLUtils.addTextElement(documentDom, crlValuesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:EncapsulatedCRLValue", base64EncodedCRL);
+            DSSXMLUtils.addTextElement(documentDom, crlValuesDom, XAdESNamespaces.XAdES, "xades:EncapsulatedCRLValue", base64EncodedCRL);
         }
     }
 
@@ -180,13 +181,13 @@ public class XAdESLevelBaselineLT extends XAdESLevelBaselineT {
 
         // ...<xades:OCSPValues>
         // .........<xades:EncapsulatedOCSPValue>MIIERw...
-        final Element ocspValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, xPathQueryHolder.XADES_NAMESPACE, "xades:OCSPValues");
+        final Element ocspValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, XAdESNamespaces.XAdES, "xades:OCSPValues");
 
         for (final RevocationToken revocationToken : ocspTokens) {
 
             final byte[] encodedOCSP = revocationToken.getEncoded();
             final String base64EncodedOCSP = DSSUtils.base64Encode(encodedOCSP);
-            DSSXMLUtils.addTextElement(documentDom, ocspValuesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:EncapsulatedOCSPValue", base64EncodedOCSP);
+            DSSXMLUtils.addTextElement(documentDom, ocspValuesDom, XAdESNamespaces.XAdES, "xades:EncapsulatedOCSPValue", base64EncodedOCSP);
         }
     }
 
