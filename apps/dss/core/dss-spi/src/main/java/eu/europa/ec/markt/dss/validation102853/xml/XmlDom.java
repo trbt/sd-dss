@@ -464,7 +464,7 @@ public class XmlDom {
 
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			DSSXMLUtils.printDocument(rootElement, byteArrayOutputStream);
-			return new String(byteArrayOutputStream.toByteArray());
+			return DSSUtils.getUtf8String(byteArrayOutputStream.toByteArray());
 		}
 		return super.toString();
 	}
