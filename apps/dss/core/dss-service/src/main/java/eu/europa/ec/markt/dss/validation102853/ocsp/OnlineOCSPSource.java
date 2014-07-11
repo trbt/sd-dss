@@ -58,7 +58,7 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 /**
  * Online OCSP repository. This implementation will contact the OCSP Responder to retrieve the OCSP response.
  *
- * @version $Revision: 3966 $ - $Date: 2014-05-25 19:32:19 +0200 (Sun, 25 May 2014) $
+ * @version $Revision: 4230 $ - $Date: 2014-07-11 11:57:59 +0200 (Fri, 11 Jul 2014) $
  */
 
 public class OnlineOCSPSource implements OCSPSource {
