@@ -421,7 +421,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 
 				if (allDataObjectsTimestampDom == null) {
 
-					allDataObjectsTimestampDom = DSSXMLUtils.addElement(documentDom, signedPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:AllDataObjectsTimeStamp");
+					allDataObjectsTimestampDom = DSSXMLUtils.addElement(documentDom, signedDataObjectPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:AllDataObjectsTimeStamp");
 				}
 				addTimestamp(allDataObjectsTimestampDom, contentTimestamp);
 
@@ -430,7 +430,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 				if (individualDataObjectsTimestampDom == null) {
 
 					individualDataObjectsTimestampDom = DSSXMLUtils
-						  .addElement(documentDom, signedPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IndividualDataObjectsTimeStamp");
+						  .addElement(documentDom, signedDataObjectPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IndividualDataObjectsTimeStamp");
 				}
 				addTimestamp(individualDataObjectsTimestampDom, contentTimestamp);
 			}
@@ -567,21 +567,21 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 		//add includes: URI + referencedData = "true"
 		//add canonicalizationMethod: Algorithm
 		//add encapsulatedTimestamp: Encoding, Id, while its textContent is the base64 encoding of the data to digest
-		for (TimestampInclude include : token.getTimestampIncludes()) {
-			Node timestampIncludeNode = documentDom.createTextNode("xades:Include");
-			Element timestampIncludeElement = (Element) timestampIncludeNode;
+		List<TimestampInclude> includes = token.getTimestampIncludes();
+		if (includes != null) {
+			for (TimestampInclude include : includes) {
+				Element timestampIncludeElement = documentDom.createElement("xades:Include");
 			timestampIncludeElement.setAttribute("URI", "#" + include.getURI());
 			timestampIncludeElement.setAttribute("referencedData", "true");
 			timestampElement.appendChild((Node) timestampIncludeElement);
 		}
-		Node canonicalizationMethodNode = documentDom.createTextNode("ds:CanonicalizationMethod");
-		Element canonicalizationMethodElement = (Element) canonicalizationMethodNode;
+		}
+		Element canonicalizationMethodElement = documentDom.createElement("ds:CanonicalizationMethod");
 		canonicalizationMethodElement.setAttribute("Algorithm", token.getCanonicalizationMethod());
 
 		timestampElement.appendChild((Node) canonicalizationMethodElement);
 
-		Node encapsulatedTimestampNode = documentDom.createTextNode("xades:EncapsulatedTimeStamp");
-		Element encapsulatedTimestampElement = (Element) encapsulatedTimestampNode;
+		Element encapsulatedTimestampElement = documentDom.createElement("xades:EncapsulatedTimeStamp");
 		encapsulatedTimestampElement.setTextContent(DSSUtils.base64Encode(token.getEncoded()));
 
 		timestampElement.appendChild((Node) encapsulatedTimestampElement);
@@ -631,10 +631,10 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 				case CONTENT_TIMESTAMP:
 					break;
 				case ALL_DATA_OBJECTS_TIMESTAMP:
-					timeStampDom = DSSXMLUtils.addElement(documentDom, signedPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:AllDataObjectsTimeStamp");
+					timeStampDom = DSSXMLUtils.addElement(documentDom, signedDataObjectPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:AllDataObjectsTimeStamp");
 					break;
 				case INDIVIDUAL_DATA_OBJECTS_TIMESTAMP:
-					timeStampDom = DSSXMLUtils.addElement(documentDom, signedPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IndividualDataObjectsTimeStamp");
+					timeStampDom = DSSXMLUtils.addElement(documentDom, signedDataObjectPropertiesDom, xPathQueryHolder.XADES_NAMESPACE, "xades:IndividualDataObjectsTimeStamp");
 					break;
 			}
 			timeStampDom.setAttribute("Id", signatureTimestampId);

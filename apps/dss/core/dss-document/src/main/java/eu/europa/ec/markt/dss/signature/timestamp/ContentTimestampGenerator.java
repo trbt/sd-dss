@@ -1,3 +1,23 @@
+/*
+ * DSS - Digital Signature Services
+ *
+ * Copyright (C) 2014 European Commission, Directorate-General Internal Market and Services (DG MARKT), B-1049 Bruxelles/Brussel
+ *
+ * Developed by: 2014 ARHS Developments S.A. (rue Nicolas Bové 2B, L-1253 Luxembourg) http://www.arhs-developments.com
+ *
+ * This file is part of the "DSS - Digital Signature Services" project.
+ *
+ * "DSS - Digital Signature Services" is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Lesser General Public License as published by the Free Software Foundation, either version 2.1 of the
+ * License, or (at your option) any later version.
+ *
+ * DSS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with
+ * "DSS - Digital Signature Services".  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package eu.europa.ec.markt.dss.signature.timestamp;
 
 import eu.europa.ec.markt.dss.parameter.ContentTimestampReference;
@@ -5,12 +25,15 @@ import eu.europa.ec.markt.dss.parameter.TimestampParameters;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.validation102853.CertificatePool;
+import eu.europa.ec.markt.dss.validation102853.TimestampInclude;
 import eu.europa.ec.markt.dss.validation102853.TimestampToken;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
 import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 import org.bouncycastle.tsp.TimeStampToken;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 
 /**
@@ -110,7 +133,8 @@ public class ContentTimestampGenerator {
     public TimestampToken generateTimestampToken(final TimestampType timestampType, final DigestAlgorithm digestAlgorithm, final byte[] digest ) {
 
 		final TimeStampToken timeStampResponse = tspSource.getTimeStampResponse(digestAlgorithm, digest);
-		return new TimestampToken(timeStampResponse, timestampType, certificatePool);
+		TimestampToken token = new TimestampToken(timeStampResponse, timestampType, certificatePool);
+		return token;
     }
 
     //1. getInfo().getReferences()
@@ -158,6 +182,18 @@ public class ContentTimestampGenerator {
 			digest = DSSUtils.digest(digestAlgorithm, buffer.toByteArray());
 		}
 		final TimestampToken token = generateTimestampToken(TimestampType.INDIVIDUAL_DATA_OBJECTS_TIMESTAMP,digestAlgorithm,digest);
+		//token.setTimestampIncludes(parameters.getReferences());
+        return token;
+    }
+
+	public TimestampToken generateContentTimestamp(final TimestampParameters parameters) {
+
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		final DigestAlgorithm digestAlgorithm = parameters.getDigestAlgorithm();
+		byte[] digest = parameters.getDigest();
+
+		final TimestampToken token = generateTimestampToken(TimestampType.CONTENT_TIMESTAMP, digestAlgorithm, digest);
+
         return token;
     }
 }

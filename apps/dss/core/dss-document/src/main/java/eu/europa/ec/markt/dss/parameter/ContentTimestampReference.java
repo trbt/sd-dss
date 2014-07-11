@@ -21,22 +21,23 @@
 package eu.europa.ec.markt.dss.parameter;
 
 /**
- * Created by bouckavi on 3/7/2014.
+ * This class represents a signature Reference element considered for inclusion within a content timestamp
+ * (i.e. a XAdES AllDataObjectsTimestamp, or a XAdES IndividualDataObjectsTimestamp).
  */
 public class ContentTimestampReference {
 
     /**
-     *
+     * The data contained within the Reference element
      */
     private byte[] data;
 
 	/**
-	 *
+	 * The URI of the Reference element
 	 */
 	private String uri;
 
 	/**
-     *
+     * Getter for the data attribute
      * @return
      */
     public byte[] getData() {
@@ -44,7 +45,7 @@ public class ContentTimestampReference {
     }
 
     /**
-     *
+     * Setter for the data attribute
      * @param data
      */
     public void setData(byte[] data) {

@@ -1,10 +1,14 @@
 package eu.europa.ec.markt.dss.validation102853;
 
-// TODO-Vin (07/07/2014): To be completed
+/**
+ * This class represents
+ */
 public class TimestampInclude {
 
     private String uri;
     private boolean referencedData;
+
+	public TimestampInclude() {}
 
     public TimestampInclude(String uri, String referencedData) {
         this.uri = uri;

@@ -24,19 +24,20 @@ import java.util.List;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 
 /**
- *
+ * This class represents the parameters provided when generating specific timestamps in a signature, such as an AllDataObjectsTimestamp or an
+ * IndividualDataObjectsTimestamp.
  */
 public class TimestampParameters {
 
     private List<ContentTimestampReference> references;
 
     /**
-     *
+     * The digest value for the timestamp
      */
     private byte[] digest;
 
 	/**
-	 *
+	 * The digest algorithm to provide to the timestamping authority
 	 */
 	private DigestAlgorithm digestAlgorithm;
 	private String canonicalizationMethod;
