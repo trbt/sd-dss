@@ -40,7 +40,7 @@ public abstract class SignatureCertificateSource extends CommonCertificateSource
      *
      * @param certPool
      */
-    protected SignatureCertificateSource(CertificatePool certPool) {
+    protected SignatureCertificateSource(final CertificatePool certPool) {
 
         super(certPool);
     }

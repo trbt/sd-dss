@@ -14,17 +14,21 @@ public class XPathQueryHolder {
 
 	public static final String XMLE_SIGNATURE = "Signature";
 	public static final String XMLE_ALGORITHM = "Algorithm";
-	public static final String XMLE_TRANSFORM = "Transform";
 
+	public static final String XMLE_KEYINFO = "KeyInfo";
+	public static final String XMLE_X509DATA = "X509Data";
+	public static final String XMLE_X509CERTIFICATE = "X509Certificate";
+
+	public static final String XMLE_TRANSFORM = "Transform";
 	public static final String XMLE_CITY = "City";
 	public static final String XMLE_STATE_OR_PROVINCE = "StateOrProvince";
+
 	public static final String XMLE_POSTAL_CODE = "PostalCode";
 	public static final String XMLE_COUNTRY_NAME = "CountryName";
-
 	public static final String XMLE_QUALIFYING_PROPERTIES = "QualifyingProperties";
+
 	public static final String XMLE_UNSIGNED_PROPERTIES = "UnsignedProperties";
 	public static final String XMLE_UNSIGNED_SIGNATURE_PROPERTIES = "UnsignedSignatureProperties";
-
 	public static final String XMLE_ARCHIVE_TIME_STAMP = "ArchiveTimeStamp";
 	public static final String XMLE_ARCHIVE_TIME_STAMP_V2 = "ArchiveTimeStampV2";
 
@@ -39,7 +43,7 @@ public class XPathQueryHolder {
 	public String XPATH_OCSPREF = "/xades:OCSPRef";
 	public String XPATH__OCSPREF = "." + XPATH_OCSPREF;
 
-	public final String XPATH_SIGNATURE = "./ds:Signature";
+	public final String XPATH__SIGNATURE = "./ds:Signature";
 	public final String XPATH_SIGNED_INFO = "./ds:SignedInfo";
 	public final String XPATH_SIGNATURE_METHOD = XPATH_SIGNED_INFO + "/ds:SignatureMethod";
 	public final String XPATH_SIGNATURE_VALUE = "./ds:SignatureValue";

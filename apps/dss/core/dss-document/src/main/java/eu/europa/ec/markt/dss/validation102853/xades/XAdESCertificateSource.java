@@ -45,112 +45,115 @@ import eu.europa.ec.markt.dss.validation102853.SignatureCertificateSource;
 
 public class XAdESCertificateSource extends SignatureCertificateSource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(XAdESCertificateSource.class);
+	private static final Logger LOG = LoggerFactory.getLogger(XAdESCertificateSource.class);
 
-    private final Element signatureElement;
+	private final Element signatureElement;
 
-    private final XPathQueryHolder xPathQueryHolder;
+	private final XPathQueryHolder xPathQueryHolder;
 
-    private List<CertificateToken> keyInfoCerts;
+	private List<CertificateToken> keyInfoCerts;
 
-    private List<CertificateToken> encapsulatedCerts;
+	private List<CertificateToken> encapsulatedCerts;
 
-    private List<CertificateToken> timestampValidationData;
+	private List<CertificateToken> timestampValidationData;
 
-    /**
-     * The default constructor for XAdESCertificateSource. All certificates are extracted during instantiation.
-     *
-     * @param signatureElement {@code Element} that contains an XML signature
-     * @param xPathQueryHolder adapted {@code XPathQueryHolder}
-     * @param certificatePool  {@code CertificatePool} to use to declare found certificates
-     */
-    public XAdESCertificateSource(final Element signatureElement, final XPathQueryHolder xPathQueryHolder, final CertificatePool certificatePool) {
+	/**
+	 * The default constructor for XAdESCertificateSource. All certificates are extracted during instantiation.
+	 *
+	 * @param signatureElement {@code Element} that contains an XML signature
+	 * @param xPathQueryHolder adapted {@code XPathQueryHolder}
+	 * @param certificatePool  {@code CertificatePool} to use to declare the found certificates
+	 */
+	public XAdESCertificateSource(final Element signatureElement, final XPathQueryHolder xPathQueryHolder, final CertificatePool certificatePool) {
 
-        super(certificatePool);
-        if (signatureElement == null) {
+		super(certificatePool);
+		if (signatureElement == null) {
 
-            throw new DSSNullException(Element.class, "signatureElement");
-        }
-        if (xPathQueryHolder == null) {
+			throw new DSSNullException(Element.class, "signatureElement");
+		}
+		if (xPathQueryHolder == null) {
 
-            throw new DSSNullException(XPathQueryHolder.class, "xPathQueryHolder");
-        }
-        this.signatureElement = signatureElement;
-        this.xPathQueryHolder = xPathQueryHolder;
-        extract();
-        if (LOG.isInfoEnabled()) {
-            LOG.info("+XAdESCertificateSource");
-        }
-    }
+			throw new DSSNullException(XPathQueryHolder.class, "xPathQueryHolder");
+		}
+		this.signatureElement = signatureElement;
+		this.xPathQueryHolder = xPathQueryHolder;
+		extract();
+		if (LOG.isInfoEnabled()) {
+			LOG.info("+XAdESCertificateSource");
+		}
+	}
 
-    /**
-     * This method extracts all encapsulated certificates from the signature and adds them to validationCertPool.
-     *
-     * @throws eu.europa.ec.markt.dss.exception.DSSException
-     */
-    @Override
-    protected void extract() throws DSSException {
+	/**
+	 * This method extracts all encapsulated certificates from the signature and adds them to validationCertPool.
+	 *
+	 * @throws eu.europa.ec.markt.dss.exception.DSSException
+	 */
+	@Override
+	protected void extract() throws DSSException {
 
-        if (certificateTokens == null) {
+		if (certificateTokens == null) {
 
-            certificateTokens = new ArrayList<CertificateToken>();
-            encapsulatedCerts = getCertificates(xPathQueryHolder.XPATH_ENCAPSULATED_X509_CERTIFICATE);
-            keyInfoCerts = getCertificates(xPathQueryHolder.XPATH_KEY_INFO_X509_CERTIFICATE);
-            timestampValidationData = getCertificates(xPathQueryHolder.XPATH_TSVD_ENCAPSULATED_X509_CERTIFICATE);
-        }
-    }
+			certificateTokens = new ArrayList<CertificateToken>();
+			encapsulatedCerts = getCertificates(xPathQueryHolder.XPATH_ENCAPSULATED_X509_CERTIFICATE);
+			keyInfoCerts = getCertificates(xPathQueryHolder.XPATH_KEY_INFO_X509_CERTIFICATE);
+			timestampValidationData = getCertificates(xPathQueryHolder.XPATH_TSVD_ENCAPSULATED_X509_CERTIFICATE);
+		}
+	}
 
-    /**
-     * @param xPathQuery XPath query
-     * @return
-     */
-    private List<CertificateToken> getCertificates(final String xPathQuery) {
+	/**
+	 * @param xPathQuery XPath query
+	 * @return
+	 */
+	private List<CertificateToken> getCertificates(final String xPathQuery) {
 
-        final List<CertificateToken> list = new ArrayList<CertificateToken>();
-        final NodeList nodeList = DSSXMLUtils.getNodeList(signatureElement, xPathQuery);
-        for (int ii = 0; ii < nodeList.getLength(); ii++) {
+		final List<CertificateToken> list = new ArrayList<CertificateToken>();
+		final NodeList nodeList = DSSXMLUtils.getNodeList(signatureElement, xPathQuery);
+		for (int ii = 0; ii < nodeList.getLength(); ii++) {
 
-            final Element certEl = (Element) nodeList.item(ii);
-            final byte[] derEncoded = DSSUtils.base64Decode(certEl.getTextContent());
-            final X509Certificate cert = DSSUtils.loadCertificate(derEncoded);
-            final CertificateToken certToken = addCertificate(cert);
-            if (!list.contains(certToken)) {
+			final Element certificateElement = (Element) nodeList.item(ii);
 
-                list.add(certToken);
-            }
-        }
-        return list;
-    }
+			final byte[] derEncoded = DSSUtils.base64Decode(certificateElement.getTextContent());
+			final X509Certificate cert = DSSUtils.loadCertificate(derEncoded);
+			final CertificateToken certToken = addCertificate(cert);
+			if (!list.contains(certToken)) {
 
-    /**
-     * Returns the list of certificates included in
-     * ".../xades:UnsignedSignatureProperties/xades:CertificateValues/xades:EncapsulatedX509Certificate" node
-     *
-     * @return list of X509Certificate(s)
-     */
-    public List<CertificateToken> getEncapsulatedCertificates() throws DSSException {
+				final String idIdentifier = DSSXMLUtils.getIDIdentifier(certificateElement);
+				certToken.setXmlId(idIdentifier);
+				list.add(certToken);
+			}
+		}
+		return list;
+	}
 
-        return encapsulatedCerts;
-    }
+	/**
+	 * Returns the list of certificates included in
+	 * ".../xades:UnsignedSignatureProperties/xades:CertificateValues/xades:EncapsulatedX509Certificate" node
+	 *
+	 * @return list of X509Certificate(s)
+	 */
+	public List<CertificateToken> getEncapsulatedCertificates() throws DSSException {
 
-    /**
-     * Returns the list of certificates included in "ds:KeyInfo/ds:X509Data/ds:X509Certificate" node
-     *
-     * @return list of X509Certificate(s)
-     */
-    public List<CertificateToken> getKeyInfoCertificates() throws DSSException {
+		return encapsulatedCerts;
+	}
 
-        return keyInfoCerts;
-    }
+	/**
+	 * Returns the list of certificates included in "ds:KeyInfo/ds:X509Data/ds:X509Certificate" node
+	 *
+	 * @return list of X509Certificate(s)
+	 */
+	public List<CertificateToken> getKeyInfoCertificates() throws DSSException {
 
-    /**
-     * Returns the list of certificates included in "xades141:TimeStampValidationData/xades132:CertificateValues" node
-     *
-     * @return
-     * @throws eu.europa.ec.markt.dss.exception.DSSException
-     */
-    public List<CertificateToken> getTimestampCertificates() throws DSSException {
+		return keyInfoCerts;
+	}
 
-        return timestampValidationData;
-    }
+	/**
+	 * Returns the list of certificates included in "xades141:TimeStampValidationData/xades132:CertificateValues" node
+	 *
+	 * @return
+	 * @throws eu.europa.ec.markt.dss.exception.DSSException
+	 */
+	public List<CertificateToken> getTimestampCertificates() throws DSSException {
+
+		return timestampValidationData;
+	}
 }

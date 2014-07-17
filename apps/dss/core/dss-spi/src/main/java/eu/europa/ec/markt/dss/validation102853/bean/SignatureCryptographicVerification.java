@@ -21,74 +21,74 @@ package eu.europa.ec.markt.dss.validation102853.bean;
 
 public class SignatureCryptographicVerification {
 
-    private boolean referenceDataFound;
+	private boolean referenceDataFound;
 
-    private boolean referenceDataIntact;
+	private boolean referenceDataIntact;
 
-    /**
-     * This can be true but the {@code signatureValid} can be false
-     */
-    private boolean signatureIntact;
+	/**
+	 * This can be true but the {@code signatureValid} can be false
+	 */
+	private boolean signatureIntact;
 
-    private String errorMessage = "";
+	private String errorMessage = "";
 
-    public boolean isReferenceDataFound() {
+	public boolean isReferenceDataFound() {
 
-        return referenceDataFound;
-    }
+		return referenceDataFound;
+	}
 
-    public void setReferenceDataFound(boolean referenceDataFound) {
+	public void setReferenceDataFound(boolean referenceDataFound) {
 
-        this.referenceDataFound = referenceDataFound;
-    }
+		this.referenceDataFound = referenceDataFound;
+	}
 
-    public boolean isReferenceDataIntact() {
+	public boolean isReferenceDataIntact() {
 
-        return referenceDataIntact;
-    }
+		return referenceDataIntact;
+	}
 
-    public void setReferenceDataIntact(boolean referenceDataIntact) {
+	public void setReferenceDataIntact(boolean referenceDataIntact) {
 
-        this.referenceDataIntact = referenceDataIntact;
-    }
+		this.referenceDataIntact = referenceDataIntact;
+	}
 
-    public boolean isSignatureIntact() {
+	public boolean isSignatureIntact() {
 
-        return signatureIntact;
-    }
+		return signatureIntact;
+	}
 
-    public void setSignatureIntact(boolean signatureIntact) {
+	public void setSignatureIntact(boolean signatureIntact) {
 
-        this.signatureIntact = signatureIntact;
-    }
+		this.signatureIntact = signatureIntact;
+	}
 
-    /**
-     * This means that the {@code referenceDataFound} and {@code referenceDataIntact} and {@code signatureValid} are true
-     */
-    public boolean isSignatureValid() {
+	/**
+	 * This means that the {@code referenceDataFound} and {@code referenceDataIntact} and {@code signatureValid} are true
+	 */
+	public boolean isSignatureValid() {
 
-        return referenceDataFound && signatureIntact && referenceDataIntact;
-    }
+		return referenceDataFound && signatureIntact && referenceDataIntact;
+	}
 
-    public String getErrorMessage() {
+	public String getErrorMessage() {
 
-        return errorMessage;
-    }
+		return errorMessage;
+	}
 
-    public void setErrorMessage(String errorMessage) {
+	public void setErrorMessage(final String errorMessage) {
 
-        if (this.errorMessage != null && !this.errorMessage.isEmpty()) {
+		if (this.errorMessage != null && !this.errorMessage.isEmpty()) {
 
-            this.errorMessage += "<br/>\n" + errorMessage;
-        } else {
+			this.errorMessage += "<br/>\n" + errorMessage;
+		} else {
 
-            this.errorMessage = errorMessage;
-        }
-    }
+			this.errorMessage = errorMessage;
+		}
+	}
 
-    @Override
-    public String toString() {
+	@Override
+	public String toString() {
 
-        return "referenceDataFound:" + referenceDataFound + ", referenceDataIntact:" + referenceDataIntact + ", signatureValid;" + signatureIntact + " / " + errorMessage;
-    }
+		return "referenceDataFound:" + referenceDataFound + ", referenceDataIntact:" + referenceDataIntact + ", signatureValid;" + signatureIntact + " / " + errorMessage;
+	}
 }

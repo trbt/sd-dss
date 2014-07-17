@@ -91,12 +91,12 @@ public class SignatureParameters {
 	/**
 	 * The encryption algorithm shall be automatically extracted from the signing token.
 	 */
-	private EncryptionAlgorithm encryptionAlgorithm = signatureAlgorithm.getEncryptionAlgo();
+	private EncryptionAlgorithm encryptionAlgorithm = signatureAlgorithm.getEncryptionAlgorithm();
 
 	/**
 	 * XAdES: The digest algorithm used to hash ds:SignedInfo.
 	 */
-	private DigestAlgorithm digestAlgorithm = signatureAlgorithm.getDigestAlgo();
+	private DigestAlgorithm digestAlgorithm = signatureAlgorithm.getDigestAlgorithm();
 	private List<DSSReference> references;
 
 	/**
@@ -125,7 +125,7 @@ public class SignatureParameters {
 	/**
 	 * The document to be signed
 	 */
-	private DSSDocument originalDocument;
+	private DSSDocument detachedContent;
 
 	/**
 	 * Copy constructor (used by ASiC)
@@ -147,7 +147,7 @@ public class SignatureParameters {
 		deterministicId = source.getDeterministicId();
 		digestAlgorithm = source.digestAlgorithm;
 		encryptionAlgorithm = source.encryptionAlgorithm;
-		originalDocument = source.originalDocument;
+		detachedContent = source.detachedContent;
 		privateKeyEntry = source.privateKeyEntry;
 		reason = source.reason;
 		signatureAlgorithm = source.signatureAlgorithm;
@@ -168,20 +168,44 @@ public class SignatureParameters {
 	 * This method returns the document to sign. In the case of the DETACHED signature this is the detached document.
 	 *
 	 * @return
+	 * @deprecated (4.1.0) use {@code getDetachedContent}
 	 */
+	@Deprecated
 	public DSSDocument getOriginalDocument() {
-		return originalDocument;
+		return detachedContent;
 	}
 
 	/**
-	 * When signing this method is internally invoked by the {@code AbstractSignatureService} and the related variable {@code originalDocument} is overwritten by the service
+	 * This method returns the document to sign. In the case of the DETACHED signature this is the detached document.
+	 *
+	 * @return
+	 */
+	public DSSDocument getDetachedContent() {
+		return detachedContent;
+	}
+
+	/**
+	 * When signing this method is internally invoked by the {@code AbstractSignatureService} and the related variable {@code detachedContent} is overwritten by the service
 	 * parameter. In the case of the DETACHED signature this is the detached document. In the case of ASiC-S this is the document to be signed.<p />
-	 * When extending this method must be invoked to indicate the {@code originalDocument}.
+	 * When extending this method must be invoked to indicate the {@code detachedContent}.
 	 *
 	 * @param document
+	 * @deprecated (4.1.0) use {@code setDetachedContent}
 	 */
+	@Deprecated
 	public void setOriginalDocument(final DSSDocument document) {
-		this.originalDocument = document;
+		this.detachedContent = document;
+	}
+
+	/**
+	 * When signing this method is internally invoked by the {@code AbstractSignatureService} and the related variable {@code detachedContent} is overwritten by the service
+	 * parameter. In the case of the DETACHED signature this is the detached document. In the case of ASiC-S this is the document to be signed.<p />
+	 * When extending this method must be invoked to indicate the {@code detachedContent}.
+	 *
+	 * @param detachedContent
+	 */
+	public void setDetachedContent(final DSSDocument detachedContent) {
+		this.detachedContent = detachedContent;
 	}
 
 	/**
@@ -573,7 +597,7 @@ public class SignatureParameters {
 			  ", timestampDigestAlgorithm=" + timestampDigestAlgorithm +
 			  ", archiveTimestampDigestAlgorithm=" + archiveTimestampDigestAlgorithm +
 			  ", contentTimestamps=" + contentTimestamps +
-			  ", originalDocument=" + originalDocument +
+			  ", detachedContent=" + detachedContent +
 			  '}';
 	}
 }

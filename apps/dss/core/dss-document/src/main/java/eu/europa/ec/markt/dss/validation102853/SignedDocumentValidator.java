@@ -121,7 +121,7 @@ import eu.europa.ec.markt.dss.validation102853.xades.XMLDocumentValidator;
 
 /**
  * Validate the signed document. The content of the document is determined automatically. It can be: XML, CAdES(p7m), PDF or ASiC(zip).
- *
+ * <p/>
  * SignatureScopeFinder can be set using the appropriate setter (ex. setCadesSignatureScopeFinder). By default, this class will use the
  * default SignatureScopeFinder as defined by eu.europa.ec.markt.dss.validation102853.scope.SignatureScopeFinderFactory
  *
@@ -163,7 +163,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	/**
 	 * In case of a detached signature this is the signed document.
 	 */
-	protected DSSDocument externalContent;
+	protected DSSDocument detachedContent;
 
 	protected CertificateToken providedSigningCertificateToken = null;
 
@@ -205,9 +205,16 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	}
 
 	@Override
+	@Deprecated
 	public DSSDocument getExternalContent() {
 
-		return externalContent;
+		return detachedContent;
+	}
+
+	@Override
+	public DSSDocument getDetachedContent() {
+
+		return detachedContent;
 	}
 
 	/**
@@ -217,8 +224,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 */
 	public MimeType getExternalContentMimeType() {
 
-		if (externalContent != null) {
-			return externalContent.getMimeType();
+		if (detachedContent != null) {
+			return detachedContent.getMimeType();
 		}
 		return null;
 	}
@@ -246,15 +253,17 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		validationCertPool = certificateVerifier.createValidationPool();
 	}
 
-	/**
-	 * Sets the Document containing the original content to sign, for detached signature scenarios.
-	 *
-	 * @param externalContent the externalContent to set
-	 */
 	@Override
+	@Deprecated
 	public void setExternalContent(final DSSDocument externalContent) {
 
-		this.externalContent = externalContent;
+		this.detachedContent = externalContent;
+	}
+
+	@Override
+	public void setDetachedContent(final DSSDocument detachedContent) {
+
+		this.detachedContent = detachedContent;
 	}
 
 	/**
@@ -417,9 +426,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
          */
 		for (final AdvancedSignature signature : getSignatures()) {
 
-			final CandidatesForSigningCertificate candidatesForSigningCertificate = signature.getCandidatesForSigningCertificate();
-			final List<CertificateToken> signingCertificateTokenList = candidatesForSigningCertificate.getSigningCertificateTokenList();
-			for (final CertificateToken certificateToken : signingCertificateTokenList) {
+			final List<CertificateToken> candidates = signature.getCertificateSource().getCertificates();
+			for (final CertificateToken certificateToken : candidates) {
 
 				validationContext.addCertificateTokenForVerification(certificateToken);
 			}
@@ -454,7 +462,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	/**
 	 * Main method for validating a signature. The diagnostic data is extracted.
 	 *
-	 * @param signature Signature to be validated (can be XAdES, CAdES, PAdES.
+	 * @param signature Signature to be validated (can be XAdES, CAdES, PAdES).
 	 * @return The JAXB object containing all diagnostic data pertaining to the signature
 	 */
 	private XmlSignature validateSignature(final AdvancedSignature signature) throws DSSException {
@@ -552,8 +560,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		final XmlBasicSignatureType xmlBasicSignatureType = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlBasicSignatureType();
 		if (signatureAlgorithm != null) {
 
-			xmlBasicSignatureType.setEncryptionAlgoUsedToSignThisToken(signatureAlgorithm.getEncryptionAlgo().getName());
-			xmlBasicSignatureType.setDigestAlgoUsedToSignThisToken(signatureAlgorithm.getDigestAlgo().getName());
+			xmlBasicSignatureType.setEncryptionAlgoUsedToSignThisToken(signatureAlgorithm.getEncryptionAlgorithm().getName());
+			xmlBasicSignatureType.setDigestAlgoUsedToSignThisToken(signatureAlgorithm.getDigestAlgorithm().getName());
 		}
 		final String keyLength = timestampToken.getKeyLength();
 		xmlBasicSignatureType.setKeyLengthUsedToSignThisToken(keyLength);
@@ -777,8 +785,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		final XmlBasicSignatureType xmlBasicSignatureType = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlBasicSignatureType();
 
 		final SignatureAlgorithm signatureAlgorithm = certToken.getSignatureAlgo();
-		xmlBasicSignatureType.setDigestAlgoUsedToSignThisToken(signatureAlgorithm.getDigestAlgo().getName());
-		xmlBasicSignatureType.setEncryptionAlgoUsedToSignThisToken(signatureAlgorithm.getEncryptionAlgo().getName());
+		xmlBasicSignatureType.setDigestAlgoUsedToSignThisToken(signatureAlgorithm.getDigestAlgorithm().getName());
+		xmlBasicSignatureType.setEncryptionAlgoUsedToSignThisToken(signatureAlgorithm.getEncryptionAlgorithm().getName());
 		final String keyLength = certToken.getKeyLength();
 		xmlBasicSignatureType.setKeyLengthUsedToSignThisToken(keyLength);
 		final boolean signatureIntact = certToken.isSignatureValid();
@@ -805,21 +813,22 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 		final XmlDistinguishedName xmlDistinguishedName = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlDistinguishedName();
 		xmlDistinguishedName.setFormat(x500PrincipalFormat);
-		xmlDistinguishedName.setValue(X500PrincipalName.getName(x500PrincipalFormat));
+		final String x500PrincipalName = X500PrincipalName.getName(x500PrincipalFormat);
+		xmlDistinguishedName.setValue(x500PrincipalName);
 		return xmlDistinguishedName;
 	}
 
 	/**
 	 * This method deals with the certificate chain. The retrieved information is transformed to the JAXB object.
 	 *
-	 * @param xmlSignature
-	 * @param signToken
+	 * @param xmlSignature The JAXB object containing all diagnostic data pertaining to the signature
+	 * @param signingToken {@code CertificateToken} relative to the current signature
 	 */
-	private void dealCertificateChain(final XmlSignature xmlSignature, final CertificateToken signToken) {
+	private void dealCertificateChain(final XmlSignature xmlSignature, final CertificateToken signingToken) {
 
-		if (signToken != null) {
+		if (signingToken != null) {
 
-			final XmlCertificateChainType xmlCertChainType = xmlForCertificateChain(signToken);
+			final XmlCertificateChainType xmlCertChainType = xmlForCertificateChain(signingToken);
 			xmlSignature.setCertificateChain(xmlCertChainType);
 		}
 	}
@@ -904,12 +913,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			final XmlBasicSignatureType xmlBasicSignatureType = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlBasicSignatureType();
 			final SignatureAlgorithm revocationSignatureAlgo = revocationToken.getSignatureAlgo();
 			final boolean unknownAlgorithm = revocationSignatureAlgo == null;
-			final String encryptionAlgorithmName = unknownAlgorithm ? "?" : revocationSignatureAlgo.getEncryptionAlgo().getName();
+			final String encryptionAlgorithmName = unknownAlgorithm ? "?" : revocationSignatureAlgo.getEncryptionAlgorithm().getName();
 			xmlBasicSignatureType.setEncryptionAlgoUsedToSignThisToken(encryptionAlgorithmName);
 			final String keyLength = revocationToken.getKeyLength();
 			xmlBasicSignatureType.setKeyLengthUsedToSignThisToken(keyLength);
 
-			final String digestAlgorithmName = unknownAlgorithm ? "?" : revocationSignatureAlgo.getDigestAlgo().getName();
+			final String digestAlgorithmName = unknownAlgorithm ? "?" : revocationSignatureAlgo.getDigestAlgorithm().getName();
 			xmlBasicSignatureType.setDigestAlgoUsedToSignThisToken(digestAlgorithmName);
 			final boolean signatureValid = revocationToken.isSignatureValid();
 			xmlBasicSignatureType.setReferenceDataFound(signatureValid);
@@ -945,8 +954,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	/**
 	 * This method deals with the signature policy. The retrieved information is transformed to the JAXB object.
 	 *
-	 * @param signature
-	 * @param xmlSignature
+	 * @param signature    Signature to be validated (can be XAdES, CAdES, PAdES).
+	 * @param xmlSignature The JAXB object containing all diagnostic data pertaining to the signature
 	 */
 	private void dealPolicy(final AdvancedSignature signature, final XmlSignature xmlSignature) {
 
@@ -1105,8 +1114,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	/**
 	 * This method deals with the basic signature data. The retrieved information is transformed to the JAXB object. The signing certificate token is returned if found.
 	 *
-	 * @param signature
-	 * @param xmlSignature
+	 * @param signature    Signature to be validated (can be XAdES, CAdES, PAdES).
+	 * @param xmlSignature The JAXB object containing all diagnostic data pertaining to the signature
 	 * @return
 	 */
 	private CertificateToken dealSignature(final AdvancedSignature signature, final XmlSignature xmlSignature) {
@@ -1201,14 +1210,14 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		final SigningCertificateValidity signingCertificateValidity = dealSigningCertificate(signature, xmlSignature);
 
 		final XmlBasicSignatureType xmlBasicSignature = getXmlBasicSignatureType(xmlSignature);
-		final EncryptionAlgorithm encryptionAlgorithm = signature.getEncryptionAlgo();
+		final EncryptionAlgorithm encryptionAlgorithm = signature.getEncryptionAlgorithm();
 		final String encryptionAlgorithmString = encryptionAlgorithm == null ? "?" : encryptionAlgorithm.getName();
 		xmlBasicSignature.setEncryptionAlgoUsedToSignThisToken(encryptionAlgorithmString);
 		// signingCertificateValidity can be null in case of a non AdES signature.
 		final CertificateToken signingCertificateToken = signingCertificateValidity == null ? null : signingCertificateValidity.getCertificateToken();
 		final int keyLength = signingCertificateToken == null ? 0 : signingCertificateToken.getPublicKeyLength();
 		xmlBasicSignature.setKeyLengthUsedToSignThisToken(String.valueOf(keyLength));
-		final DigestAlgorithm digestAlgorithm = signature.getDigestAlgo();
+		final DigestAlgorithm digestAlgorithm = signature.getDigestAlgorithm();
 		final String digestAlgorithmString = digestAlgorithm == null ? "?" : digestAlgorithm.getName();
 		xmlBasicSignature.setDigestAlgoUsedToSignThisToken(digestAlgorithmString);
 		xmlSignature.setBasicSignature(xmlBasicSignature);
@@ -1244,12 +1253,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * This method verifies the cryptographic integrity of the signature: the references are identified, their digest is checked and then the signature itself. The result of these
 	 * verifications is transformed to the JAXB representation.
 	 *
-	 * @param signature
-	 * @param xmlSignature
+	 * @param signature    Signature to be validated (can be XAdES, CAdES, PAdES).
+	 * @param xmlSignature The JAXB object containing all diagnostic data pertaining to the signature
 	 */
 	private void dealSignatureCryptographicIntegrity(final AdvancedSignature signature, final XmlSignature xmlSignature) {
 
-		final SignatureCryptographicVerification scv = signature.checkIntegrity(this.externalContent, providedSigningCertificateToken);
+		final SignatureCryptographicVerification scv = signature.checkSignatureIntegrity();
 		final XmlBasicSignatureType xmlBasicSignature = getXmlBasicSignatureType(xmlSignature);
 		xmlBasicSignature.setReferenceDataFound(scv.isReferenceDataFound());
 		xmlBasicSignature.setReferenceDataIntact(scv.isReferenceDataIntact());
@@ -1264,17 +1273,17 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 	/**
 	 * This method finds the signing certificate and creates its JAXB object representation. The signing certificate used to produce the main signature (signature being analysed).
-	 * If the signToken is null (the signing certificate was not found) then Id is set to 0.
+	 * If the signingToken is null (the signing certificate was not found) then Id is set to 0.
 	 *
-	 * @param signature
-	 * @param xmlSignature
+	 * @param signature    Signature to be validated (can be XAdES, CAdES, PAdES).
+	 * @param xmlSignature The JAXB object containing all diagnostic data pertaining to the signature
 	 * @return
 	 */
 	private SigningCertificateValidity dealSigningCertificate(final AdvancedSignature signature, final XmlSignature xmlSignature) {
 
 		final XmlSigningCertificateType xmlSignCertType = DIAGNOSTIC_DATA_OBJECT_FACTORY.createXmlSigningCertificateType();
+		signature.checkSigningCertificate();
 		final CandidatesForSigningCertificate candidatesForSigningCertificate = signature.getCandidatesForSigningCertificate();
-
 		final SigningCertificateValidity theSigningCertificateValidity = candidatesForSigningCertificate.getTheSigningCertificateValidity();
 		if (theSigningCertificateValidity != null) {
 
@@ -1288,6 +1297,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			xmlSignCertType.setDigestValueMatch(theSigningCertificateValidity.isDigestEqual());
 			final boolean issuerSerialMatch = theSigningCertificateValidity.isSerialNumberEqual() && theSigningCertificateValidity.isDistinguishedNameEqual();
 			xmlSignCertType.setIssuerSerialMatch(issuerSerialMatch);
+			xmlSignCertType.setSigned(theSigningCertificateValidity.getSigned());
 			xmlSignature.setSigningCertificate(xmlSignCertType);
 		}
 		return theSigningCertificateValidity;
@@ -1310,12 +1320,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
             final Result counterSigResult;
             try {
 
-                final SignatureCryptographicVerification scv = counterSig.checkIntegrity(getExternalContent());
+                final SignatureCryptographicVerification scv = counterSig.checkSignatureIntegrity(getExternalContent());
                 counterSigResult = new Result(scv.signatureValid());
             } catch (DSSException e) {
                 throw new RuntimeException(e);
             }
-            final String counterSigAlg = counterSig.getEncryptionAlgo().getName();
+            final String counterSigAlg = counterSig.getEncryptionAlgorithm().getName();
             counterSigVerifs.add(new SignatureVerification(counterSigResult, counterSigAlg, signature.getId()));
         }
 
@@ -1391,12 +1401,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		return xadesSignatureScopeFinder;
 	}
 
-    /**
-     * Set the SignatureScopeFinder to use for XML signatures
-     *
-     * @param xadesSignatureScopeFinder
-     */
-    public void setXadesSignatureScopeFinder(SignatureScopeFinder<XAdESSignature> xadesSignatureScopeFinder) {
+	/**
+	 * Set the SignatureScopeFinder to use for XML signatures
+	 *
+	 * @param xadesSignatureScopeFinder
+	 */
+	public void setXadesSignatureScopeFinder(SignatureScopeFinder<XAdESSignature> xadesSignatureScopeFinder) {
 		this.xadesSignatureScopeFinder = xadesSignatureScopeFinder;
 	}
 
@@ -1404,12 +1414,12 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		return cadesSignatureScopeFinder;
 	}
 
-    /**
-     * Set the SignatureScopeFinder to use for CMS signatures
-     *
-     * @param cadesSignatureScopeFinder
-     */
-    public void setCadesSignatureScopeFinder(SignatureScopeFinder<CAdESSignature> cadesSignatureScopeFinder) {
+	/**
+	 * Set the SignatureScopeFinder to use for CMS signatures
+	 *
+	 * @param cadesSignatureScopeFinder
+	 */
+	public void setCadesSignatureScopeFinder(SignatureScopeFinder<CAdESSignature> cadesSignatureScopeFinder) {
 		this.cadesSignatureScopeFinder = cadesSignatureScopeFinder;
 	}
 
@@ -1417,22 +1427,24 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		return padesSignatureScopeFinder;
 	}
 
-    /**
-     * Set the SignatureScopeFinder to use for PDF signatures
-     *
-     * @param padesSignatureScopeFinder
-     */
-    public void setPadesSignatureScopeFinder(SignatureScopeFinder<PAdESSignature> padesSignatureScopeFinder) {
+	/**
+	 * Set the SignatureScopeFinder to use for PDF signatures
+	 *
+	 * @param padesSignatureScopeFinder
+	 */
+	public void setPadesSignatureScopeFinder(SignatureScopeFinder<PAdESSignature> padesSignatureScopeFinder) {
 		this.padesSignatureScopeFinder = padesSignatureScopeFinder;
 	}
 
 	protected abstract SignatureScopeFinder getSignatureScopeFinder();
 
-	/*********************************************************************************************
-	 *
-	 *      BUILDER METHODS (Should be in a specific class)
-	 *
-	 *********************************************************************************************/
+	/**
+	 * ******************************************************************************************
+	 * <p/>
+	 * BUILDER METHODS (Should be in a specific class)
+	 * <p/>
+	 * *******************************************************************************************
+	 */
 
 	public static final String MIME_TYPE = "mimetype";
 	public static final String MIME_TYPE_COMMENT = MIME_TYPE + "=";

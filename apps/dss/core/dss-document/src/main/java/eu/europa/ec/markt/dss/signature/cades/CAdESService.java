@@ -45,7 +45,7 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 /**
  * CAdES implementation of DocumentSignatureService
  *
- * @version $Revision: 4191 $ - $Date: 2014-07-04 23:16:26 +0200 (Fri, 04 Jul 2014) $
+ * @version $Revision: 4324 $ - $Date: 2014-07-16 09:35:52 +0200 (Wed, 16 Jul 2014) $
  */
 
 public class CAdESService extends AbstractSignatureService {
@@ -100,6 +100,10 @@ public class CAdESService extends AbstractSignatureService {
 		final CustomContentSigner customContentSigner = new CustomContentSigner(signatureAlgorithm.getJCEId(), signatureValue);
 		final SignerInfoGeneratorBuilder signerInfoGeneratorBuilder = cmsSignedDataBuilder.getSignerInfoGeneratorBuilder(parameters, true);
 		final CMSSignedData originalCmsSignedData = getCmsSignedData(toSignDocument, parameters);
+		if (originalCmsSignedData == null && SignaturePackaging.DETACHED.equals(packaging) && parameters.getDetachedContent() == null) {
+
+			parameters.setDetachedContent(toSignDocument);
+		}
 
 		final CMSSignedDataGenerator cmsSignedDataGenerator = cmsSignedDataBuilder
 			  .createCMSSignedDataGenerator(parameters, customContentSigner, signerInfoGeneratorBuilder, originalCmsSignedData);
@@ -108,17 +112,19 @@ public class CAdESService extends AbstractSignatureService {
 		final CMSProcessableByteArray content = new CMSProcessableByteArray(toSignData.getBytes());
 		final boolean encapsulate = !SignaturePackaging.DETACHED.equals(packaging);
 		final CMSSignedData cmsSignedData = DSSASN1Utils.generateCMSSignedData(cmsSignedDataGenerator, content, encapsulate);
-		final CMSSignedDocument cmsSignedDocument = new CMSSignedDocument(cmsSignedData);
+		final CMSSignedDocument signature = new CMSSignedDocument(cmsSignedData);
 
 		final SignatureLevel signatureLevel = parameters.getSignatureLevel();
 		if (!SignatureLevel.CAdES_BASELINE_B.equals(signatureLevel)) {
 
 			// true: Only the last signature will be extended
 			final SignatureExtension extension = getExtensionProfile(parameters, true);
-			final DSSDocument signedDocument = extension.extendSignatures(cmsSignedDocument, parameters);
-			return signedDocument;
+			final DSSDocument extendSignature = extension.extendSignatures(signature, parameters);
+			parameters.setDeterministicId(null);
+			return extendSignature;
 		}
-		return cmsSignedDocument;
+		parameters.setDeterministicId(null);
+		return signature;
 	}
 
 	@Override
@@ -155,9 +161,9 @@ public class CAdESService extends AbstractSignatureService {
 	 */
 	private DSSDocument getToSignData(final DSSDocument toSignDocument, final SignatureParameters parameters, final CMSSignedData originalCmsSignedData) {
 
-		if (parameters.getOriginalDocument() != null) {
+		if (parameters.getDetachedContent() != null) {
 
-			return parameters.getOriginalDocument();
+			return parameters.getDetachedContent();
 		} else {
 
 			if (originalCmsSignedData == null) {
@@ -214,7 +220,6 @@ public class CAdESService extends AbstractSignatureService {
 	 * @return the {@code CMSSignedData} if the dssDocument is an CMS signed message. Null otherwise.
 	 */
 	private CMSSignedData getCmsSignedData(final DSSDocument dssDocument, final SignatureParameters parameters) {
-
 
 		CMSSignedData cmsSignedData = null;
 		try {

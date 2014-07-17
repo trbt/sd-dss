@@ -20,9 +20,7 @@
 
 package eu.europa.ec.markt.dss.validation102853.asic;
 
-import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.signature.MimeType;
 import eu.europa.ec.markt.dss.validation102853.cades.CMSDocumentValidator;
@@ -72,7 +70,7 @@ public class ASiCCMSDocumentValidator extends CMSDocumentValidator {
 	public ASiCCMSDocumentValidator(final byte[] signature, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
 
 		super(new InMemoryDocument(signature));
-		externalContent = new InMemoryDocument(signedContent, signedDocumentFileName);
+		detachedContent = new InMemoryDocument(signedContent, signedDocumentFileName);
 	}
 
 	public MimeType getAsicContainerMimeType() {

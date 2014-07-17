@@ -81,20 +81,20 @@ public final class SigningUtils {
 	/**
 	 * @param serviceURL
 	 * @param signedFile
-	 * @param originalFile
+	 * @param detachedFile
 	 * @param parameters
 	 * @return
 	 * @throws DSSException
 	 */
-	public static DSSDocument extendDocument(final String serviceURL, final File signedFile, final File originalFile, final SignatureParameters parameters) throws DSSException {
+	public static DSSDocument extendDocument(final String serviceURL, final File signedFile, final File detachedFile, final SignatureParameters parameters) throws DSSException {
 
 		try {
 
 			final WsDocument wsSignedDocument = toWsDocument(signedFile);
-			if (originalFile != null) {
+			if (detachedFile != null) {
 
-				final DSSDocument originalDocument = new FileDocument(originalFile);
-				parameters.setOriginalDocument(originalDocument);
+				final DSSDocument detachedContent = new FileDocument(detachedFile);
+				parameters.setDetachedContent(detachedContent);
 			}
 
 			final WsParameters wsParameters = new WsParameters();
@@ -167,7 +167,6 @@ public final class SigningUtils {
 					certificateChainByteArrayList.add(DSSUtils.getEncoded(x509Certificate));
 				}
 			}
-			//wsParameters.setDeterministicId("demo");
 			final BLevelParameters bLevelParameters = parameters.bLevel();
 			final BLevelParameters.Policy signaturePolicy = bLevelParameters.getSignaturePolicy();
 			if (signaturePolicy != null) {
@@ -216,6 +215,7 @@ public final class SigningUtils {
 				}
 				wsDssReferences.add(wsDssReference);
 			}
+			wsParameters.setDeterministicId(parameters.getDeterministicId());
 
 			// System.out.println("#@@@@@@@@: " + serviceURL);
 			SignatureService_Service.setROOT_SERVICE_URL(serviceURL);

@@ -21,7 +21,10 @@ package eu.europa.ec.markt.dss.validation102853.bean;
 
 import java.security.PublicKey;
 
+import eu.europa.ec.markt.dss.DSSUtils;
+import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
+import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
 
 /**
  * This class stores the information about the validity of the signing certificate.
@@ -40,6 +43,32 @@ public class SigningCertificateValidity {
 	private boolean distinguishedNameEqual;
 
 	/**
+	 * Indicates what element encapsulating the signed certificate has been signed.
+	 */
+	private String signed;
+
+	/**
+	 * This constructor create an object containing all information concerning the validity of a candidate for the signing certificate.
+	 *
+	 * @param certificateToken the candidate for the signing certificate
+	 */
+	public SigningCertificateValidity(final CertificateToken certificateToken) {
+
+		this.certificateToken = certificateToken;
+	}
+
+	/**
+	 * This constructor create an object containing all information concerning the validity of a candidate for the signing certificate which is based only on the {@code
+	 * PublicKey}. To be used in case of a non AdES signature.
+	 *
+	 * @param publicKey the {@code PublicKey} associated to the signing certificate.
+	 */
+	public SigningCertificateValidity(final PublicKey publicKey) {
+
+		this.publicKey = publicKey;
+	}
+
+	/**
 	 * If the {@code certificateToken} is not null then the associated {@code PublicKey} will be returned otherwise the provided {@code publicKey} is returned.
 	 *
 	 * @return the public key associated with this instance.
@@ -49,21 +78,8 @@ public class SigningCertificateValidity {
 		return certificateToken == null ? publicKey : certificateToken.getCertificate().getPublicKey();
 	}
 
-	/**
-	 * This method sets the public key. To be used in case of a non AdES signature.
-	 *
-	 * @param publicKey the public key to set
-	 */
-	public void setPublicKey(final PublicKey publicKey) {
-		this.publicKey = publicKey;
-	}
-
 	public CertificateToken getCertificateToken() {
 		return certificateToken;
-	}
-
-	public void setCertificateToken(final CertificateToken certificateToken) {
-		this.certificateToken = certificateToken;
 	}
 
 	public boolean isDigestPresent() {
@@ -112,13 +128,34 @@ public class SigningCertificateValidity {
 	}
 
 	/**
-	 * This method returns {@code true} if the certificate digest or IssuerSerial/issuerAndSerialNumber matches. The signed reference is checked following the validation policy.
+	 * @return returns the signed element: X509Certificate, X509Data or KeyInfo. {@code null} if there is no signed element
+	 */
+	public String getSigned() {
+		return signed;
+	}
+
+	/**
+	 * Allows to set the signed element: X509Certificate, X509Data or KeyInfo
+	 *
+	 * @param signed indicates the element which was signed
+	 */
+	public void setSigned(final String signed) {
+
+		if (!XPathQueryHolder.XMLE_X509CERTIFICATE.equals(signed) && !XPathQueryHolder.XMLE_X509DATA.equals(signed) && !XPathQueryHolder.XMLE_KEYINFO.equals(signed)) {
+			throw new DSSException("The signed element should be one of the following: X509Certificate, X509Data or KeyInfo!");
+		}
+		this.signed = signed;
+	}
+
+	/**
+	 * This method returns {@code true} if the certificate digest or IssuerSerial/issuerAndSerialNumber match or the certificate is signed. The signed reference is checked
+	 * following the validation policy.
 	 *
 	 * @return {@code true} if the certificate digest matches.
 	 */
 	public boolean isValid() {
 
-		final boolean valid = isDigestEqual() || (isDistinguishedNameEqual() && isSerialNumberEqual());
+		final boolean valid = isDigestEqual() || (isDistinguishedNameEqual() && isSerialNumberEqual()) || DSSUtils.isNotEmpty(getSigned());
 		return valid;
 	}
 }

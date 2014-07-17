@@ -33,7 +33,6 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.ProfileParameters;
 import eu.europa.ec.markt.dss.signature.ProfileParameters.Operation;
 import eu.europa.ec.markt.dss.signature.SignatureExtension;
-import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
@@ -42,7 +41,7 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 /**
  * XAdES implementation of DocumentSignatureService
  *
- * @version $Revision: 4191 $ - $Date: 2014-07-04 23:16:26 +0200 (Fri, 04 Jul 2014) $
+ * @version $Revision: 4324 $ - $Date: 2014-07-16 09:35:52 +0200 (Wed, 16 Jul 2014) $
  */
 
 public class XAdESService extends AbstractSignatureService {
@@ -85,7 +84,7 @@ public class XAdESService extends AbstractSignatureService {
 		assertSigningDateInCertificateValidityRange(parameters);
 		parameters.getContext().setOperationKind(Operation.SIGNING);
 		final XAdESLevelBaselineB profile;
-		ProfileParameters context = parameters.getContext();
+		final ProfileParameters context = parameters.getContext();
 		if (context.getProfile() != null) {
 
 			profile = context.getProfile();
@@ -99,11 +98,13 @@ public class XAdESService extends AbstractSignatureService {
 
 			if (SignaturePackaging.DETACHED.equals(parameters.getSignaturePackaging())) {
 
-				parameters.setOriginalDocument(toSignDocument);
+				parameters.setDetachedContent(toSignDocument);
 			}
 			final DSSDocument dssExtendedDocument = extension.extendSignatures(signedDoc, parameters);
+			parameters.setDeterministicId(null);
 			return dssExtendedDocument;
 		}
+		parameters.setDeterministicId(null);
 		return signedDoc;
 	}
 

@@ -20,7 +20,6 @@
 
 package eu.europa.ec.markt.dss.signature.pdf;
 
-import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Set;
@@ -31,54 +30,52 @@ import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerifi
 
 /**
  * The usage of this interface permit the user to choose the underlying PDF library use to created PDF signatures.
- * 
- * 
+ *
  * @version $Revision: 1653 $ - $Date: 2013-02-01 11:48:52 +0100 (Fri, 01 Feb 2013) $
  */
 public interface PdfSignatureOrDocTimestampInfo {
 
-    int[] getSignatureByteRange();
+	int[] getSignatureByteRange();
 
-    public static class DssPadesNoSignatureFound extends DSSException {
+	public static class DSSPadesNoSignatureFound extends DSSException {
 
-    }
-    SignatureCryptographicVerification checkIntegrity() throws SignatureException;
+	}
+
+	SignatureCryptographicVerification checkIntegrity();
 
 
-    X509Certificate[] getCertificates();
+	X509Certificate[] getCertificates();
 
-    String getLocation();
+	String getLocation();
 
-    Date getSigningDate();
+	Date getSigningDate();
 
-    X509Certificate getSigningCertificate();
+	X509Certificate getSigningCertificate();
 
-    /**
-     *
-     * @return the byte of what is signed (without signature, but with the placeholder)
-     */
-    byte[] getSignedDocumentBytes();
+	/**
+	 * @return the byte of what is signed (without signature, but with the placeholder)
+	 */
+	byte[] getSignedDocumentBytes();
 
-    /**
-     * This method return a few extra bytes (the header of the signature) but it's correctly ignored by PDF Box
-     *
-     * @return the byte of the originally signed document (without this signature)
-     */
-    byte[] getOriginalBytes();
+	/**
+	 * This method return a few extra bytes (the header of the signature) but it's correctly ignored by PDF Box
+	 *
+	 * @return the byte of the originally signed document (without this signature)
+	 */
+	byte[] getOriginalBytes();
 
-    PdfDssDict getDocumentDictionary();
+	PdfDssDict getDocumentDictionary();
 
-    PdfDssDict getOuterCatalog();
+	PdfDssDict getOuterCatalog();
 
-    int uniqueId();
+	int uniqueId();
 
-    void addOuterSignature(PdfSignatureOrDocTimestampInfo signatureInfo);
+	void addOuterSignature(PdfSignatureOrDocTimestampInfo signatureInfo);
 
-    /**
-     *
-     * @return signatures that covers a document that contains this signature
-     */
-    Set<PdfSignatureOrDocTimestampInfo> getOuterSignatures();
+	/**
+	 * @return signatures that covers a document that contains this signature
+	 */
+	Set<PdfSignatureOrDocTimestampInfo> getOuterSignatures();
 
-    boolean isTimestamp();
+	boolean isTimestamp();
 }

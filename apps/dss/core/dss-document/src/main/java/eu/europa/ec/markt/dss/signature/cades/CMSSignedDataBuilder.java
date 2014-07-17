@@ -241,7 +241,7 @@ public class CMSSignedDataBuilder {
 			cmsSignedDataGenerator.addOtherRevocationInfo(CMSObjectIdentifiers.id_ri_ocsp_response, otherRevocationInfoFormatStoreOcsp);
 			final boolean encapsulate = cmsSignedData.getSignedContent() != null;
 			if (!encapsulate) {
-				final CMSProcessableByteArray content = new CMSProcessableByteArray(DSSUtils.toByteArray(parameters.getOriginalDocument().openStream()));
+				final CMSProcessableByteArray content = new CMSProcessableByteArray(DSSUtils.toByteArray(parameters.getDetachedContent().openStream()));
 				cmsSignedData = cmsSignedDataGenerator.generate(content, encapsulate);
 			} else {
 				cmsSignedData = cmsSignedDataGenerator.generate(cmsSignedData.getSignedContent(), encapsulate);

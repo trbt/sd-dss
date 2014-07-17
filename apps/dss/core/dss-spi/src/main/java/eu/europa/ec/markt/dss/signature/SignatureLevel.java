@@ -23,12 +23,12 @@ package eu.europa.ec.markt.dss.signature;
 /**
  * Signature profiles (form+level) handled by the SD-DSS framework.
  *
- * @version $Revision: 4229 $ - $Date: 2014-07-11 11:44:06 +0200 (Fri, 11 Jul 2014) $
+ * @version $Revision: 4262 $ - $Date: 2014-07-13 19:25:42 +0200 (Sun, 13 Jul 2014) $
  */
 
 public enum SignatureLevel {
 
-	XAdES_C(null), XAdES_X(null), XAdES_XL(null), XAdES_A(null), XAdES_BASELINE_LTA(null), XAdES_BASELINE_LT(XAdES_BASELINE_LTA), XAdES_BASELINE_T( XAdES_BASELINE_LT), XAdES_BASELINE_B(XAdES_BASELINE_T),
+	XMLDSIG(null), XAdES_C(null), XAdES_X(null), XAdES_XL(null), XAdES_A(null), XAdES_BASELINE_LTA(null), XAdES_BASELINE_LT(XAdES_BASELINE_LTA), XAdES_BASELINE_T( XAdES_BASELINE_LT), XAdES_BASELINE_B(XAdES_BASELINE_T),
 
 	CAdES_BASELINE_LTA(null), CAdES_BASELINE_LT(CAdES_BASELINE_LTA), CAdES_BASELINE_T(CAdES_BASELINE_LT), CAdES_BASELINE_B(CAdES_BASELINE_T), CAdES_101733_C(null), CAdES_101733_X(null), CAdES_101733_A(null),
 

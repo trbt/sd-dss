@@ -33,9 +33,18 @@ public interface DocumentValidator {
 	/**
 	 * This method returns the signed document in the case of the detached signatures.
 	 *
-	 * @return
+	 * @return the detached document
+	 * @deprecated 4.1.0: {@code getDetachedContent} to be used
 	 */
+	@Deprecated
 	DSSDocument getExternalContent();
+
+	/**
+	 * This method returns the signed document in the case of the detached signatures.
+	 *
+	 * @return the detached document {@code DSSDocument}
+	 */
+	DSSDocument getDetachedContent();
 
 	/**
 	 * Retrieves the signatures found in the document
@@ -46,7 +55,21 @@ public interface DocumentValidator {
 
 	void setCertificateVerifier(final CertificateVerifier certVerifier);
 
+	/**
+	 * Sets the Document containing the original content to sign, for detached signature scenarios.
+	 *
+	 * @param externalContent the externalContent to set
+	 * @deprecated 4.1.0: {@code setDetachedContent} to be used
+	 */
+	@Deprecated
 	void setExternalContent(final DSSDocument externalContent);
+
+	/**
+	 * Sets the Document containing the original content to sign, for detached signature scenarios.
+	 *
+	 * @param detachedContent the externalContent to set
+	 */
+	void setDetachedContent(final DSSDocument detachedContent);
 
 	/**
 	 * This method allows to define the signing certificate. It is useful in the case of ,non AdES signatures.
@@ -75,7 +98,7 @@ public interface DocumentValidator {
 
 	DetailedReport getDetailedReport();
 
-	Reports getReports() ;
+	Reports getReports();
 
 	void printReports();
 }

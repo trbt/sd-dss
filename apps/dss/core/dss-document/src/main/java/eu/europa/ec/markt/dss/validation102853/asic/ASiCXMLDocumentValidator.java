@@ -70,7 +70,7 @@ public class ASiCXMLDocumentValidator extends XMLDocumentValidator {
 	public ASiCXMLDocumentValidator(final byte[] signature, final byte[] signedContent, final String signedDocumentFileName) throws DSSException {
 
 		super(new InMemoryDocument(signature));
-		externalContent = new InMemoryDocument(signedContent, signedDocumentFileName);
+		detachedContent = new InMemoryDocument(signedContent, signedDocumentFileName);
 	}
 
 	public MimeType getAsicContainerMimeType() {

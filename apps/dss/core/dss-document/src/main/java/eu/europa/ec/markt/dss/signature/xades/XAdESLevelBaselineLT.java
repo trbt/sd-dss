@@ -22,13 +22,14 @@ package eu.europa.ec.markt.dss.signature.xades;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DSSXMLUtils;
 import eu.europa.ec.markt.dss.XAdESNamespaces;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.DefaultAdvancedSignature;
@@ -41,12 +42,12 @@ import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 /**
  * XL profile of XAdES signature
  *
- * @version $Revision: 4235 $ - $Date: 2014-07-11 15:44:15 +0200 (Fri, 11 Jul 2014) $
+ * @version $Revision: 4263 $ - $Date: 2014-07-14 14:04:54 +0200 (Mon, 14 Jul 2014) $
  */
 
 public class XAdESLevelBaselineLT extends XAdESLevelBaselineT {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(XAdESLevelBaselineLT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(XAdESLevelBaselineLT.class);
 
     /**
      * The default constructor for XAdESLevelBaselineLT.
@@ -101,8 +102,7 @@ public class XAdESLevelBaselineLT extends XAdESLevelBaselineT {
      */
     protected void checkSignatureIntegrity() throws DSSException {
 
-        final DSSDocument detachedDocument = params.getOriginalDocument();
-        final SignatureCryptographicVerification signatureCryptographicVerification = xadesSignature.checkIntegrity(detachedDocument);
+        final SignatureCryptographicVerification signatureCryptographicVerification = xadesSignature.checkSignatureIntegrity();
         if (!signatureCryptographicVerification.isSignatureIntact()) {
 
             final String errorMessage = signatureCryptographicVerification.getErrorMessage();

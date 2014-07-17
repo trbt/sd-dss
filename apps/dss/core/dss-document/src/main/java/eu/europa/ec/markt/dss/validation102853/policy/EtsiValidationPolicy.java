@@ -600,6 +600,15 @@ public class EtsiValidationPolicy extends ValidationPolicy {
 	}
 
 	/**
+	 * @return {@code Constraint} if Signed for a given context element is present in the constraint file, null otherwise.
+	 */
+	public Constraint getSigningCertificateSignedConstraint(final String context) {
+
+		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/Signed", context);
+		return getBasicConstraint(XP_ROOT, true);
+	}
+
+	/**
 	 * @return {@code Constraint} if SigningCertificateAttribute for a given context element is present in the constraint file, null otherwise.
 	 */
 	public Constraint getSigningCertificateAttributePresentConstraint(final String context) {
@@ -607,7 +616,6 @@ public class EtsiValidationPolicy extends ValidationPolicy {
 		final String XP_ROOT = String.format("/ConstraintsParameters/%s/SigningCertificate/AttributePresent", context);
 		return getBasicConstraint(XP_ROOT, true);
 	}
-
 
 	/**
 	 * @return {@code Constraint} if DigestValuePresent for a given context element is present in the constraint file, null otherwise.

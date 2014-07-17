@@ -158,8 +158,8 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 
 		// Preparation of SignedInfo
 		byte[] canonicalizedSignedInfo = DSSXMLUtils.canonicalizeSubtree(signedInfoCanonicalizationMethod, signedInfoDom);
-		if (LOG.isInfoEnabled()) {
-			LOG.debug("Canonicalized SignedInfo         -->" + new String(canonicalizedSignedInfo));
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("Canonicalized SignedInfo         --> {}", new String(canonicalizedSignedInfo));
 		}
 		built = true;
 		return canonicalizedSignedInfo;
@@ -259,9 +259,9 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 
 		// <ds:DigestValue>b/JEDQH2S1Nfe4Z3GSVtObN34aVB1kMrEbVQZswThfQ=</ds:DigestValue>
 		final byte[] canonicalizedBytes = DSSXMLUtils.canonicalizeSubtree(reference2CanonicalizationMethod, signedPropertiesDom);
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("Canonicalization method  -->" + signedInfoCanonicalizationMethod);
-			LOG.debug("Canonicalised REF_2      --> " + new String(canonicalizedBytes));
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("Canonicalization method  --> {}", signedInfoCanonicalizationMethod);
+			LOG.trace("Canonicalised REF_2      --> {}", new String(canonicalizedBytes));
 		}
 		incorporateDigestValue(reference, digestAlgorithm, new InMemoryDocument(canonicalizedBytes));
 	}
@@ -324,8 +324,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 			final Element signaturePolicyIdDom = DSSXMLUtils.addElement(documentDom, signaturePolicyIdentifierDom, XAdESNamespaces.XAdES, "xades:SignaturePolicyId");
 			if ("".equals(signaturePolicy.getId())) { // implicit
 
-				final Element signaturePolicyImpliedDom = DSSXMLUtils
-					  .addElement(documentDom, signaturePolicyIdDom, XAdESNamespaces.XAdES, "xades:SignaturePolicyImplied");
+				final Element signaturePolicyImpliedDom = DSSXMLUtils.addElement(documentDom, signaturePolicyIdDom, XAdESNamespaces.XAdES, "xades:SignaturePolicyImplied");
 			} else { // explicit
 
 				final Element sigPolicyIdDom = DSSXMLUtils.addElement(documentDom, signaturePolicyIdDom, XAdESNamespaces.XAdES, "xades:SigPolicyId");
@@ -478,8 +477,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 		final BLevelParameters.SignerLocation signatureProductionPlace = params.bLevel().getSignerLocation();
 		if (signatureProductionPlace != null) {
 
-			final Element signatureProductionPlaceDom = DSSXMLUtils
-				  .addElement(documentDom, signedSignaturePropertiesDom, XAdESNamespaces.XAdES, "xades:SignatureProductionPlace");
+			final Element signatureProductionPlaceDom = DSSXMLUtils.addElement(documentDom, signedSignaturePropertiesDom, XAdESNamespaces.XAdES, "xades:SignatureProductionPlace");
 
 			final String city = signatureProductionPlace.getCity();
 			if (city != null) {
@@ -517,8 +515,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 		final List<String> commitmentTypeIndications = params.bLevel().getCommitmentTypeIndications();
 		if (commitmentTypeIndications != null) {
 
-			final Element commitmentTypeIndicationDom = DSSXMLUtils
-				  .addElement(documentDom, signedDataObjectPropertiesDom, XAdESNamespaces.XAdES, "xades:CommitmentTypeIndication");
+			final Element commitmentTypeIndicationDom = DSSXMLUtils.addElement(documentDom, signedDataObjectPropertiesDom, XAdESNamespaces.XAdES, "xades:CommitmentTypeIndication");
 
 			final Element commitmentTypeIdDom = DSSXMLUtils.addElement(documentDom, commitmentTypeIndicationDom, XAdESNamespaces.XAdES, "xades:CommitmentTypeId");
 
@@ -528,8 +525,7 @@ public abstract class SignatureBuilder extends XAdESBuilder {
 			}
 			//final Element objectReferenceDom = DSSXMLUtils.addElement(documentDom, commitmentTypeIndicationDom, XADES, "ObjectReference");
 			// or
-			final Element allSignedDataObjectsDom = DSSXMLUtils
-				  .addElement(documentDom, commitmentTypeIndicationDom, XAdESNamespaces.XAdES, "xades:AllSignedDataObjects");
+			final Element allSignedDataObjectsDom = DSSXMLUtils.addElement(documentDom, commitmentTypeIndicationDom, XAdESNamespaces.XAdES, "xades:AllSignedDataObjects");
 
 			//final Element commitmentTypeQualifiersDom = DSSXMLUtils.addElement(documentDom, commitmentTypeIndicationDom, XADES, "CommitmentTypeQualifiers");
 		}

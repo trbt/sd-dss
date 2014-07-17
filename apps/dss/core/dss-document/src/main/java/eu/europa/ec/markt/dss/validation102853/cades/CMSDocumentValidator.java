@@ -60,7 +60,7 @@ public class CMSDocumentValidator extends SignedDocumentValidator {
 	 */
 	public CMSDocumentValidator(final CMSSignedData cmsSignedData) {
 
-		cadesSignatureScopeFinder = SignatureScopeFinderFactory.geInstance(CAdESSignature.class);
+		this();
 		this.cmsSignedData = cmsSignedData;
 	}
 
@@ -72,7 +72,7 @@ public class CMSDocumentValidator extends SignedDocumentValidator {
 	 */
 	public CMSDocumentValidator(final DSSDocument document) throws DSSException {
 
-		cadesSignatureScopeFinder = SignatureScopeFinderFactory.geInstance(CAdESSignature.class);
+		this();
 		this.document = document;
 		try {
 
@@ -97,8 +97,10 @@ public class CMSDocumentValidator extends SignedDocumentValidator {
 			for (final Object signerInformationObject : cmsSignedData.getSignerInfos().getSigners()) {
 
 				final SignerInformation signerInformation = (SignerInformation) signerInformationObject;
-				final CAdESSignature signature = new CAdESSignature(cmsSignedData, signerInformation, validationCertPool, externalContent);
-				signatures.add(signature);
+				final CAdESSignature cadesSignature = new CAdESSignature(cmsSignedData, signerInformation, validationCertPool);
+				cadesSignature.setDetachedContent(detachedContent);
+				cadesSignature.setProvidedSigningCertificateToken(providedSigningCertificateToken);
+				signatures.add(cadesSignature);
 			}
 		}
 		return signatures;

@@ -276,28 +276,28 @@ public enum SignatureAlgorithm {
     /**
      * For given encryption algorithm & digest algorithm this function returns the signature algorithm.
      *
-     * @param encryptionAlgo
-     * @param digestAlgo
+     * @param encryptionAlgorithm
+     * @param digestAlgorithm
      * @return
      */
-    public static SignatureAlgorithm getAlgorithm(final EncryptionAlgorithm encryptionAlgo, final DigestAlgorithm digestAlgo) {
+    public static SignatureAlgorithm getAlgorithm(final EncryptionAlgorithm encryptionAlgorithm, final DigestAlgorithm digestAlgorithm) {
 
-        String digestAlgo_ = digestAlgo.getName();
-        digestAlgo_ = digestAlgo_.replace("-", "");
-        final String javaName = digestAlgo_ + "with" + encryptionAlgo.getName();
+        String digestAlgorithm_ = digestAlgorithm.getName();
+        digestAlgorithm_ = digestAlgorithm_.replace("-", "");
+        final String javaName = digestAlgorithm_ + "with" + encryptionAlgorithm.getName();
         return JAVA_ALGORITHMS.get(javaName);
     }
 
     /**
      * The default constructor.
      *
-     * @param encryptionAlgo
-     * @param digestAlgo
+     * @param encryptionAlgorithm
+     * @param digestAlgorithm
      */
-    private SignatureAlgorithm(final EncryptionAlgorithm encryptionAlgo, final DigestAlgorithm digestAlgo) {
+    private SignatureAlgorithm(final EncryptionAlgorithm encryptionAlgorithm, final DigestAlgorithm digestAlgorithm) {
 
-        this.encryptionAlgo = encryptionAlgo;
-        this.digestAlgo = digestAlgo;
+        this.encryptionAlgo = encryptionAlgorithm;
+        this.digestAlgo = digestAlgorithm;
     }
 
     /**
@@ -305,7 +305,7 @@ public enum SignatureAlgorithm {
      *
      * @return
      */
-    public EncryptionAlgorithm getEncryptionAlgo() {
+    public EncryptionAlgorithm getEncryptionAlgorithm() {
 
         return encryptionAlgo;
     }
@@ -315,7 +315,7 @@ public enum SignatureAlgorithm {
      *
      * @return
      */
-    public DigestAlgorithm getDigestAlgo() {
+    public DigestAlgorithm getDigestAlgorithm() {
 
         return digestAlgo;
     }

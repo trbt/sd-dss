@@ -155,53 +155,45 @@ public class MOCCASignatureTokenConnection implements SignatureTokenConnection {
     }
 
     @Override
-    @Deprecated
-    public byte[] sign(final InputStream stream, final DigestAlgorithm digestAlgo, final DSSPrivateKeyEntry keyEntry) throws DSSException {
-
-        if (!(keyEntry instanceof MOCCAPrivateKeyEntry)) {
-
-            throw new DSSException("Unsupported DSSPrivateKeyEntry instance " + keyEntry.getClass() + " / Must be MOCCAPrivateKeyEntry.");
-        }
-        final MOCCAPrivateKeyEntry moccaKey = (MOCCAPrivateKeyEntry) keyEntry;
-        if (_signatureCards == null) {
-
-            throw new IllegalStateException("The cards have not been initialised");
-        }
-        // TODO Bob:20130619 This is not completely true, it is true only for the last card. The signing certificate
-        // should be checked.
-        if (moccaKey.getPos() > _signatureCards.size() - 1) {
-
-            throw new IllegalStateException("Card was removed or disconnected " + moccaKey.getPos() + " " + _signatureCards.size());
-        }
-        final SignatureCard signatureCard = _signatureCards.get(moccaKey.getPos());
-        final EncryptionAlgorithm encryptionAlgo = moccaKey.getEncryptionAlgorithm();
-        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.getAlgorithm(encryptionAlgo, digestAlgo);
-
-        LOG.info("MOCCA>>>Signature algorithm: " + signatureAlgorithm.getJCEId());
-        try {
-
-            final KeyboxName keyboxName = moccaKey.getKeyboxName();
-            byte[] signedData = signatureCard.createSignature(stream, keyboxName, callback, signatureAlgorithm.getXMLId());
-            if (EncryptionAlgorithm.ECDSA.equals(encryptionAlgo)) {
-
-                signedData = encode(signedData);
-            }
-            return signedData;
-        } catch (SignatureCardException e) {
-            throw new DSSException(e);
-        } catch (InterruptedException e) {
-            throw new DSSException(e);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        }
-    }
-
-    @Override
     public byte[] sign(byte[] bytes, DigestAlgorithm digestAlgo, DSSPrivateKeyEntry keyEntry) throws DSSException {
 
 	    final InputStream inputStream = DSSUtils.toInputStream(bytes);
-	    final byte[] signedData = sign(inputStream, digestAlgo, keyEntry);
-        return signedData;
+	    if (!(keyEntry instanceof MOCCAPrivateKeyEntry)) {
+
+		    throw new DSSException("Unsupported DSSPrivateKeyEntry instance " + keyEntry.getClass() + " / Must be MOCCAPrivateKeyEntry.");
+	    }
+	    final MOCCAPrivateKeyEntry moccaKey = (MOCCAPrivateKeyEntry) keyEntry;
+	    if (_signatureCards == null) {
+
+		    throw new IllegalStateException("The cards have not been initialised");
+	    }
+	    // TODO Bob:20130619 This is not completely true, it is true only for the last card. The signing certificate
+	    // should be checked.
+	    if (moccaKey.getPos() > _signatureCards.size() - 1) {
+
+		    throw new IllegalStateException("Card was removed or disconnected " + moccaKey.getPos() + " " + _signatureCards.size());
+	    }
+	    final SignatureCard signatureCard = _signatureCards.get(moccaKey.getPos());
+	    final EncryptionAlgorithm encryptionAlgo = moccaKey.getEncryptionAlgorithm();
+	    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.getAlgorithm(encryptionAlgo, digestAlgo);
+
+	    LOG.info("MOCCA>>>Signature algorithm: " + signatureAlgorithm.getJCEId());
+	    try {
+
+		    final KeyboxName keyboxName = moccaKey.getKeyboxName();
+		    byte[] signedData = signatureCard.createSignature(inputStream, keyboxName, callback, signatureAlgorithm.getXMLId());
+		    if (EncryptionAlgorithm.ECDSA.equals(encryptionAlgo)) {
+
+			    signedData = encode(signedData);
+		    }
+		    return signedData;
+	    } catch (SignatureCardException e) {
+		    throw new DSSException(e);
+	    } catch (InterruptedException e) {
+		    throw new DSSException(e);
+	    } catch (IOException e) {
+		    throw new DSSException(e);
+	    }
     }
 
     /**

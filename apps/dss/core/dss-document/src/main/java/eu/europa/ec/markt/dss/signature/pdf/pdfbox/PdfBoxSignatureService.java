@@ -68,7 +68,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
 	private static final Logger LOG = LoggerFactory.getLogger(PdfBoxSignatureService.class);
 
 	@Override
-	public byte[] digest(final InputStream pdfData, final SignatureParameters parameters, final DigestAlgorithm digestAlgorithm,
+	public byte[] digest(final InputStream toSignDocument, final SignatureParameters parameters, final DigestAlgorithm digestAlgorithm,
 	                     final Map.Entry<String, PdfDict>... extraDictionariesToAddBeforeSign) throws DSSException {
 
 		final byte[] signatureBytes = DSSUtils.EMPTY_BYTE_ARRAY;
@@ -77,7 +77,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
 		PDDocument doc = null;
 		try {
 
-			file = DSSPDFUtils.getFileFromPdfData(pdfData);
+			file = DSSPDFUtils.getFileFromPdfData(toSignDocument);
 
 			// TODO: (Bob: 2014 Jan 22) There is no guarantee that there will be no duplicates
 			signed = File.createTempFile("raw", "-signed.pdf");
@@ -88,10 +88,6 @@ class PdfBoxSignatureService implements PDFSignatureService {
 			PDSignature signature = createSignatureDictionary(parameters);
 
 			final byte[] digestValue = signDocumentAndReturnDigest(parameters, signatureBytes, signed, output, doc, signature, digestAlgorithm);
-			if (LOG.isTraceEnabled()) {
-				LOG.trace("Calculated digest on byte range " + DSSUtils.encodeHexString(digestValue));
-			}
-
 			return digestValue;
 		} catch (IOException e) {
 			throw new DSSException(e);
@@ -173,7 +169,9 @@ class PdfBoxSignatureService implements PDFSignatureService {
 
 			saveDocumentIncrementally(parameters, signed, output, doc);
 			final byte[] digestValue = digest.digest();
-			LOG.debug("Digest " + DSSUtils.encodeHexString(digestValue));
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("Digest to be signed: " + DSSUtils.encodeHexString(digestValue));
+			}
 			output.close();
 			return digestValue;
 		} catch (NoSuchAlgorithmException e) {
@@ -250,7 +248,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
 	/**
 	 * @param validationCertPool
 	 * @param byteRangeMap
-	 * @param outerCatalog       the PdfDictionnary of the document that enclose the document stored in the input InputStream
+	 * @param outerCatalog       the PdfDictionary of the document that enclose the document stored in the input InputStream
 	 * @param input              the Pdf bytes to open as a PDF
 	 * @return
 	 * @throws DSSException
@@ -288,7 +286,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
 					} else {
 						signatureInfo = PdfSignatureFactory.createPdfSignatureInfo(validationCertPool, outerCatalog, doc, signature, cms, buffer);
 					}
-				} catch (PdfSignatureOrDocTimestampInfo.DssPadesNoSignatureFound e) {
+				} catch (PdfSignatureOrDocTimestampInfo.DSSPadesNoSignatureFound e) {
 					LOG.debug("No signature found in signature Dictionary:Content", e);
 					continue;
 				}
@@ -329,7 +327,7 @@ class PdfBoxSignatureService implements PDFSignatureService {
 
 
     /*
-        This method is needed because we will encounter manytimes the same signature during our document analysis.
+        This method is needed because we will encounter many times the same signature during our document analysis.
         We make sure that we always add it only once.
      */
 

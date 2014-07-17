@@ -21,32 +21,46 @@
 package eu.europa.ec.markt.dss.validation102853;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import eu.europa.ec.markt.dss.exception.DSSException;
 
 /**
- * This interface allows the implementation of signature validator for: signing certificate and all timestamps included in the signature.
+ * This interface allows the implementation of the validators for: certificates,  timestamps and revocation data.
  */
 public interface ValidationContext {
 
 	/**
 	 * This function sets the validation time.
 	 *
-	 * @param currentTime
+	 * @param currentTime {@code Date}
 	 */
 	public void setCurrentTime(final Date currentTime);
 
-	void initialize(CertificateVerifier certificateVerifier);
+	void initialize(final CertificateVerifier certificateVerifier);
 
 	public Date getCurrentTime();
 
-	void addRevocationTokenForVerification(RevocationToken revocationToken);
+	/**
+	 * Adds a new revocation token to the list of tokes to verify. If the revocation token has already been added then it is ignored.
+	 *
+	 * @param revocationToken {@code RevocationToken} revocation token to verify
+	 */
+	void addRevocationTokenForVerification(final RevocationToken revocationToken);
 
-	void addCertificateTokenForVerification(CertificateToken certificateToken);
+	/**
+	 * Adds a new certificate token to the list of tokes to verify. If the certificate token has already been added then it is ignored.
+	 *
+	 * @param certificateToken {@code CertificateToken} certificate token to verify
+	 */
+	void addCertificateTokenForVerification(final CertificateToken certificateToken);
 
-	void addTimestampTokenForVerification(TimestampToken timestampToken);
+	/**
+	 * Adds a new timestamp token to the list of tokes to verify. If the timestamp token has already been added then it is ignored.
+	 *
+	 * @param timestampToken {@code TimestampToken} timestamp token to verify
+	 */
+	void addTimestampTokenForVerification(final TimestampToken timestampToken);
 
 	/**
 	 * Carries out the validation process in recursive manner for not yet checked tokens.

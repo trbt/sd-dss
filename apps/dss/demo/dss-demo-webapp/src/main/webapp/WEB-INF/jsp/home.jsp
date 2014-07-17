@@ -9,11 +9,17 @@
         <div class="column">
             <h3><spring:message code="label.signature.applet"/></h3>
             <ul>
-                <li>XML files can be signed with an enveloped/enveloping/detached XAdES signature.</li>
-                <li>PDF files can be signed with an enveloped PAdES signature.</li>
-                <li>Arbitrary binary files can be signed with an enveloping/detached CAdES signature or ASiC-S</li>
-                <li>A user can use PKCS#11-compliant SSCD, MSCAPI and PKCS#12 to sign.</li>
-                <li>Validation report is available on CAdES, PAdES, XAdES signature.</li>
+              <li>XAdES detached and enveloping signatures can be used to sign any file.</li>
+              <li>XAdES enveloped signature can be used to sign an XML file.</li>
+              <li>PDF files can be signed with an enveloped PAdES signature.</li>
+              <li>CAdES enveloping or detached signatures can be used to sign any arbitrary files.</li>
+              <li>ASiC-S signature can be used to sign any type of files.</li>
+              <li>The multiple parallel signatures can be created.</li>
+              <li>A user can use PKCS#11-compliant SSCD, MS-CAPI, MOCCA and PKCS#12 to sign.</li>
+              <li>Any kind of signature: CAdES, PAdES, XAdES or ASiC-S can be validated.</li>
+              <li>A validation policy can be applied.</li>
+              <li>Two validation reports are available: Simple and Detailed.</li>
+              <li>The Diagnostic Data representing each static information used during the validation process is available.</li>
             </ul>
         </div>
     </div>

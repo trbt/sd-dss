@@ -39,7 +39,7 @@ import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
  * This class holds the CAdES-T signature profile; it supports the inclusion of the mandatory unsigned
  * id-aa-signatureTimeStampToken attribute as specified in ETSI TS 101 733 V1.8.1, clause 6.1.1.
  *
- * @version $Revision: 4167 $ - $Date: 2014-06-27 17:57:11 +0200 (Fri, 27 Jun 2014) $
+ * @version $Revision: 4324 $ - $Date: 2014-07-16 09:35:52 +0200 (Wed, 16 Jul 2014) $
  */
 
 public class CAdESLevelBaselineT extends CAdESSignatureExtension {
@@ -56,7 +56,7 @@ public class CAdESLevelBaselineT extends CAdESSignatureExtension {
     @Override
     protected SignerInformation extendCMSSignature(CMSSignedData signedData, SignerInformation signerInformation, SignatureParameters parameters)  throws DSSException {
 
-        final CAdESSignature cadesSignature = new CAdESSignature(signedData, signerInformation, parameters.getOriginalDocument());
+        final CAdESSignature cadesSignature = new CAdESSignature(signedData, signerInformation, parameters.getDetachedContent());
 
         assertExtendSignaturePossible(cadesSignature);
 

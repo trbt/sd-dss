@@ -15,9 +15,9 @@
     </bean>
 
     <!--Property file implementation of proxy preferences-->
-    <bean id="proxyFile" class="eu.europa.ec.markt.dss.dao.ProxyFileDao">
-        <constructor-arg value="/proxy.properties"/>
-    </bean>
+    <!--<bean id="proxyFile" class="eu.europa.ec.markt.dss.dao.ProxyFileDao">-->
+    <!--<constructor-arg value="/proxy.properties"/>-->
+    <!--</bean>-->
 
     <bean id="preferencesDao" class="eu.europa.ec.markt.dss.dao.PreferencesJdbcDao">
         <property name="dataSource" ref="dataSource"/>

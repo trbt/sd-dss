@@ -52,7 +52,7 @@ import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 /**
  * PAdES implementation of the DocumentSignatureService
  *
- * @version $Revision: 4191 $ - $Date: 2014-07-04 23:16:26 +0200 (Fri, 04 Jul 2014) $
+ * @version $Revision: 4278 $ - $Date: 2014-07-15 09:58:55 +0200 (Tue, 15 Jul 2014) $
  */
 
 public class PAdESService extends AbstractSignatureService {
@@ -142,18 +142,21 @@ public class PAdESService extends AbstractSignatureService {
 			final byte[] encodedData = DSSASN1Utils.getEncoded(data);
 			pdfSignatureService.sign(toSignDocument.openStream(), encodedData, output, parameters, parameters.getDigestAlgorithm());
 
-			DSSDocument doc = null;
+			final DSSDocument signature;
 			if (DSSUtils.isEmpty(toSignDocument.getName())) {
-				doc = new InMemoryDocument(output.toByteArray(), null, MimeType.PDF);
+				signature = new InMemoryDocument(output.toByteArray(), null, MimeType.PDF);
 			} else {
-				doc = new InMemoryDocument(output.toByteArray(), toSignDocument.getName(), MimeType.PDF);
+				signature = new InMemoryDocument(output.toByteArray(), toSignDocument.getName(), MimeType.PDF);
 			}
 
 			final SignatureExtension extension = getExtensionProfile(parameters);
 			if (signatureLevel != SignatureLevel.PAdES_BASELINE_B && signatureLevel != SignatureLevel.PAdES_BASELINE_T && extension != null) {
-				return extension.extendSignatures(doc, parameters);
+				final DSSDocument extendSignature = extension.extendSignatures(signature, parameters);
+				parameters.setDeterministicId(null);
+				return extendSignature;
 			} else {
-				return doc;
+				parameters.setDeterministicId(null);
+				return signature;
 			}
 		} catch (CMSException e) {
 			throw new DSSException(e);

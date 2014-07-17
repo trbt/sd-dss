@@ -20,7 +20,6 @@
 
 package eu.europa.ec.markt.dss.signature.token;
 
-import java.io.InputStream;
 import java.util.List;
 
 import eu.europa.ec.markt.dss.DigestAlgorithm;
@@ -29,7 +28,7 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Connection through available API to the SSCD (SmartCard, MSCAPI, PKCS#12)
  *
- * @version $Revision: 3760 $ - $Date: 2014-04-21 07:53:08 +0200 (Mon, 21 Apr 2014) $
+ * @version $Revision: 4263 $ - $Date: 2014-07-14 14:04:54 +0200 (Mon, 14 Jul 2014) $
  */
 
 public interface SignatureTokenConnection {
@@ -48,19 +47,6 @@ public interface SignatureTokenConnection {
 	List<DSSPrivateKeyEntry> getKeys() throws DSSException;
 
 	/**
-	 * Signs the stream with the digest algorithm and the private key.
-	 *
-	 * @param stream     The stream that need to be signed
-	 * @param digestAlgo The digest algorithm to be used before signing
-	 * @param keyEntry   The private key to be used
-	 * @return The array of bytes representing the signature value
-	 * @throws DSSException If there is any problem during the signature process
-	 * @deprecated use {@link eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection#sign(byte[], eu.europa.ec.markt.dss.DigestAlgorithm, DSSPrivateKeyEntry)}
-	 */
-	@Deprecated
-	byte[] sign(final InputStream stream, final DigestAlgorithm digestAlgo, final DSSPrivateKeyEntry keyEntry) throws DSSException;
-
-	/**
 	 * @param bytes           The array of bytes that need to be signed
 	 * @param digestAlgorithm The digest algorithm to be used before signing
 	 * @param keyEntry        The private key to be used
@@ -68,5 +54,4 @@ public interface SignatureTokenConnection {
 	 * @throws DSSException If there is any problem during the signature process
 	 */
 	byte[] sign(final byte[] bytes, final DigestAlgorithm digestAlgorithm, final DSSPrivateKeyEntry keyEntry) throws DSSException;
-
 }

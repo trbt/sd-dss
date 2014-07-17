@@ -20,10 +20,12 @@
 
 package eu.europa.ec.markt.dss.signature.xades;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.validation102853.CertificateVerifier;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
 import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
@@ -31,12 +33,12 @@ import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 /**
  * Holds level A aspects of XAdES
  *
- * @version $Revision: 3372 $ - $Date: 2014-01-22 15:23:17 +0100 (Wed, 22 Jan 2014) $
+ * @version $Revision: 4263 $ - $Date: 2014-07-14 14:04:54 +0200 (Mon, 14 Jul 2014) $
  */
 
 public class XAdESLevelA extends XAdESLevelXL {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(XAdESLevelA.class);
+    private static final Logger LOG = LoggerFactory.getLogger(XAdESLevelA.class);
 
     /**
      * The default constructor for XAdESLevelA.
@@ -60,8 +62,7 @@ public class XAdESLevelA extends XAdESLevelXL {
         /* Up to -XL */
         super.extendSignatureTag();
 
-        final DSSDocument detachedDocument = params.getOriginalDocument();
-        xadesSignature.checkIntegrity(detachedDocument);
+        xadesSignature.checkSignatureIntegrity();
 
         final byte[] data = xadesSignature.getArchiveTimestampData(null);
         final DigestAlgorithm timestampDigestAlgorithm = params.getTimestampDigestAlgorithm();

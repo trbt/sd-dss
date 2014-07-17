@@ -27,12 +27,12 @@ import eu.europa.ec.markt.dss.validation102853.tsp.TSPSource;
 /**
  * This interface {@code DocumentSignatureService} provides operations for the signature creation and for its extension.
  *
- * @version $Revision: 4191 $ - $Date: 2014-07-04 23:16:26 +0200 (Fri, 04 Jul 2014) $
+ * @version $Revision: 4263 $ - $Date: 2014-07-14 14:04:54 +0200 (Mon, 14 Jul 2014) $
  */
 public interface DocumentSignatureService {
 
 	/**
-	 * Retrieves the bytes of data that need to be signed based on the {@code toSignDocument} and {@code parameters}. (Added in version 4) When {@code toSignDocument} contains an
+	 * Retrieves the bytes of the data that need to be signed based on the {@code toSignDocument} and {@code parameters}. (Added in version 4) When {@code toSignDocument} contains an
 	 * already existing signature the returned bytes are related to a new parallel signature.<p/>
 	 * - Enveloped signature (XML): a new signature is added and the signed data corresponds to this pointed by the first signature;<p/>
 	 * - Enveloping signature:<p/>

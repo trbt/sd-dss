@@ -114,24 +114,17 @@ public class ASiCSService extends AbstractSignatureService {
 		} catch (Exception e) {
 			// do nothing
 		}
-		if (validator != null) {
+		specificParameters.setDetachedContent(contextToSignDocument);
+		if (validator != null && (validator instanceof ASiCCMSDocumentValidator || validator instanceof ASiCXMLDocumentValidator)) {
 
-			// This is the ASiC-S container
-			if (validator instanceof ASiCCMSDocumentValidator || validator instanceof ASiCXMLDocumentValidator) {
+			// This is already an existing ASiC-S container; a new signature should be added.
+			contextToSignDocument = validator.getDetachedContent();
+			specificParameters.setDetachedContent(contextToSignDocument);
+			final DSSDocument contextSignature = validator.getDocument();
+			parameters.aSiC().setEnclosedSignature(contextSignature);
+			if (validator instanceof ASiCCMSDocumentValidator) {
 
-				// This is already an existing ASiC-S container; a new signature should be added.
-				contextToSignDocument = validator.getExternalContent();
-				specificParameters.setOriginalDocument(contextToSignDocument);
-				final DSSDocument contextSignature = validator.getDocument();
-				parameters.aSiC().setEnclosedSignature(contextSignature);
-				if (validator instanceof ASiCCMSDocumentValidator) {
-
-					contextToSignDocument = contextSignature;
-				} else {
-
-				}
-			} else {
-				throw new DSSUnsupportedOperationException(validator.getClass().getSimpleName() + ": This form of the signature is not supported.");
+				contextToSignDocument = contextSignature;
 			}
 		}
 		final DocumentSignatureService underlyingService = getSpecificService(specificParameters);
@@ -176,28 +169,18 @@ public class ASiCSService extends AbstractSignatureService {
 		} catch (Exception e) {
 			// do nothing
 		}
-		if (validator != null) {
+		specificParameters.setDetachedContent(contextToSignDocument);
+		if (validator != null && (validator instanceof ASiCCMSDocumentValidator || validator instanceof ASiCXMLDocumentValidator)) {
 
-			// This is the ASiC-S container
-			if (validator instanceof ASiCCMSDocumentValidator || validator instanceof ASiCXMLDocumentValidator) {
+			// This is already an existing ASiC-S container; a new signature should be added.
+			contextToSignDocument = validator.getDetachedContent();
+			specificParameters.setDetachedContent(contextToSignDocument);
+			final DSSDocument contextSignature = validator.getDocument();
+			parameters.aSiC().setEnclosedSignature(contextSignature);
+			if (validator instanceof ASiCCMSDocumentValidator) {
 
-				// This is already an existing ASiC-S container; a new signature should be added.
-				contextToSignDocument = validator.getExternalContent();
-				specificParameters.setOriginalDocument(contextToSignDocument);
-				final DSSDocument contextSignature = validator.getDocument();
-				parameters.aSiC().setEnclosedSignature(contextSignature);
-				if (validator instanceof ASiCCMSDocumentValidator) {
-
-					contextToSignDocument = contextSignature;
-				} else {
-
-				}
-			} else {
-				throw new DSSUnsupportedOperationException(validator.getClass().getSimpleName() + ": This form of the signature is not supported.");
+				contextToSignDocument = contextSignature;
 			}
-		} else {
-
-			specificParameters.setOriginalDocument(toSignDocument);
 		}
 
 		final ASiCParameters asicParameters = specificParameters.aSiC();
@@ -218,7 +201,7 @@ public class ASiCSService extends AbstractSignatureService {
 			throw new DSSUnsupportedOperationException(asicSignatureForm.name() + ": This form of the signature is not supported.");
 		}
 
-		final DSSDocument originalDocument = specificParameters.getOriginalDocument();
+		final DSSDocument originalDocument = specificParameters.getDetachedContent();
 
 		final ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
 		final ZipOutputStream outZip = new ZipOutputStream(outBytes);
@@ -261,8 +244,9 @@ public class ASiCSService extends AbstractSignatureService {
 		// return the new toSignDocument = ASiC-S
 		final byte[] documentBytes = outBytes.toByteArray();
 		final String name = toSignDocumentName != null ? toSignDocumentName + ASICS_EXTENSION : null;
-		final InMemoryDocument inMemoryDocument = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
-		return inMemoryDocument;
+		final InMemoryDocument asicSignature = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
+		parameters.setDeterministicId(null);
+		return asicSignature;
 	}
 
 	@Override
@@ -288,19 +272,19 @@ public class ASiCSService extends AbstractSignatureService {
 
 			final SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(toExtendDocument);
 			final DSSDocument signature = validator.getDocument();
-			DSSDocument originalDocument = parameters.getOriginalDocument();
-			if (validator.getExternalContent() == null) {
+			DSSDocument originalDocument = parameters.getDetachedContent();
+			if (validator.getDetachedContent() == null) {
 
-				validator.setExternalContent(originalDocument);
+				validator.setDetachedContent(originalDocument);
 			} else {
-				originalDocument = validator.getExternalContent();
+				originalDocument = validator.getDetachedContent();
 			}
 
 			final DocumentSignatureService specificService = getSpecificService(parameters);
 			specificService.setTspSource(tspSource);
 
 			final SignatureParameters xadesParameters = getParameters(parameters);
-			xadesParameters.setOriginalDocument(originalDocument);
+			xadesParameters.setDetachedContent(originalDocument);
 			final DSSDocument signedDocument = specificService.extendDocument(signature, xadesParameters);
 
 			final ByteArrayOutputStream output = new ByteArrayOutputStream();

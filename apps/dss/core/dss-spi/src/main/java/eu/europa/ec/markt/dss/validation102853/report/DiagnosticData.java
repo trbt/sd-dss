@@ -22,10 +22,10 @@ package eu.europa.ec.markt.dss.validation102853.report;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import eu.europa.ec.markt.dss.DigestAlgorithm;
 import eu.europa.ec.markt.dss.EncryptionAlgorithm;
@@ -33,8 +33,6 @@ import eu.europa.ec.markt.dss.TSLConstant;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.validation102853.TimestampType;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 
 /**
  * This class represents all static data extracted by the process analysing the signature. They are independent from the validation policy to be applied.
@@ -156,7 +154,7 @@ public class DiagnosticData extends XmlDom {
 	 */
 	public EncryptionAlgorithm getSignatureEncryptionAlgorithm(final String signatureId) {
 
-		final String signatureEncryptionAlgorithmName = getValue("/DiagnosticData/Signature[1]/BasicSignature/EncryptionAlgoUsedToSignThisToken/text()");
+		final String signatureEncryptionAlgorithmName = getValue("/DiagnosticData/Signature[@Id='%s']/BasicSignature/EncryptionAlgoUsedToSignThisToken/text()", signatureId);
 		final EncryptionAlgorithm signatureEncryptionAlgorithm = EncryptionAlgorithm.forName(signatureEncryptionAlgorithmName);
 		return signatureEncryptionAlgorithm;
 	}
@@ -269,6 +267,18 @@ public class DiagnosticData extends XmlDom {
 			timestampIdList.add(timestampId);
 		}
 		return timestampIdList;
+	}
+
+	/**
+	 * Indicates if the -B level is technically valid. It means that the signature value is valid.
+	 *
+	 * @param signatureId The identifier of the signature.
+	 * @return true if the signature value is valid
+	 */
+	public boolean isBLevelTechnicallyValid(final String signatureId) {
+
+		final boolean signatureValueValid = getBoolValue("/DiagnosticData/Signature[@Id='%s']/BasicSignature/SignatureValid/text()", signatureId);
+		return signatureValueValid;
 	}
 
 	/**
@@ -631,28 +641,29 @@ public class DiagnosticData extends XmlDom {
 		return tspServiceName;
 	}
 
-    public String getCertificateTSPServiceStatus(final int dssCertificateId) {
+	public String getCertificateTSPServiceStatus(final int dssCertificateId) {
 
-        final String TSPServiceStatus = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Status/text()", dssCertificateId);
-        return TSPServiceStatus;
-    }
+		final String TSPServiceStatus = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Status/text()", dssCertificateId);
+		return TSPServiceStatus;
+	}
 
-    public String getCertificateTSPServiceStartDate(final int dssCertificateId) {
+	public String getCertificateTSPServiceStartDate(final int dssCertificateId) {
 
-        final String TSPServiceStartDate = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/StartDate/text()", dssCertificateId);
-        return TSPServiceStartDate;
-    }
+		final String TSPServiceStartDate = getValue("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/StartDate/text()", dssCertificateId);
+		return TSPServiceStartDate;
+	}
 
-    public List<String> getCertificateTSPServiceQualifiers(final int dssCertificateId) {
+	public List<String> getCertificateTSPServiceQualifiers(final int dssCertificateId) {
 
-        List<String> tspServiceQualifiers = new ArrayList<String>();
-        final List<XmlDom> TSPServiceQualifiers = getElements("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Qualifiers/Qualifier", dssCertificateId);
+		List<String> tspServiceQualifiers = new ArrayList<String>();
+		final List<XmlDom> TSPServiceQualifiers = getElements("/DiagnosticData/UsedCertificates/Certificate[@Id='%s']/TrustedServiceProvider/Qualifiers/Qualifier",
+			  dssCertificateId);
 
-        for (XmlDom tspServiceQualifier : TSPServiceQualifiers) {
-                tspServiceQualifiers.add(tspServiceQualifier.getText());
-        }
-        return tspServiceQualifiers;
-    }
+		for (XmlDom tspServiceQualifier : TSPServiceQualifiers) {
+			tspServiceQualifiers.add(tspServiceQualifier.getText());
+		}
+		return tspServiceQualifiers;
+	}
 
 	/**
 	 * This method indicates if the associated trusted list is well signed.
@@ -702,25 +713,25 @@ public class DiagnosticData extends XmlDom {
 		return revocationReason;
 	}
 
-    public String getErrorMessage(final String signatureId) {
+	public String getErrorMessage(final String signatureId) {
 
-        final String errorMessage = getValue("/DiagnosticData/Signature[@Id='%s']/ErrorMessage/text()", signatureId);
-        return errorMessage;
-    }
+		final String errorMessage = getValue("/DiagnosticData/Signature[@Id='%s']/ErrorMessage/text()", signatureId);
+		return errorMessage;
+	}
 
-    public List <String> getTrueQCStatements() {
+	public List<String> getTrueQCStatements() {
 
-        List <String> trueQcStatements = new ArrayList<String>();
-        final List <XmlDom> qcStatements = getElements("/DiagnosticData/UsedCertificates/Certificate/QCStatement");
-        for (XmlDom qcStatement : qcStatements) {
-            NodeList qcNodes = qcStatement.getRootElement().getChildNodes();
-            for (int i=0; i < qcNodes.getLength() ; ++i) {
-                if(qcNodes.item(i).getTextContent().toLowerCase().equals("true")) {
-                    trueQcStatements.add(qcNodes.item(i).getNodeName());
-                }
-            }
-        }
-        return trueQcStatements;
-    }
+		List<String> trueQcStatements = new ArrayList<String>();
+		final List<XmlDom> qcStatements = getElements("/DiagnosticData/UsedCertificates/Certificate/QCStatement");
+		for (XmlDom qcStatement : qcStatements) {
+			NodeList qcNodes = qcStatement.getRootElement().getChildNodes();
+			for (int i = 0; i < qcNodes.getLength(); ++i) {
+				if (qcNodes.item(i).getTextContent().toLowerCase().equals("true")) {
+					trueQcStatements.add(qcNodes.item(i).getNodeName());
+				}
+			}
+		}
+		return trueQcStatements;
+	}
 
 }

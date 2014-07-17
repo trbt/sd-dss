@@ -70,7 +70,9 @@ public class PDFDocumentValidator extends SignedDocumentValidator {
 			public void validate(final PdfSignatureInfo pdfSignatureInfo) {
 				try {
 					if (pdfSignatureInfo.getCades() != null) {
+
 						final PAdESSignature padesSignature = new PAdESSignature(document, pdfSignatureInfo, validationCertPool);
+						padesSignature.setProvidedSigningCertificateToken(providedSigningCertificateToken);
 						signatures.add(padesSignature);
 					}
 				} catch (Exception e) {

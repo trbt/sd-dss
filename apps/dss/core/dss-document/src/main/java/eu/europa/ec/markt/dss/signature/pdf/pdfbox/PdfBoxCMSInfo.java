@@ -23,7 +23,6 @@ package eu.europa.ec.markt.dss.signature.pdf.pdfbox;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.Date;
@@ -33,6 +32,8 @@ import java.util.Set;
 import org.apache.mina.util.ConcurrentHashSet;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.DigestAlgorithm;
@@ -45,137 +46,139 @@ import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerifi
 
 abstract class PdfBoxCMSInfo implements PdfSignatureOrDocTimestampInfo {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PdfBoxCMSInfo.class);
-    protected final CertificatePool validationCertPool;
-    private final PdfDssDict outerCatalog;
-    private final PdfDssDict documentDictonary;
-    private final Date signingDate;
-    private final String location;
-    private final int[] signatureByteRange;
+	private static final Logger LOG = LoggerFactory.getLogger(PdfBoxCMSInfo.class);
+	protected final CertificatePool validationCertPool;
+	private final PdfDssDict outerCatalog;
+	private final PdfDssDict documentDictionary;
+	private final Date signingDate;
+	private final String location;
+	private final int[] signatureByteRange;
 
-    protected final byte[] cms;
+	protected final byte[] cms;
 
-    /**
-     * The original signed pdf document
-     */
-    final byte[] signedBytes;
+	/**
+	 * The original signed pdf document
+	 */
+	final byte[] signedBytes;
 
-    protected InputStream inputStream;
-    private boolean verified;
-    private SignatureCryptographicVerification verifyResult;
+	protected InputStream inputStream;
+	private boolean verified;
+	private SignatureCryptographicVerification verifyResult;
 
-    private Set<PdfSignatureOrDocTimestampInfo> outerSignatures = new ConcurrentHashSet<PdfSignatureOrDocTimestampInfo>();
+	private Set<PdfSignatureOrDocTimestampInfo> outerSignatures = new ConcurrentHashSet<PdfSignatureOrDocTimestampInfo>();
 
-    /**
-     *
-     * @param validationCertPool
-     * @param outerCatalog the PDF Dict of the outer document, if the PDFDocument in a enclosed revision. Can be null.
-     * @param document     the signed PDFDocument
-     * @param cms the CMS bytes (CAdES signature)
-     * @param inputStream  the stream of the whole signed document
-     * @throws IOException
-     */
-    PdfBoxCMSInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, byte[] cms, InputStream inputStream) throws DSSException, IOException {
-        this.validationCertPool = validationCertPool;
-        this.outerCatalog = PdfDssDict.build(outerCatalog);
-        this.cms = cms;
-        this.location = signature.getLocation();
-        this.signingDate = signature.getSignDate() != null ? signature.getSignDate().getTime() : null;
-        this.signatureByteRange = signature.getByteRange();
-        documentDictonary = PdfDssDict.build(new PdfBoxDict(document.getDocumentCatalog().getCOSDictionary(), document));
-        try {
-            if (cms == null) {
-                // due to not very good revision extracting
-                throw new DssPadesNoSignatureFound();
-            }
-            signedBytes = signature.getSignedContent(inputStream);
-        } catch (IOException e) {
-            throw new DSSException(e);
-        }
-    }
+	/**
+	 * @param validationCertPool
+	 * @param outerCatalog       the PDF Dict of the outer document, if the PDFDocument in a enclosed revision. Can be null.
+	 * @param document           the signed PDFDocument
+	 * @param cms                the CMS bytes (CAdES signature)
+	 * @param inputStream        the stream of the whole signed document
+	 * @throws IOException
+	 */
+	PdfBoxCMSInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, byte[] cms,
+	              InputStream inputStream) throws DSSException, IOException {
+		this.validationCertPool = validationCertPool;
+		this.outerCatalog = PdfDssDict.build(outerCatalog);
+		this.cms = cms;
+		this.location = signature.getLocation();
+		this.signingDate = signature.getSignDate() != null ? signature.getSignDate().getTime() : null;
+		this.signatureByteRange = signature.getByteRange();
+		documentDictionary = PdfDssDict.build(new PdfBoxDict(document.getDocumentCatalog().getCOSDictionary(), document));
+		try {
+			if (cms == null) {
+				// due to not very good revision extracting
+				throw new DSSPadesNoSignatureFound();
+			}
+			signedBytes = signature.getSignedContent(inputStream);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
 
-    @Override
-    public SignatureCryptographicVerification checkIntegrity() throws SignatureException {
-        if (!verified) {
-            verifyResult = checkIntegrityOnce();
-            LOG.debug("Verify embedded CAdES Signature on signedBytes size {}. Signature intact: {}", signedBytes.length, verifyResult);
-            verified = true;
-        }
-        return verifyResult;
-    }
+	@Override
+	public SignatureCryptographicVerification checkIntegrity() {
 
-    protected abstract SignatureCryptographicVerification checkIntegrityOnce();
+		if (!verified) {
 
-    @Override
-    public String getLocation() {
-        return location;
-    }
+			verifyResult = checkIntegrityOnce();
+			LOG.debug("Verify embedded CAdES Signature on signedBytes size {}. Signature intact: {}", signedBytes.length, verifyResult);
+			verified = true;
+		}
+		return verifyResult;
+	}
 
-    @Override
-    public Date getSigningDate() {
-        return signingDate;
-    }
+	protected abstract SignatureCryptographicVerification checkIntegrityOnce();
 
-    /**
-     * @return the byte of the originally signed document
-     */
-    public byte[] getSignedDocumentBytes() {
-        return signedBytes;
-    }
+	@Override
+	public String getLocation() {
+		return location;
+	}
 
-    @Override
-    public byte[] getOriginalBytes() {
-        final int length = signatureByteRange[1];
-        final byte[] result = new byte[length];
-        System.arraycopy(signedBytes, 0, result, 0, length);
-        return result;
-    }
+	@Override
+	public Date getSigningDate() {
+		return signingDate;
+	}
 
-    @Override
-    public PdfDssDict getDocumentDictionary() {
-        return documentDictonary;
-    }
+	/**
+	 * @return the byte of the originally signed document
+	 */
+	public byte[] getSignedDocumentBytes() {
+		return signedBytes;
+	}
 
-    @Override
-    public PdfDssDict getOuterCatalog() {
-        return outerCatalog;
-    }
+	@Override
+	public byte[] getOriginalBytes() {
+		final int length = signatureByteRange[1];
+		final byte[] result = new byte[length];
+		System.arraycopy(signedBytes, 0, result, 0, length);
+		return result;
+	}
 
-    protected X509Certificate[] toX509CertificateArray(List<CertificateToken> certificateTokens) {
-        X509Certificate[] result = new X509Certificate[certificateTokens.size()];
-        for (int i = 0; i < certificateTokens.size(); i++) {
-            CertificateToken certificateToken = certificateTokens.get(i);
-            result[i] = certificateToken.getCertificate();
-        }
-        return result;
-    }
+	@Override
+	public PdfDssDict getDocumentDictionary() {
+		return documentDictionary;
+	}
 
-    @Override
-    public int uniqueId() {
-        final byte[] digest = DSSUtils.digest(DigestAlgorithm.SHA1, cms);
-        return bytesToInt(digest);
-    }
+	@Override
+	public PdfDssDict getOuterCatalog() {
+		return outerCatalog;
+	}
 
-    private int bytesToInt(byte[] bytes) {
-        ByteBuffer buffer = ByteBuffer.allocate(8);
-        buffer.put(bytes, 0, Integer.SIZE / 8);
-        buffer.flip();//need flip
-        return buffer.getInt();
-    }
+	protected X509Certificate[] toX509CertificateArray(List<CertificateToken> certificateTokens) {
+		X509Certificate[] result = new X509Certificate[certificateTokens.size()];
+		for (int i = 0; i < certificateTokens.size(); i++) {
+			CertificateToken certificateToken = certificateTokens.get(i);
+			result[i] = certificateToken.getCertificate();
+		}
+		return result;
+	}
 
-    @Override
-    public void addOuterSignature(PdfSignatureOrDocTimestampInfo signatureInfo) {
-        signatureInfo = PdfBoxSignatureService.signatureAlreadyInListOrSelf(outerSignatures, signatureInfo);
-        outerSignatures.add(signatureInfo);
-    }
+	@Override
+	public int uniqueId() {
+		final byte[] digest = DSSUtils.digest(DigestAlgorithm.SHA1, cms);
+		return bytesToInt(digest);
+	}
 
-    @Override
-    public Set<PdfSignatureOrDocTimestampInfo> getOuterSignatures() {
-        return Collections.unmodifiableSet(outerSignatures);
-    }
+	private int bytesToInt(byte[] bytes) {
+		ByteBuffer buffer = ByteBuffer.allocate(8);
+		buffer.put(bytes, 0, Integer.SIZE / 8);
+		buffer.flip();//need flip
+		return buffer.getInt();
+	}
 
-    @Override
-    public int[] getSignatureByteRange() {
-        return signatureByteRange;
-    }
+	@Override
+	public void addOuterSignature(PdfSignatureOrDocTimestampInfo signatureInfo) {
+		signatureInfo = PdfBoxSignatureService.signatureAlreadyInListOrSelf(outerSignatures, signatureInfo);
+		outerSignatures.add(signatureInfo);
+	}
+
+	@Override
+	public Set<PdfSignatureOrDocTimestampInfo> getOuterSignatures() {
+		return Collections.unmodifiableSet(outerSignatures);
+	}
+
+	@Override
+	public int[] getSignatureByteRange() {
+		return signatureByteRange;
+	}
 }

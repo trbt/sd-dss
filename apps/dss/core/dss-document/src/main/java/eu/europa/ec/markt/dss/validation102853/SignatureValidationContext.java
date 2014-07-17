@@ -53,7 +53,8 @@ import eu.europa.ec.markt.dss.validation102853.ocsp.OCSPSource;
  * During the validation of a signature, the software retrieves different X509 artifacts like Certificate, CRL and OCSP Response. The SignatureValidationContext is a "cache" for
  * one validation request that contains every object retrieved so far.
  * <p/>
- * The validate method is multi-threaded, using an CachedThreadPool from ExecutorService, to parallelize fetching Certificates from AIA and online revocation information.
+ * The validate method is multi-threaded, using an CachedThreadPool from ExecutorService, to parallelize fetching of the certificates from AIA and of the revocation information
+ * from online sources.
  *
  * @version $Revision: 1839 $ - $Date: 2013-04-04 17:40:51 +0200 (Thu, 04 Apr 2013) $
  */
@@ -322,11 +323,6 @@ public class SignatureValidationContext implements ValidationContext {
 		}
 	}
 
-	/**
-	 * Adds a new revocation token to the list of tokes to verify. only if it was not already verified.
-	 *
-	 * @param revocationToken revocation token to verify
-	 */
 	@Override
 	public void addRevocationTokenForVerification(final RevocationToken revocationToken) {
 
@@ -343,11 +339,6 @@ public class SignatureValidationContext implements ValidationContext {
 		}
 	}
 
-	/**
-	 * Adds a new certificate token to the list of tokes to verify. only if it was not already verified.
-	 *
-	 * @param certificateToken certificate token to verify
-	 */
 	@Override
 	public void addCertificateTokenForVerification(final CertificateToken certificateToken) {
 
@@ -364,11 +355,6 @@ public class SignatureValidationContext implements ValidationContext {
 		}
 	}
 
-	/**
-	 * Adds a new timestamp token to the list of tokes to verify. only if it was not already verified.
-	 *
-	 * @param timestampToken
-	 */
 	@Override
 	public void addTimestampTokenForVerification(final TimestampToken timestampToken) {
 

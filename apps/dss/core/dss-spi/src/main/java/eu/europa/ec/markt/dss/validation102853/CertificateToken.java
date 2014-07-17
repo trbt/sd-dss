@@ -124,6 +124,11 @@ public class CertificateToken extends Token {
 	private X500Principal subjectX500PrincipalNormalized = null;
 
 	/**
+	 * In the case of the XML signature this is the Id associated with the certificate if any.
+	 */
+	private String xmlId;
+
+	/**
 	 * This method returns an instance of {@link eu.europa.ec.markt.dss.validation102853.CertificateToken}.
 	 *
 	 * @param cert <code>X509Certificate</code>
@@ -828,5 +833,21 @@ public class CertificateToken extends Token {
 			qcStatementsIdList = DSSUtils.getQCStatementsIdList(x509Certificate);
 		}
 		return qcStatementsIdList;
+	}
+
+	/**
+	 * @return return the id associated with the certificate in case of an XML signature, or null
+	 */
+	public String getXmlId() {
+		return xmlId;
+	}
+
+	/**
+	 * Sets the Id associated with the certificate in case of an XML signature.
+	 *
+	 * @param xmlId id
+	 */
+	public void setXmlId(final String xmlId) {
+		this.xmlId = xmlId;
 	}
 }

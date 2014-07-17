@@ -43,88 +43,89 @@ import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
 
 public class XAdESBuilder {
 
-    /**
-     * This variable holds the {@code XPathQueryHolder} which contains all constants and queries needed to cope with the default signature schema.
-     */
-    protected final XPathQueryHolder xPathQueryHolder = new XPathQueryHolder();
+	/**
+	 * This variable holds the {@code XPathQueryHolder} which contains all constants and queries needed to cope with the default signature schema.
+	 */
+	protected final XPathQueryHolder xPathQueryHolder = new XPathQueryHolder();
 
-    protected static final Logger LOG = LoggerFactory.getLogger(XAdESBuilder.class);
+	protected static final Logger LOG = LoggerFactory.getLogger(XAdESBuilder.class);
 
-    /*
-     * This variable is a reference to the set of parameters relating to the structure and process of the creation or
-     * extension of the electronic signature.
-     */
-    protected SignatureParameters params;
+	/*
+	 * This variable is a reference to the set of parameters relating to the structure and process of the creation or
+	 * extension of the electronic signature.
+	 */
+	protected SignatureParameters params;
 
-    /**
-     * This is the variable which represents the root XML document root (with signature).
-     */
-    protected Document documentDom;
+	/**
+	 * This is the variable which represents the root XML document root (with signature).
+	 */
+	protected Document documentDom;
 
-    /**
-     * This method creates the ds:DigestMethod DOM object
-     *
-     * @param parentDom
-     * @param digestAlgorithm digest algorithm xml identifier
-     */
-    protected void incorporateDigestMethod(final Element parentDom, final DigestAlgorithm digestAlgorithm) {
+	/**
+	 * This method creates the ds:DigestMethod DOM object
+	 *
+	 * @param parentDom
+	 * @param digestAlgorithm digest algorithm xml identifier
+	 */
+	protected void incorporateDigestMethod(final Element parentDom, final DigestAlgorithm digestAlgorithm) {
 
-        // <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-        final Element digestMethodDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:DigestMethod");
-        final String digestAlgorithmXmlId = digestAlgorithm.getXmlId();
-        digestMethodDom.setAttribute("Algorithm", digestAlgorithmXmlId);
-        parentDom.appendChild(digestMethodDom);
-    }
+		// <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+		final Element digestMethodDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:DigestMethod");
+		final String digestAlgorithmXmlId = digestAlgorithm.getXmlId();
+		digestMethodDom.setAttribute("Algorithm", digestAlgorithmXmlId);
+		parentDom.appendChild(digestMethodDom);
+	}
 
-    /**
-     * This method creates the ds:DigestValue DOM object.
-     *  @param parentDom
-     * @param digestAlgorithm digest algorithm
-     * @param originalDocument   to digest array of bytes
-     */
-    protected void incorporateDigestValue(final Element parentDom, final DigestAlgorithm digestAlgorithm, final DSSDocument originalDocument) {
+	/**
+	 * This method creates the ds:DigestValue DOM object.
+	 *
+	 * @param parentDom
+	 * @param digestAlgorithm  digest algorithm
+	 * @param originalDocument to digest array of bytes
+	 */
+	protected void incorporateDigestValue(final Element parentDom, final DigestAlgorithm digestAlgorithm, final DSSDocument originalDocument) {
 
-        // <ds:DigestValue>b/JEDQH2S1Nfe4Z3GSVtObN34aVB1kMrEbVQZswThfQ=</ds:DigestValue>
-        final Element digestValueDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:DigestValue");
-	    final String base64EncodedDigestBytes = originalDocument.getDigest(digestAlgorithm);
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("Digest value             --> " + base64EncodedDigestBytes);
-        }
-        final Text textNode = documentDom.createTextNode(base64EncodedDigestBytes);
-        digestValueDom.appendChild(textNode);
-        parentDom.appendChild(digestValueDom);
-    }
+		// <ds:DigestValue>b/JEDQH2S1Nfe4Z3GSVtObN34aVB1kMrEbVQZswThfQ=</ds:DigestValue>
+		final Element digestValueDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:DigestValue");
+		final String base64EncodedDigestBytes = originalDocument.getDigest(digestAlgorithm);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("Digest value {} --> {}", parentDom.getNodeName(), base64EncodedDigestBytes);
+		}
+		final Text textNode = documentDom.createTextNode(base64EncodedDigestBytes);
+		digestValueDom.appendChild(textNode);
+		parentDom.appendChild(digestValueDom);
+	}
 
-    /**
-     * Incorporates the certificate's reference as a child of the given parent node.
-     *
-     * @param signingCertificateDom
-     * @param certificates
-     */
-    protected void incorporateCertificateRef(final Element signingCertificateDom, final List<X509Certificate> certificates) {
+	/**
+	 * Incorporates the certificate's reference as a child of the given parent node.
+	 *
+	 * @param signingCertificateDom
+	 * @param certificates
+	 */
+	protected void incorporateCertificateRef(final Element signingCertificateDom, final List<X509Certificate> certificates) {
 
-        final Element certDom = DSSXMLUtils.addElement(documentDom, signingCertificateDom, XAdESNamespaces.XAdES, "xades:Cert");
+		final Element certDom = DSSXMLUtils.addElement(documentDom, signingCertificateDom, XAdESNamespaces.XAdES, "xades:Cert");
 
-        final Element certDigestDom = DSSXMLUtils.addElement(documentDom, certDom, XAdESNamespaces.XAdES, "xades:CertDigest");
+		final Element certDigestDom = DSSXMLUtils.addElement(documentDom, certDom, XAdESNamespaces.XAdES, "xades:CertDigest");
 
-        final DigestAlgorithm signingCertificateDigestMethod = params.bLevel().getSigningCertificateDigestMethod();
-        incorporateDigestMethod(certDigestDom, signingCertificateDigestMethod);
+		final DigestAlgorithm signingCertificateDigestMethod = params.bLevel().getSigningCertificateDigestMethod();
+		incorporateDigestMethod(certDigestDom, signingCertificateDigestMethod);
 
-        for (final X509Certificate certificate : certificates) {
+		for (final X509Certificate certificate : certificates) {
 
-	        final InMemoryDocument inMemoryCertificate = new InMemoryDocument(DSSUtils.getEncoded(certificate));
-	        incorporateDigestValue(certDigestDom, signingCertificateDigestMethod, inMemoryCertificate);
+			final InMemoryDocument inMemoryCertificate = new InMemoryDocument(DSSUtils.getEncoded(certificate));
+			incorporateDigestValue(certDigestDom, signingCertificateDigestMethod, inMemoryCertificate);
 
-            final Element issuerSerialDom = DSSXMLUtils.addElement(documentDom, certDom, XAdESNamespaces.XAdES, "xades:IssuerSerial");
+			final Element issuerSerialDom = DSSXMLUtils.addElement(documentDom, certDom, XAdESNamespaces.XAdES, "xades:IssuerSerial");
 
-            final Element x509IssuerNameDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, XMLSignature.XMLNS, "ds:X509IssuerName");
-            final String issuerX500PrincipalName = DSSUtils.getIssuerX500PrincipalName(certificate);
-            DSSXMLUtils.setTextNode(documentDom, x509IssuerNameDom, issuerX500PrincipalName);
+			final Element x509IssuerNameDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, XMLSignature.XMLNS, "ds:X509IssuerName");
+			final String issuerX500PrincipalName = DSSUtils.getIssuerX500PrincipalName(certificate);
+			DSSXMLUtils.setTextNode(documentDom, x509IssuerNameDom, issuerX500PrincipalName);
 
-            final Element x509SerialNumberDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, XMLSignature.XMLNS, "ds:X509SerialNumber");
-            final BigInteger serialNumber = certificate.getSerialNumber();
-            final String serialNumberString = new String(serialNumber.toString());
-            DSSXMLUtils.setTextNode(documentDom, x509SerialNumberDom, serialNumberString);
-        }
-    }
+			final Element x509SerialNumberDom = DSSXMLUtils.addElement(documentDom, issuerSerialDom, XMLSignature.XMLNS, "ds:X509SerialNumber");
+			final BigInteger serialNumber = certificate.getSerialNumber();
+			final String serialNumberString = new String(serialNumber.toString());
+			DSSXMLUtils.setTextNode(documentDom, x509SerialNumberDom, serialNumberString);
+		}
+	}
 }

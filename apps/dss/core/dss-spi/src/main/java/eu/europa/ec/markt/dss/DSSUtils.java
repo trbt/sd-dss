@@ -45,6 +45,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -64,6 +65,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
@@ -1112,7 +1114,24 @@ public final class DSSUtils {
 		}
 	}
 
+	/**
+	 * @param digestAlgorithm
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 */
 	public static MessageDigest getMessageDigest(final DigestAlgorithm digestAlgorithm) throws NoSuchAlgorithmException {
+
+		// TODO-Bob (13/07/2014):  To be checked if the default implementation copes with RIPEMD160
+		//		if (digestAlgorithm.equals(DigestAlgorithm.RIPEMD160)) {
+		//
+		//			final RIPEMD160Digest digest = new RIPEMD160Digest();
+		//			final byte[] message = certificateToken.getEncoded();
+		//			digest.update(message, 0, message.length);
+		//			final byte[] digestValue = new byte[digest.getDigestSize()];
+		//			digest.doFinal(digestValue, 0);
+		//			recalculatedBase64DigestValue = DSSUtils.base64BinaryEncode(digestValue);
+		//		} else {
+
 		final String digestAlgorithmOid = digestAlgorithm.getOid().getId();
 		// System.out.println(">>> " + digestAlgorithmOid);
 		final MessageDigest messageDigest = MessageDigest.getInstance(digestAlgorithmOid);
@@ -2915,6 +2934,23 @@ public final class DSSUtils {
 			extension = path.substring(lastIndexOf + 1);
 		}
 		return extension;
+	}
+
+	/**
+	 * This method lists all defined secutity providers.
+	 */
+	public static void printSecurityProvides() {
+
+		final Provider[] providers = Security.getProviders();
+		for (final Provider provider : providers) {
+
+			System.out.println("PROVIDER: " + provider.getName());
+			final Set<Provider.Service> services = provider.getServices();
+			for (final Provider.Service service : services) {
+
+				System.out.println("\tALGORITHM: " + service.getAlgorithm() + " / " + service.getType() + " / " + service.getClassName());
+			}
+		}
 	}
 }
 

@@ -508,15 +508,29 @@ public final class DSSXMLUtils {
 	 */
 	public static void printDocument(final Node node, final OutputStream out) {
 
+		printDocument(node, out, false);
+	}
+
+	/**
+	 * This method writes formatted {@link org.w3c.dom.Node} to the outputStream.
+	 *
+	 * @param node
+	 * @param out
+	 */
+	private static void printDocument(final Node node, final OutputStream out, final boolean raw) {
+
 		try {
 
 			final TransformerFactory tf = TransformerFactory.newInstance();
 			final Transformer transformer = tf.newTransformer();
 			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
 			transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			if (!raw) {
+
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
+			}
 			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
 
 			final DOMSource xmlSource = new DOMSource(node);
 			final OutputStreamWriter writer = new OutputStreamWriter(out, "UTF-8");
@@ -529,6 +543,38 @@ public final class DSSXMLUtils {
 	}
 
 	/**
+	 * This method writes raw {@link org.w3c.dom.Node} (without blanks) to the outputStream.
+	 *
+	 * @param node
+	 * @param out
+	 */
+	public static void printRawDocument(final Node node, final OutputStream out) {
+
+		trimWhitespace(node);
+		printDocument(node, out, true);
+	}
+
+	/**
+	 * This method trims all whitespaces in TEXT_NODE.
+	 *
+	 * @param node
+	 */
+	public static void trimWhitespace(final Node node) {
+
+		final NodeList children = node.getChildNodes();
+		for (int ii = 0; ii < children.getLength(); ++ii) {
+
+			final Node child = children.item(ii);
+			if (child.getNodeType() == Node.TEXT_NODE) {
+
+				final String textContent = child.getTextContent();
+				child.setTextContent(textContent.trim());
+			}
+			trimWhitespace(child);
+		}
+	}
+
+	/**
 	 * This method writes formatted {@link org.w3c.dom.Node} to the outputStream.
 	 *
 	 * @param dssDocument
@@ -536,27 +582,9 @@ public final class DSSXMLUtils {
 	 */
 	public static void printDocument(final DSSDocument dssDocument, final OutputStream out) {
 
-		try {
-
-			final byte[] bytes = dssDocument.getBytes();
-			final Document document = DSSXMLUtils.buildDOM(bytes);
-
-			final TransformerFactory tf = TransformerFactory.newInstance();
-			final Transformer transformer = tf.newTransformer();
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-			transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
-
-			final DOMSource xmlSource = new DOMSource(document);
-			final OutputStreamWriter writer = new OutputStreamWriter(out, "UTF-8");
-			final StreamResult outputTarget = new StreamResult(writer);
-			transformer.transform(xmlSource, outputTarget);
-		} catch (Exception e) {
-
-			// Ignore
-		}
+		final byte[] bytes = dssDocument.getBytes();
+		final Document document = DSSXMLUtils.buildDOM(bytes);
+		printDocument(document, out, false);
 	}
 
 	/**
@@ -738,20 +766,37 @@ public final class DSSXMLUtils {
 		if (date == null) {
 			return null;
 		}
-
 		final GregorianCalendar calendar = new GregorianCalendar();
 		calendar.setTime(date);
-
 		try {
-			XMLGregorianCalendar gc = DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar);
-			gc.setFractionalSecond(null);
-			gc = gc.normalize(); // to UTC = Zulu
-			return gc;
+
+			XMLGregorianCalendar xmlGregorianCalendar = DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar);
+			xmlGregorianCalendar.setFractionalSecond(null);
+			xmlGregorianCalendar = xmlGregorianCalendar.normalize(); // to UTC = Zulu
+			return xmlGregorianCalendar;
 		} catch (DatatypeConfigurationException e) {
 
 			// LOG.warn("Unable to properly convert a Date to an XMLGregorianCalendar",e);
 		}
+		return null;
+	}
 
+	/**
+	 * This method allows to convert the given text (XML representation of a date) to the {@code Date}.
+	 *
+	 * @param text the text representing the XML date
+	 * @return {@code Date} converted or null
+	 */
+	public static Date getDate(final String text) {
+
+		try {
+
+			final DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
+			final XMLGregorianCalendar xmlGregorianCalendar = datatypeFactory.newXMLGregorianCalendar(text);
+			return xmlGregorianCalendar.toGregorianCalendar().getTime();
+		} catch (DatatypeConfigurationException e) {
+			// do nothing
+		}
 		return null;
 	}
 }

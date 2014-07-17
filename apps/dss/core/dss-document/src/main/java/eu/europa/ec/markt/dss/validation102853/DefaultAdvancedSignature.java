@@ -30,15 +30,16 @@ import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 
 import eu.europa.ec.markt.dss.DSSRevocationUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
+import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.validation102853.bean.CandidatesForSigningCertificate;
+import eu.europa.ec.markt.dss.validation102853.bean.SignatureCryptographicVerification;
 import eu.europa.ec.markt.dss.validation102853.bean.SigningCertificateValidity;
 import eu.europa.ec.markt.dss.validation102853.crl.CRLToken;
 import eu.europa.ec.markt.dss.validation102853.crl.ListCRLSource;
 import eu.europa.ec.markt.dss.validation102853.crl.OfflineCRLSource;
 import eu.europa.ec.markt.dss.validation102853.ocsp.ListOCSPSource;
 import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
-import eu.europa.ec.markt.dss.validation102853.scope.SignatureScope;
 
 /**
  * TODO <p/> <p/> DISCLAIMER: Project owner DG-MARKT.
@@ -49,9 +50,31 @@ import eu.europa.ec.markt.dss.validation102853.scope.SignatureScope;
 public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 
 	/**
+	 * This is the reference to the global (external) pool of certificates. All encapsulated certificates in the signature are added to this pool. See {@link
+	 * eu.europa.ec.markt.dss.validation102853.CertificatePool}
+	 */
+	protected final CertificatePool certPool;
+
+	/**
+	 * In the case of a non AdES signature the signing certificate is not mandatory within the signature and can be provided by the driving application.
+	 */
+	protected CertificateToken providedSigningCertificateToken;
+
+	/**
+	 * In case of a detached signature this is the signed document.
+	 */
+	protected DSSDocument detachedContent;
+
+	/**
+	 * This variable contains the result of the signature mathematical validation. It is initialised when the method {@code checkSignatureIntegrity} is called.
+	 */
+	protected SignatureCryptographicVerification signatureCryptographicVerification;
+
+	/**
 	 * The reference to the object containing all candidates to the signing certificate.
 	 */
 	protected CandidatesForSigningCertificate candidatesForSigningCertificate;
+
 	/**
 	 * This list contains the detail information collected during the check. It is reset for each call of {@code isDataForSignatureLevelPresent}
 	 */
@@ -73,21 +96,40 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	protected List<TimestampToken> archiveTimestamps;
 
 	/**
-	 * The scope of the signature (full document, parts of documents, etc).
+	 * @param certPool can be null
 	 */
-	private SignatureScope signatureScope;
+	protected DefaultAdvancedSignature(final CertificatePool certPool) {
+		this.certPool = certPool;
+	}
+
+	@Override
+	public DSSDocument getDetachedContent() {
+		return detachedContent;
+	}
+
+	@Override
+	public void setDetachedContent(final DSSDocument detachedContent) {
+		this.detachedContent = detachedContent;
+	}
 
 	/**
 	 * @return the upper level for which data have been found. Doesn't mean any validity of the data found. Null if unknown.
 	 */
 	@Override
 	public SignatureLevel getDataFoundUpToLevel() {
+
 		final SignatureLevel[] signatureLevels = getSignatureLevels();
 		final SignatureLevel dataFoundUpToProfile = getDataFoundUpToProfile(signatureLevels);
 		return dataFoundUpToProfile;
 	}
 
-	private SignatureLevel getDataFoundUpToProfile(SignatureLevel... signatureLevels) {
+	/**
+	 * This method returns the {@code SignatureLevel} which was reached.
+	 *
+	 * @param signatureLevels the array of the all levels associated with the given signature type
+	 * @return {@code SignatureLevel}
+	 */
+	private SignatureLevel getDataFoundUpToProfile(final SignatureLevel... signatureLevels) {
 
 		for (int ii = signatureLevels.length - 1; ii >= 0; ii--) {
 
@@ -162,7 +204,7 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	 * This method returns revocation values (ocsp and crl) that will be included in the LT profile
 	 *
 	 * @param validationContext
-	 * @return
+	 * @return {@code RevocationDataForInclusion}
 	 */
 	public RevocationDataForInclusion getRevocationDataForInclusion(final ValidationContext validationContext) {
 
@@ -228,9 +270,23 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
 	}
 
 	@Override
+	public CertificateToken getProvidedSigningCertificateToken() {
+		return providedSigningCertificateToken;
+	}
+
+	@Override
+	public void setProvidedSigningCertificateToken(final CertificateToken certificateToken) {
+		this.providedSigningCertificateToken = certificateToken;
+	}
+
+	@Override
 	public CertificateToken getSigningCertificateToken() {
 
 		candidatesForSigningCertificate = getCandidatesForSigningCertificate();
+		if (signatureCryptographicVerification == null) {
+
+			checkSignatureIntegrity();
+		}
 		final SigningCertificateValidity theSigningCertificateValidity = candidatesForSigningCertificate.getTheSigningCertificateValidity();
 		if (theSigningCertificateValidity != null) {
 
@@ -258,7 +314,7 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
         /*
 	     * This validates the signature timestamp tokensToProcess present in the signature.
          */
-        for (final TimestampToken timestampToken : getContentTimestamps()) {
+		for (final TimestampToken timestampToken : getContentTimestamps()) {
 
 			validationContext.addTimestampTokenForVerification(timestampToken);
 		}
@@ -301,7 +357,7 @@ public abstract class DefaultAdvancedSignature implements AdvancedSignature {
         /*
 	     * This validates the signature timestamp tokensToProcess present in the signature.
          */
-        for (final TimestampToken timestampToken : getContentTimestamps()) {
+		for (final TimestampToken timestampToken : getContentTimestamps()) {
 
 			final byte[] timestampBytes = getContentTimestampData(timestampToken);
 			timestampToken.matchData(timestampBytes);

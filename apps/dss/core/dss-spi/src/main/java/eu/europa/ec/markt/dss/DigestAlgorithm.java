@@ -33,7 +33,7 @@ import eu.europa.ec.markt.dss.exception.DSSException;
 /**
  * Supported Algorithms
  *
- * @version $Revision: 4211 $ - $Date: 2014-07-08 09:53:52 +0200 (Tue, 08 Jul 2014) $
+ * @version $Revision: 4262 $ - $Date: 2014-07-13 19:25:42 +0200 (Sun, 13 Jul 2014) $
  */
 public enum DigestAlgorithm {
 
@@ -174,9 +174,9 @@ public enum DigestAlgorithm {
 	/**
 	 * Returns the digest algorithm associated to the given XML url or the default one if the algorithm does not exist.
 	 *
-	 * @param xmlName
-	 * @param defaultValue
-	 * @return
+	 * @param xmlName      The XML representation of the digest algorithm
+	 * @param defaultValue The default value for the {@code DigestAlgorithm}
+	 * @return the corresponding {@code DigestAlgorithm} or the default value
 	 */
 	public static DigestAlgorithm forXML(final String xmlName, final DigestAlgorithm defaultValue) {
 

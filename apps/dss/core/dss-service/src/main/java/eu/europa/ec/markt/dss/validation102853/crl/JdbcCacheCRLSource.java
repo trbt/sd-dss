@@ -37,451 +37,451 @@ import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 /**
  * CRLSource that retrieve information from a JDBC datasource
  *
- * @version $Revision: 3564 $ - $Date: 2014-03-06 16:19:24 +0100 (Thu, 06 Mar 2014) $
+ * @version $Revision: 4264 $ - $Date: 2014-07-14 17:21:17 +0200 (Mon, 14 Jul 2014) $
  */
 
 public class JdbcCacheCRLSource extends CommonCRLSource {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(JdbcCacheCRLSource.class);
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(JdbcCacheCRLSource.class);
 
-    /**
-     * used in the init method to check if the table exists
-     */
-    public static final String SQL_INIT_CHECK_EXISTENCE = "SELECT COUNT(*) FROM CACHED_CRL";
+	/**
+	 * used in the init method to check if the table exists
+	 */
+	public static final String SQL_INIT_CHECK_EXISTENCE = "SELECT COUNT(*) FROM CACHED_CRL";
 
-    /**
-     * used in the init method to create the table, if not existing: ID (char20) and DATA (blob)
-     */
-    public static final String SQL_INIT_CREATE_TABLE = "CREATE TABLE CACHED_CRL (ID CHAR(20), DATA LONGVARBINARY)";
+	/**
+	 * used in the init method to create the table, if not existing: ID (char20) and DATA (blob)
+	 */
+	public static final String SQL_INIT_CREATE_TABLE = "CREATE TABLE CACHED_CRL (ID CHAR(20), DATA LONGVARBINARY)";
 
-    /**
-     * used in the find method to select the crl via the id
-     */
-    public static final String SQL_FIND_QUERY = "SELECT * FROM CACHED_CRL WHERE ID = ?";
+	/**
+	 * used in the find method to select the crl via the id
+	 */
+	public static final String SQL_FIND_QUERY = "SELECT * FROM CACHED_CRL WHERE ID = ?";
 
-    /**
-     * used in the find method when selecting the crl via the id to get the ID (char20) from the resultset
-     */
-    public static final String SQL_FIND_QUERY_ID = "ID";
+	/**
+	 * used in the find method when selecting the crl via the id to get the ID (char20) from the resultset
+	 */
+	public static final String SQL_FIND_QUERY_ID = "ID";
 
-    /**
-     * used in the find method when selecting the crl via the id to get the DATA (blob) from the resultset
-     */
-    public static final String SQL_FIND_QUERY_DATA = "DATA";
+	/**
+	 * used in the find method when selecting the crl via the id to get the DATA (blob) from the resultset
+	 */
+	public static final String SQL_FIND_QUERY_DATA = "DATA";
 
-    /**
-     * used via the find method to insert a new record
-     */
-    public static final String SQL_FIND_INSERT = "INSERT INTO CACHED_CRL (ID, DATA) VALUES (?, ?)";
+	/**
+	 * used via the find method to insert a new record
+	 */
+	public static final String SQL_FIND_INSERT = "INSERT INTO CACHED_CRL (ID, DATA) VALUES (?, ?)";
 
-    /**
-     * used via the find method to update an existing record via the id
-     */
-    public static final String SQL_FIND_UPDATE = "UPDATE CACHED_CRL SET DATA = ? WHERE ID = ?";
+	/**
+	 * used via the find method to update an existing record via the id
+	 */
+	public static final String SQL_FIND_UPDATE = "UPDATE CACHED_CRL SET DATA = ? WHERE ID = ?";
 
-    private OnlineCRLSource cachedSource;
+	private OnlineCRLSource cachedSource;
 
-    private DataSource dataSource;
+	private DataSource dataSource;
 
-    private String sqlInitCheckExistence = SQL_INIT_CHECK_EXISTENCE;
+	private String sqlInitCheckExistence = SQL_INIT_CHECK_EXISTENCE;
 
-    private String sqlInitCreateTable = SQL_INIT_CREATE_TABLE;
+	private String sqlInitCreateTable = SQL_INIT_CREATE_TABLE;
 
-    private String sqlFindQuery = SQL_FIND_QUERY;
+	private String sqlFindQuery = SQL_FIND_QUERY;
 
-    private String sqlFindQueryId = SQL_FIND_QUERY_ID;
+	private String sqlFindQueryId = SQL_FIND_QUERY_ID;
 
-    private String sqlFindQueryData = SQL_FIND_QUERY_DATA;
+	private String sqlFindQueryData = SQL_FIND_QUERY_DATA;
 
-    private String sqlFindInsert = SQL_FIND_INSERT;
+	private String sqlFindInsert = SQL_FIND_INSERT;
 
-    private String sqlFindUpdate = SQL_FIND_UPDATE;
+	private String sqlFindUpdate = SQL_FIND_UPDATE;
 
-    /**
-     * The default constructor for JdbcCRLSource.
-     */
-    public JdbcCacheCRLSource() {
+	/**
+	 * The default constructor for JdbcCRLSource.
+	 */
+	public JdbcCacheCRLSource() {
 
-    }
+	}
 
-    @Override
-    public CRLToken findCrl(final CertificateToken certificateToken) throws DSSException {
+	@Override
+	public CRLToken findCrl(final CertificateToken certificateToken) throws DSSException {
 
-        if (certificateToken == null) {
+		if (certificateToken == null) {
 
-            return null;
-        }
-        final CertificateToken issuerToken = certificateToken.getIssuerToken();
-        if (issuerToken == null) {
+			return null;
+		}
+		final CertificateToken issuerToken = certificateToken.getIssuerToken();
+		if (issuerToken == null) {
 
-            return null;
-        }
-        final String crlUrl = cachedSource.getCrlUrl(certificateToken);
-        if (crlUrl == null) {
+			return null;
+		}
+		final String crlUrl = cachedSource.getCrlUrl(certificateToken);
+		if (crlUrl == null) {
 
-            return null;
-        }
-        LOG.info("CRL's URL for " + certificateToken.getAbbreviation() + " : " + crlUrl);
-        try {
+			return null;
+		}
+		LOG.info("CRL's URL for " + certificateToken.getAbbreviation() + " : " + crlUrl);
+		try {
 
-            final String key = DSSUtils.getSHA1Digest(crlUrl);
-            final CachedCRL dbCrl = findCrlInDB(key);
-            if (dbCrl != null) {
+			final String key = DSSUtils.getSHA1Digest(crlUrl);
+			final CachedCRL dbCrl = findCrlInDB(key);
+			if (dbCrl != null) {
 
-                X509CRL x509Crl = DSSUtils.loadCRL(dbCrl.getCrl());
-                if (x509Crl.getNextUpdate().after(new Date())) {
+				X509CRL x509Crl = DSSUtils.loadCRL(dbCrl.getCrl());
+				if (x509Crl.getNextUpdate().after(new Date())) {
 
-                    LOG.debug("CRL in cache");
-                    final CRLValidity crlValidity = isValidCRL(x509Crl, issuerToken);
-                    final CRLToken crlToken = new CRLToken(certificateToken, crlValidity);
-                    if (crlToken.isValid()) {
+					LOG.debug("CRL in cache");
+					final CRLValidity crlValidity = isValidCRL(x509Crl, issuerToken);
+					final CRLToken crlToken = new CRLToken(certificateToken, crlValidity);
+					if (crlToken.isValid()) {
 
-                        return crlToken;
-                    }
-                }
-            }
-            final CRLToken crlToken = cachedSource.findCrl(certificateToken);
-            if (crlToken.isValid()) {
+						return crlToken;
+					}
+				}
+			}
+			final CRLToken crlToken = cachedSource.findCrl(certificateToken);
+			if (crlToken != null && crlToken.isValid()) {
 
-                if (dbCrl == null) {
+				if (dbCrl == null) {
 
-                    LOG.info("CRL not in cache");
-                    insertCrlInDb(key, crlToken.getEncoded());
-                } else {
+					LOG.info("CRL not in cache");
+					insertCrlInDb(key, crlToken.getEncoded());
+				} else {
 
-                    LOG.debug("CRL expired");
-                    updateCrlInDb(key, crlToken.getEncoded());
-                }
-            }
-            return crlToken;
-        } catch (SQLException e) {
+					LOG.debug("CRL expired");
+					updateCrlInDb(key, crlToken.getEncoded());
+				}
+			}
+			return crlToken;
+		} catch (SQLException e) {
 
-            LOG.info("Error with the cache data store");
-        }
-        return null;
-    }
+			LOG.info("Error with the cache data store");
+		}
+		return null;
+	}
 
-    /**
-     * @param cachedSource the cachedSource to set
-     */
-    public void setCachedSource(OnlineCRLSource cachedSource) {
+	/**
+	 * @param cachedSource the cachedSource to set
+	 */
+	public void setCachedSource(OnlineCRLSource cachedSource) {
 
-        this.cachedSource = cachedSource;
-    }
+		this.cachedSource = cachedSource;
+	}
 
-    /**
-     * Initialise the DAO by creating the table if it does not exist.
-     *
-     * @throws Exception
-     */
-    private void initDao() throws Exception {
+	/**
+	 * Initialise the DAO by creating the table if it does not exist.
+	 *
+	 * @throws Exception
+	 */
+	private void initDao() throws Exception {
 
 		/* Create the table iff it doesn't exist. */
-        if (!tableExists()) {
-            createTable();
-        }
-    }
+		if (!tableExists()) {
+			createTable();
+		}
+	}
 
-    /**
-     * Create the cache crl table if it does not exist
-     *
-     * @throws java.sql.SQLException
-     */
-    private void createTable() throws SQLException {
+	/**
+	 * Create the cache crl table if it does not exist
+	 *
+	 * @throws java.sql.SQLException
+	 */
+	private void createTable() throws SQLException {
 
-        Connection c = null;
-        Statement s = null;
-        try {
-            c = getDataSource().getConnection();
-            s = c.createStatement();
-            s.executeQuery(sqlInitCreateTable);
-            c.commit();
-        } finally {
-            closeQuietly(c, s, null);
-        }
+		Connection c = null;
+		Statement s = null;
+		try {
+			c = getDataSource().getConnection();
+			s = c.createStatement();
+			s.executeQuery(sqlInitCreateTable);
+			c.commit();
+		} finally {
+			closeQuietly(c, s, null);
+		}
 
-    }
+	}
 
-    /**
-     * Check if the cache table exists
-     *
-     * @return true if the table exists.
-     */
-    private boolean tableExists() {
+	/**
+	 * Check if the cache table exists
+	 *
+	 * @return true if the table exists.
+	 */
+	private boolean tableExists() {
 
-        Connection c = null;
-        Statement s = null;
-        boolean tableExists;
-        try {
-            c = getDataSource().getConnection();
-            s = c.createStatement();
-            s.executeQuery(sqlInitCheckExistence);
-            tableExists = true;
-        } catch (SQLException e) {
-            tableExists = false;
-        } finally {
-            closeQuietly(c, s, null);
-        }
-        return tableExists;
-    }
+		Connection c = null;
+		Statement s = null;
+		boolean tableExists;
+		try {
+			c = getDataSource().getConnection();
+			s = c.createStatement();
+			s.executeQuery(sqlInitCheckExistence);
+			tableExists = true;
+		} catch (SQLException e) {
+			tableExists = false;
+		} finally {
+			closeQuietly(c, s, null);
+		}
+		return tableExists;
+	}
 
-    /**
-     * Get the cached CRL from the datasource
-     *
-     * @param key the key of the CRL
-     * @return the cached crl
-     * @throws java.sql.SQLException
-     */
-    private CachedCRL findCrlInDB(String key) throws SQLException {
+	/**
+	 * Get the cached CRL from the datasource
+	 *
+	 * @param key the key of the CRL
+	 * @return the cached crl
+	 * @throws java.sql.SQLException
+	 */
+	private CachedCRL findCrlInDB(String key) throws SQLException {
 
-        Connection c = null;
-        PreparedStatement s = null;
-        ResultSet rs = null;
-        try {
-            c = getDataSource().getConnection();
-            s = c.prepareStatement(sqlFindQuery);
-            s.setString(1, key);
-            rs = s.executeQuery();
-            if (rs.next()) {
-                CachedCRL cached = new CachedCRL();
-                cached.setKey(rs.getString(sqlFindQueryId));
-                cached.setCrl(rs.getBytes(sqlFindQueryData));
-                return cached;
-            }
-        } finally {
-            closeQuietly(c, s, rs);
-        }
+		Connection c = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try {
+			c = getDataSource().getConnection();
+			s = c.prepareStatement(sqlFindQuery);
+			s.setString(1, key);
+			rs = s.executeQuery();
+			if (rs.next()) {
+				CachedCRL cached = new CachedCRL();
+				cached.setKey(rs.getString(sqlFindQueryId));
+				cached.setCrl(rs.getBytes(sqlFindQueryData));
+				return cached;
+			}
+		} finally {
+			closeQuietly(c, s, rs);
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    /**
-     * Insert a new CRL into the cache
-     *
-     * @param key     the key
-     * @param encoded the encoded CRL
-     * @throws java.sql.SQLException
-     */
-    private void insertCrlInDb(String key, byte[] encoded) throws SQLException {
+	/**
+	 * Insert a new CRL into the cache
+	 *
+	 * @param key     the key
+	 * @param encoded the encoded CRL
+	 * @throws java.sql.SQLException
+	 */
+	private void insertCrlInDb(String key, byte[] encoded) throws SQLException {
 
-        Connection c = null;
-        PreparedStatement s = null;
-        ResultSet rs = null;
-        try {
-            c = getDataSource().getConnection();
-            s = c.prepareStatement(sqlFindInsert);
-            s.setString(1, key);
-            s.setBytes(2, encoded);
-            s.executeUpdate();
-        } finally {
-            closeQuietly(c, s, rs);
-        }
-    }
+		Connection c = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try {
+			c = getDataSource().getConnection();
+			s = c.prepareStatement(sqlFindInsert);
+			s.setString(1, key);
+			s.setBytes(2, encoded);
+			s.executeUpdate();
+		} finally {
+			closeQuietly(c, s, rs);
+		}
+	}
 
-    /**
-     * Update the cache with the CRL
-     *
-     * @param key     the key
-     * @param encoded the encoded CRL
-     * @throws java.sql.SQLException
-     */
-    private void updateCrlInDb(String key, byte[] encoded) throws SQLException {
+	/**
+	 * Update the cache with the CRL
+	 *
+	 * @param key     the key
+	 * @param encoded the encoded CRL
+	 * @throws java.sql.SQLException
+	 */
+	private void updateCrlInDb(String key, byte[] encoded) throws SQLException {
 
-        Connection c = null;
-        PreparedStatement s = null;
-        ResultSet rs = null;
-        try {
-            c = getDataSource().getConnection();
-            s = c.prepareStatement(sqlFindUpdate);
-            s.setBytes(1, encoded);
-            s.setString(2, key);
-            s.executeUpdate();
-        } finally {
-            closeQuietly(c, s, rs);
-        }
+		Connection c = null;
+		PreparedStatement s = null;
+		ResultSet rs = null;
+		try {
+			c = getDataSource().getConnection();
+			s = c.prepareStatement(sqlFindUpdate);
+			s.setBytes(1, encoded);
+			s.setString(2, key);
+			s.executeUpdate();
+		} finally {
+			closeQuietly(c, s, rs);
+		}
 
-    }
+	}
 
-    /**
-     * @return the dataSource
-     */
-    private DataSource getDataSource() {
+	/**
+	 * @return the dataSource
+	 */
+	private DataSource getDataSource() {
 
-        return dataSource;
-    }
+		return dataSource;
+	}
 
-    /**
-     * @param dataSource the dataSource to set
-     * @throws Exception
-     */
-    public void setDataSource(DataSource dataSource) throws Exception {
+	/**
+	 * @param dataSource the dataSource to set
+	 * @throws Exception
+	 */
+	public void setDataSource(DataSource dataSource) throws Exception {
 
-        this.dataSource = dataSource;
-        initDao();
-    }
+		this.dataSource = dataSource;
+		initDao();
+	}
 
-    /**
-     * used in the init method to check if the table exists
-     *
-     * @return the value
-     */
-    public String getSqlInitCheckExistence() {
+	/**
+	 * used in the init method to check if the table exists
+	 *
+	 * @return the value
+	 */
+	public String getSqlInitCheckExistence() {
 
-        return sqlInitCheckExistence;
-    }
+		return sqlInitCheckExistence;
+	}
 
-    /**
-     * used in the init method to check if the table exists
-     *
-     * @param sqlInitCheckExistence the value
-     */
-    public void setSqlInitCheckExistence(final String sqlInitCheckExistence) {
+	/**
+	 * used in the init method to check if the table exists
+	 *
+	 * @param sqlInitCheckExistence the value
+	 */
+	public void setSqlInitCheckExistence(final String sqlInitCheckExistence) {
 
-        this.sqlInitCheckExistence = sqlInitCheckExistence;
-    }
+		this.sqlInitCheckExistence = sqlInitCheckExistence;
+	}
 
-    /**
-     * used in the init method to create the table, if not existing: ID (char20) and DATA (blob)
-     *
-     * @return the value
-     */
-    public String getSqlInitCreateTable() {
+	/**
+	 * used in the init method to create the table, if not existing: ID (char20) and DATA (blob)
+	 *
+	 * @return the value
+	 */
+	public String getSqlInitCreateTable() {
 
-        return sqlInitCreateTable;
-    }
+		return sqlInitCreateTable;
+	}
 
-    /**
-     * used in the init method to create the table, if not existing: ID (char20) and DATA (blob)
-     *
-     * @param sqlInitCreateTable the value
-     */
-    public void setSqlInitCreateTable(final String sqlInitCreateTable) {
+	/**
+	 * used in the init method to create the table, if not existing: ID (char20) and DATA (blob)
+	 *
+	 * @param sqlInitCreateTable the value
+	 */
+	public void setSqlInitCreateTable(final String sqlInitCreateTable) {
 
-        this.sqlInitCreateTable = sqlInitCreateTable;
-    }
+		this.sqlInitCreateTable = sqlInitCreateTable;
+	}
 
-    /**
-     * used in the find method to select the crl via the id
-     *
-     * @return the value
-     */
-    public String getSqlFindQuery() {
+	/**
+	 * used in the find method to select the crl via the id
+	 *
+	 * @return the value
+	 */
+	public String getSqlFindQuery() {
 
-        return sqlFindQuery;
-    }
+		return sqlFindQuery;
+	}
 
-    /**
-     * used in the find method to select the crl via the id
-     *
-     * @param sqlFindQuery the value
-     */
-    public void setSqlFindQuery(final String sqlFindQuery) {
+	/**
+	 * used in the find method to select the crl via the id
+	 *
+	 * @param sqlFindQuery the value
+	 */
+	public void setSqlFindQuery(final String sqlFindQuery) {
 
-        this.sqlFindQuery = sqlFindQuery;
-    }
+		this.sqlFindQuery = sqlFindQuery;
+	}
 
-    /**
-     * used in the find method when selecting the crl via the id to get the ID (char20) from the resultset
-     *
-     * @return the value
-     */
-    public String getSqlFindQueryId() {
+	/**
+	 * used in the find method when selecting the crl via the id to get the ID (char20) from the resultset
+	 *
+	 * @return the value
+	 */
+	public String getSqlFindQueryId() {
 
-        return sqlFindQueryId;
-    }
+		return sqlFindQueryId;
+	}
 
-    /**
-     * used in the find method when selecting the crl via the id to get the ID (char20) from the resultset
-     *
-     * @param sqlFindQueryId the value
-     */
-    public void setSqlFindQueryId(final String sqlFindQueryId) {
+	/**
+	 * used in the find method when selecting the crl via the id to get the ID (char20) from the resultset
+	 *
+	 * @param sqlFindQueryId the value
+	 */
+	public void setSqlFindQueryId(final String sqlFindQueryId) {
 
-        this.sqlFindQueryId = sqlFindQueryId;
-    }
+		this.sqlFindQueryId = sqlFindQueryId;
+	}
 
-    /**
-     * used in the find method when selecting the crl via the id to get the DATA (blob) from the resultset
-     *
-     * @return the value
-     */
-    public String getSqlFindQueryData() {
+	/**
+	 * used in the find method when selecting the crl via the id to get the DATA (blob) from the resultset
+	 *
+	 * @return the value
+	 */
+	public String getSqlFindQueryData() {
 
-        return sqlFindQueryData;
-    }
+		return sqlFindQueryData;
+	}
 
-    /**
-     * used in the find method when selecting the crl via the id to get the DATA (blob) from the resultset
-     *
-     * @param sqlFindQueryData the value
-     */
-    public void setSqlFindQueryData(final String sqlFindQueryData) {
+	/**
+	 * used in the find method when selecting the crl via the id to get the DATA (blob) from the resultset
+	 *
+	 * @param sqlFindQueryData the value
+	 */
+	public void setSqlFindQueryData(final String sqlFindQueryData) {
 
-        this.sqlFindQueryData = sqlFindQueryData;
-    }
+		this.sqlFindQueryData = sqlFindQueryData;
+	}
 
-    /**
-     * used via the find method to insert a new record
-     *
-     * @return the value
-     */
-    public String getSqlFindInsert() {
+	/**
+	 * used via the find method to insert a new record
+	 *
+	 * @return the value
+	 */
+	public String getSqlFindInsert() {
 
-        return sqlFindInsert;
-    }
+		return sqlFindInsert;
+	}
 
-    /**
-     * used via the find method to insert a new record
-     *
-     * @param sqlFindInsert the value
-     */
-    public void setSqlFindInsert(final String sqlFindInsert) {
+	/**
+	 * used via the find method to insert a new record
+	 *
+	 * @param sqlFindInsert the value
+	 */
+	public void setSqlFindInsert(final String sqlFindInsert) {
 
-        this.sqlFindInsert = sqlFindInsert;
-    }
+		this.sqlFindInsert = sqlFindInsert;
+	}
 
-    /**
-     * used via the find method to update an existing record via the id
-     *
-     * @return the value
-     */
-    public String getSqlFindUpdate() {
+	/**
+	 * used via the find method to update an existing record via the id
+	 *
+	 * @return the value
+	 */
+	public String getSqlFindUpdate() {
 
-        return sqlFindUpdate;
-    }
+		return sqlFindUpdate;
+	}
 
-    /**
-     * used via the find method to update an existing record via the id
-     *
-     * @param sqlFindUpdate the value
-     */
-    public void setSqlFindUpdate(final String sqlFindUpdate) {
+	/**
+	 * used via the find method to update an existing record via the id
+	 *
+	 * @param sqlFindUpdate the value
+	 */
+	public void setSqlFindUpdate(final String sqlFindUpdate) {
 
-        this.sqlFindUpdate = sqlFindUpdate;
-    }
+		this.sqlFindUpdate = sqlFindUpdate;
+	}
 
-    /**
-     * Close the statement and connection and resultset without throwing the exception
-     *
-     * @param c  the connection
-     * @param s  the statement
-     * @param rs the ResultSet
-     */
-    private void closeQuietly(Connection c, Statement s, ResultSet rs) {
+	/**
+	 * Close the statement and connection and resultset without throwing the exception
+	 *
+	 * @param c  the connection
+	 * @param s  the statement
+	 * @param rs the ResultSet
+	 */
+	private void closeQuietly(Connection c, Statement s, ResultSet rs) {
 
-        try {
-            if (rs != null) {
-                rs.close();
-            }
-            if (s != null) {
-                s.close();
-            }
-            if (c != null) {
-                c.close();
-            }
-        } catch (SQLException e) {
-            // purposely empty
-        }
+		try {
+			if (rs != null) {
+				rs.close();
+			}
+			if (s != null) {
+				s.close();
+			}
+			if (c != null) {
+				c.close();
+			}
+		} catch (SQLException e) {
+			// purposely empty
+		}
 
-    }
+	}
 }

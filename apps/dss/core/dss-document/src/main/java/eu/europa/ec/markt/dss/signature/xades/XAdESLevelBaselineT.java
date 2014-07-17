@@ -58,159 +58,163 @@ import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 /**
  * -T profile of XAdES signature
  *
- * @version $Revision: 4235 $ - $Date: 2014-07-11 15:44:15 +0200 (Fri, 11 Jul 2014) $
+ * @version $Revision: 4324 $ - $Date: 2014-07-16 09:35:52 +0200 (Wed, 16 Jul 2014) $
  */
 
 public class XAdESLevelBaselineT extends ExtensionBuilder implements XAdESSignatureExtension {
 
-    private static final Logger LOG = LoggerFactory.getLogger(XAdESLevelBaselineT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(XAdESLevelBaselineT.class);
 
-    /*
-     * The object encapsulating the Time Stamp Protocol needed to create the level -T, of the signature
-     */
-    protected TSPSource tspSource;
+	/*
+	 * The object encapsulating the Time Stamp Protocol needed to create the level -T, of the signature
+	 */
+	protected TSPSource tspSource;
 
-    /**
-     * The default constructor for XAdESLevelBaselineT.
-     */
-    public XAdESLevelBaselineT(final CertificateVerifier certificateVerifier) {
+	/**
+	 * The default constructor for XAdESLevelBaselineT.
+	 */
+	public XAdESLevelBaselineT(final CertificateVerifier certificateVerifier) {
 
-        super(certificateVerifier);
-    }
+		super(certificateVerifier);
+	}
 
-    private void incorporateC14nMethod(final Element parentDom, final String signedInfoC14nMethod) {
+	private void incorporateC14nMethod(final Element parentDom, final String signedInfoC14nMethod) {
 
-        //<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-        final Element canonicalizationMethodDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:CanonicalizationMethod");
-        canonicalizationMethodDom.setAttribute("Algorithm", signedInfoC14nMethod);
-        parentDom.appendChild(canonicalizationMethodDom);
-    }
+		//<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+		final Element canonicalizationMethodDom = documentDom.createElementNS(XMLSignature.XMLNS, "ds:CanonicalizationMethod");
+		canonicalizationMethodDom.setAttribute("Algorithm", signedInfoC14nMethod);
+		parentDom.appendChild(canonicalizationMethodDom);
+	}
 
-    @Override
-    public InMemoryDocument extendSignatures(final DSSDocument dssDocument, final SignatureParameters params) throws DSSException {
+	@Override
+	public InMemoryDocument extendSignatures(final DSSDocument dssDocument, final SignatureParameters params) throws DSSException {
 
-        if (dssDocument == null) {
+		if (dssDocument == null) {
 
-            throw new DSSNullException(DSSDocument.class);
-        }
-        if (this.tspSource == null) {
+			throw new DSSNullException(DSSDocument.class);
+		}
+		if (this.tspSource == null) {
 
-            throw new DSSConfigurationException(MSG.CONFIGURE_TSP_SERVER);
-        }
-        this.params = params;
-        final ProfileParameters context = params.getContext();
+			throw new DSSConfigurationException(MSG.CONFIGURE_TSP_SERVER);
+		}
+		this.params = params;
+		final ProfileParameters context = params.getContext();
 
-        if (LOG.isInfoEnabled()) {
-            LOG.info("====> Extending: " + (dssDocument.getName() == null ? "IN MEMORY DOCUMENT" : dssDocument.getName()));
-        }
-        documentDom = DSSXMLUtils.buildDOM(dssDocument);
+		if (LOG.isInfoEnabled()) {
+			LOG.info("====> Extending: " + (dssDocument.getName() == null ? "IN MEMORY DOCUMENT" : dssDocument.getName()));
+		}
+		documentDom = DSSXMLUtils.buildDOM(dssDocument);
 
-        final NodeList signatureNodeList = documentDom.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature");
-        if (signatureNodeList.getLength() == 0) {
+		final NodeList signatureNodeList = documentDom.getElementsByTagNameNS(XMLSignature.XMLNS, "Signature");
+		if (signatureNodeList.getLength() == 0) {
 
-            throw new DSSException("Impossible to perform the extension of the signature, the document is not signed.");
-        }
+			throw new DSSException("Impossible to perform the extension of the signature, the document is not signed.");
+		}
 
-        // In the case of the enveloped signature we have a specific treatment:<br>
-        // we will just extend the signature that is being created (during creation process)
-        String signatureId = null;
-        final SignaturePackaging signaturePackaging = params.getSignaturePackaging();
-        final Operation operationKind = context.getOperationKind();
-        if (Operation.SIGNING.equals(operationKind) && SignaturePackaging.ENVELOPED.equals(signaturePackaging)) {
+		// In the case of the enveloped signature we have a specific treatment:<br>
+		// we will just extend the signature that is being created (during creation process)
+		String signatureId = null;
+		final SignaturePackaging signaturePackaging = params.getSignaturePackaging();
+		final Operation operationKind = context.getOperationKind();
+		if (Operation.SIGNING.equals(operationKind) && SignaturePackaging.ENVELOPED.equals(signaturePackaging)) {
 
-            signatureId = params.getDeterministicId();
-        }
-        for (int ii = 0; ii < signatureNodeList.getLength(); ii++) {
+			signatureId = params.getDeterministicId();
+		}
+		for (int ii = 0; ii < signatureNodeList.getLength(); ii++) {
 
-            currentSignatureDom = (Element) signatureNodeList.item(ii);
-            final String currentSignatureId = currentSignatureDom.getAttribute("Id");
-            if (signatureId != null && !signatureId.equals(currentSignatureId)) {
+			currentSignatureDom = (Element) signatureNodeList.item(ii);
+			final String currentSignatureId = currentSignatureDom.getAttribute("Id");
+			if (signatureId != null && !signatureId.equals(currentSignatureId)) {
 
-                continue;
-            }
-            final CertificatePool certPool = new CertificatePool();
-            xadesSignature = new XAdESSignature(currentSignatureDom, certPool);
-            extendSignatureTag();
-        }
-        final byte[] documentBytes = DSSXMLUtils.serializeNode(documentDom);
-        final InMemoryDocument inMemoryDocument = new InMemoryDocument(documentBytes);
-        return inMemoryDocument;
-    }
+				continue;
+			}
+			final CertificatePool certPool = new CertificatePool();
+			// TODO-Bob (13/07/2014):  The XPath query holder can be inherited from the xadesSignature: to be analysed
+			xadesSignature = new XAdESSignature(currentSignatureDom, certPool);
+			xadesSignature.setDetachedContent(params.getDetachedContent());
+			// In the cse of the extension of the signature the signing certificate must be included within the signature
+			// xadesSignature.setProvidedSigningCertificateToken(null);
+			extendSignatureTag();
+		}
+		final byte[] documentBytes = DSSXMLUtils.serializeNode(documentDom);
+		final InMemoryDocument inMemoryDocument = new InMemoryDocument(documentBytes);
+		return inMemoryDocument;
+	}
 
-    /**
-     * Extends the signature to a desired level. This method is overridden by other profiles.<br>
-     * For -T profile adds the SignatureTimeStamp element which contains a single HashDataInfo element that refers to the
-     * ds:SignatureValue element of the [XMLDSIG] signature. The timestamp token is obtained from TSP source.<br>
-     * Adds <SignatureTimeStamp> segment into <UnsignedSignatureProperties> element.
-     *
-     * @throws eu.europa.ec.markt.dss.exception.DSSException
-     */
-    protected void extendSignatureTag() throws DSSException {
+	/**
+	 * Extends the signature to a desired level. This method is overridden by other profiles.<br>
+	 * For -T profile adds the SignatureTimeStamp element which contains a single HashDataInfo element that refers to the
+	 * ds:SignatureValue element of the [XMLDSIG] signature. The timestamp token is obtained from TSP source.<br>
+	 * Adds <SignatureTimeStamp> segment into <UnsignedSignatureProperties> element.
+	 *
+	 * @throws eu.europa.ec.markt.dss.exception.DSSException
+	 */
+	protected void extendSignatureTag() throws DSSException {
 
-        assertExtendSignaturePossible();
+		assertExtendSignaturePossible();
 
-        // We ensure that all XML segments needed for the construction of the extension -T are present.
-        // If a segment does not exist then it is created.
-        ensureUnsignedProperties();
-        ensureUnsignedSignatureProperties();
+		// We ensure that all XML segments needed for the construction of the extension -T are present.
+		// If a segment does not exist then it is created.
+		ensureUnsignedProperties();
+		ensureUnsignedSignatureProperties();
 
-        // The timestamp must be added only if there is no one or the extension -T is being created
-        if (!xadesSignature.hasTProfile() || SignatureLevel.XAdES_BASELINE_T.equals(params.getSignatureLevel())) {
+		// The timestamp must be added only if there is no one or the extension -T is being created
+		if (!xadesSignature.hasTProfile() || SignatureLevel.XAdES_BASELINE_T.equals(params.getSignatureLevel())) {
 
-            final byte[] canonicalisedValue = xadesSignature.getSignatureTimestampData(null);
-            final DigestAlgorithm timestampDigestAlgorithm = params.getTimestampDigestAlgorithm();
-            final byte[] digestValue = DSSUtils.digest(timestampDigestAlgorithm, canonicalisedValue);
-            final String canonicalizationMethod = XAdESSignature.DEFAULT_TIMESTAMP_CREATION_CANONICALIZATION_METHOD;
-            createXAdESTimeStampType(TimestampType.SIGNATURE_TIMESTAMP, canonicalizationMethod, digestValue);
-        }
-    }
+			final byte[] canonicalisedValue = xadesSignature.getSignatureTimestampData(null);
+			final DigestAlgorithm timestampDigestAlgorithm = params.getTimestampDigestAlgorithm();
+			final byte[] digestValue = DSSUtils.digest(timestampDigestAlgorithm, canonicalisedValue);
+			final String canonicalizationMethod = XAdESSignature.DEFAULT_TIMESTAMP_CREATION_CANONICALIZATION_METHOD;
+			createXAdESTimeStampType(TimestampType.SIGNATURE_TIMESTAMP, canonicalizationMethod, digestValue);
+		}
+	}
 
-    /**
-     * Checks if the extension is possible.
-     */
-    private void assertExtendSignaturePossible() throws DSSException {
+	/**
+	 * Checks if the extension is possible.
+	 */
+	private void assertExtendSignaturePossible() throws DSSException {
 
-        final SignatureLevel signatureLevel = params.getSignatureLevel();
-        if (SignatureLevel.XAdES_BASELINE_T.equals(signatureLevel) && (xadesSignature.hasLTProfile() || xadesSignature.hasLTAProfile())) {
+		final SignatureLevel signatureLevel = params.getSignatureLevel();
+		if (SignatureLevel.XAdES_BASELINE_T.equals(signatureLevel) && (xadesSignature.hasLTProfile() || xadesSignature.hasLTAProfile())) {
 
-            final String exceptionMessage = "Cannot extend signature. The signedData is already extended with [%s].";
-            throw new DSSException(String.format(exceptionMessage, "XAdES LT"));
-        }
-    }
+			final String exceptionMessage = "Cannot extend signature. The signedData is already extended with [%s].";
+			throw new DSSException(String.format(exceptionMessage, "XAdES LT"));
+		}
+	}
 
-    /**
-     * Sets the TSP source to be used when extending the digital signature
-     *
-     * @param tspSource the tspSource to set
-     */
-    public void setTspSource(TSPSource tspSource) {
+	/**
+	 * Sets the TSP source to be used when extending the digital signature
+	 *
+	 * @param tspSource the tspSource to set
+	 */
+	public void setTspSource(TSPSource tspSource) {
 
-        this.tspSource = tspSource;
-    }
+		this.tspSource = tspSource;
+	}
 
-    /**
-     * This method incorporates all certificates used during the validation process. if any certificate is already present within the KeyInfo then it is
-     * ignored.
-     *
-     * @param parentDom
-     * @param valContext
-     */
-    protected void incorporateCertificateValues(Element parentDom, final ValidationContext valContext) {
+	/**
+	 * This method incorporates all certificates used during the validation process. if any certificate is already present within the KeyInfo then it is
+	 * ignored.
+	 *
+	 * @param parentDom
+	 * @param valContext
+	 */
+	protected void incorporateCertificateValues(Element parentDom, final ValidationContext valContext) {
 
-        // <xades:CertificateValues>
-        // ...<xades:EncapsulatedX509Certificate>MIIC9TC...
+		// <xades:CertificateValues>
+		// ...<xades:EncapsulatedX509Certificate>MIIC9TC...
 
-        final Element certificateValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, XAdESNamespaces.XAdES, "xades:CertificateValues");
+		final Element certificateValuesDom = DSSXMLUtils.addElement(documentDom, parentDom, XAdESNamespaces.XAdES, "xades:CertificateValues");
 
-        final Set<CertificateToken> certificatesForInclusionInProfileLT = xadesSignature.getCertificatesForInclusion(valContext);
+		final Set<CertificateToken> certificatesForInclusionInProfileLT = xadesSignature.getCertificatesForInclusion(valContext);
 
-        for (final CertificateToken certificateToken : certificatesForInclusionInProfileLT) {
+		for (final CertificateToken certificateToken : certificatesForInclusionInProfileLT) {
 
-            final byte[] bytes = certificateToken.getEncoded();
-            final String base64EncodeCertificate = DSSUtils.base64Encode(bytes);
-            DSSXMLUtils.addTextElement(documentDom, certificateValuesDom, XAdESNamespaces.XAdES, "xades:EncapsulatedX509Certificate", base64EncodeCertificate);
-        }
-    }
+			final byte[] bytes = certificateToken.getEncoded();
+			final String base64EncodeCertificate = DSSUtils.base64Encode(bytes);
+			DSSXMLUtils.addTextElement(documentDom, certificateValuesDom, XAdESNamespaces.XAdES, "xades:EncapsulatedX509Certificate", base64EncodeCertificate);
+		}
+	}
 
 	/**
 	 * Creates XAdES TimeStamp object representation. The time stamp token is obtained from TSP source
@@ -253,7 +257,8 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements XAdESSignat
 					// <xades141:ArchiveTimeStamp Id="time-stamp-a762ab0e-e05c-4cc8-a804-cf2c4ffb5516">
 					timeStampDom = DSSXMLUtils.addElement(documentDom, unsignedSignaturePropertiesDom, XAdESNamespaces.XAdES141, "xades141:ArchiveTimeStamp");
 					break;
-				case CONTENT_TIMESTAMP: break;
+				case CONTENT_TIMESTAMP:
+					break;
 				case ALL_DATA_OBJECTS_TIMESTAMP:
 					timeStampDom = DSSXMLUtils.addElement(documentDom, signedPropertiesDom, XAdESNamespaces.XAdES, "xades:AllDataObjectsTimeStamp");
 					break;

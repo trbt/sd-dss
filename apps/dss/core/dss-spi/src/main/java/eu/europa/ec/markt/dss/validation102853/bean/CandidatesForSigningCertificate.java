@@ -27,7 +27,7 @@ import eu.europa.ec.markt.dss.exception.DSSNullException;
 import eu.europa.ec.markt.dss.validation102853.CertificateToken;
 
 /**
- * This class hold the list of candidates for the signing certificate of the main signature.
+ * This class holds the list of the candidates for the signing certificate of the main signature.
  * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
@@ -74,17 +74,8 @@ public class CandidatesForSigningCertificate {
 	 *
 	 * @param signingCertificateValidity A new candidate with its validity.
 	 */
-	public void addSigningCertificateValidityList(final SigningCertificateValidity signingCertificateValidity) {
+	public void add(final SigningCertificateValidity signingCertificateValidity) {
 		signingCertificateValidityList.add(signingCertificateValidity);
-	}
-
-	/**
-	 * The {@code theSigningCertificateValidity} object must be set before.
-	 *
-	 * @return the signing certificate validity {@code SigningCertificateValidity} or {@code null} if such a certificate was not identified.
-	 */
-	public SigningCertificateValidity getTheSigningCertificateValidity() {
-		return theSigningCertificateValidity;
 	}
 
 	/**
@@ -106,9 +97,18 @@ public class CandidatesForSigningCertificate {
 	}
 
 	/**
+	 * The {@code theSigningCertificateValidity} object must be set before.
+	 *
+	 * @return the signing certificate validity {@code SigningCertificateValidity} or {@code null} if such a certificate was not identified.
+	 */
+	public SigningCertificateValidity getTheSigningCertificateValidity() {
+		return theSigningCertificateValidity;
+	}
+
+	/**
 	 * This method returns the best candidate for the signing certificate. The only way to be sure that it is the right one is to validate the signature.
 	 *
-	 * @return
+	 * @return The valid signing certificate, if there is no valid certificate then the first one is returned.
 	 */
 	public SigningCertificateValidity getTheBestCandidate() {
 

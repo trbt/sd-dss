@@ -178,7 +178,7 @@ public class ASiCEService extends AbstractSignatureService {
 
 		// Signs the toSignDocument first
 		final SignatureParameters specificParameters = getParameters(parameters);
-		specificParameters.setOriginalDocument(toSignDocument);
+		specificParameters.setDetachedContent(toSignDocument);
 
 		final DocumentSignatureService underlyingService = getSpecificService(specificParameters);
 		final DSSDocument signature = underlyingService.signDocument(toSignDocument, specificParameters, signatureValue);
@@ -249,8 +249,9 @@ public class ASiCEService extends AbstractSignatureService {
 			// return the new toSignDocument = ASiC-S
 			final byte[] documentBytes = outBytes.toByteArray();
 			final String name = toSignDocument.getName() != null ? toSignDocument.getName() + ASICS_EXTENSION : null;
-			final InMemoryDocument inMemoryDocument = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
-			return inMemoryDocument;
+			final InMemoryDocument asicSignature = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
+			parameters.setDeterministicId(null);
+			return asicSignature;
 		} catch (Exception e) {
 
 			throw new DSSException(e);
@@ -297,19 +298,19 @@ public class ASiCEService extends AbstractSignatureService {
 
 			final SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(toExtendDocument);
 			final DSSDocument signature = validator.getDocument();
-			DSSDocument originalDocument = parameters.getOriginalDocument();
-			if (validator.getExternalContent() == null) {
+			DSSDocument originalDocument = parameters.getDetachedContent();
+			if (validator.getDetachedContent() == null) {
 
-				validator.setExternalContent(originalDocument);
+				validator.setDetachedContent(originalDocument);
 			} else {
-				originalDocument = validator.getExternalContent();
+				originalDocument = validator.getDetachedContent();
 			}
 
 			final DocumentSignatureService specificService = getSpecificService(parameters);
 			specificService.setTspSource(tspSource);
 
 			final SignatureParameters xadesParameters = getParameters(parameters);
-			xadesParameters.setOriginalDocument(originalDocument);
+			xadesParameters.setDetachedContent(originalDocument);
 			final DSSDocument signedDocument = specificService.extendDocument(signature, xadesParameters);
 
 			final ByteArrayOutputStream output = new ByteArrayOutputStream();

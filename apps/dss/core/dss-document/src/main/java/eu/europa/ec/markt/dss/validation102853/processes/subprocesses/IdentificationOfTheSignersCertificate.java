@@ -22,8 +22,8 @@ package eu.europa.ec.markt.dss.validation102853.processes.subprocesses;
 
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
-import eu.europa.ec.markt.dss.validation102853.policy.EtsiValidationPolicy;
 import eu.europa.ec.markt.dss.validation102853.policy.Constraint;
+import eu.europa.ec.markt.dss.validation102853.policy.EtsiValidationPolicy;
 import eu.europa.ec.markt.dss.validation102853.policy.ProcessParameters;
 import eu.europa.ec.markt.dss.validation102853.report.Conclusion;
 import eu.europa.ec.markt.dss.validation102853.rules.AttributeName;
@@ -33,6 +33,7 @@ import eu.europa.ec.markt.dss.validation102853.rules.Indication;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeName;
 import eu.europa.ec.markt.dss.validation102853.rules.NodeValue;
 import eu.europa.ec.markt.dss.validation102853.rules.SubIndication;
+import eu.europa.ec.markt.dss.validation102853.xades.XPathQueryHolder;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlDom;
 import eu.europa.ec.markt.dss.validation102853.xml.XmlNode;
 
@@ -46,6 +47,8 @@ import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_I
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISASCP_ANS;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCI;
 import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCI_ANS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCS;
+import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.BBB_ICS_ISCS_ANS;
 
 /**
  * 5.1 Identification of the Signer's Certificate (ISC)
@@ -177,22 +180,35 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
 		params.setSigningCertificateId(signingCertificateId);
 		params.setSigningCertificate(signingCertificateXmlDom);
 
-		if (!checkSigningCertificateAttributePresentConstraint(conclusion)) {
-			return conclusion;
-		}
+		Constraint constraint = null;
+		final String signedElement = contextElement.getValue("./SigningCertificate/Signed/text()");
+		if (DSSUtils.isNotEmpty(signedElement)) {
 
-		if (!checkDigestValuePresentConstraint(conclusion)) {
-			return conclusion;
+			constraint = constraintData.getSigningCertificateSignedConstraint(contextName);
+			if (constraint != null) {
+				if (!checkSignedSigningCertificateConstraint(constraint, conclusion, signedElement)) {
+					return conclusion;
+				}
+			}
 		}
+		if (constraint == null) {
 
-		if (!checkDigestValueMatchConstraint(conclusion)) {
-			return conclusion;
+			if (!checkSigningCertificateAttributePresentConstraint(conclusion)) {
+				return conclusion;
+			}
+
+			if (!checkDigestValuePresentConstraint(conclusion)) {
+				return conclusion;
+			}
+
+			if (!checkDigestValueMatchConstraint(conclusion)) {
+				return conclusion;
+			}
+
+			if (!checkIssuerSerialMatchConstraint(conclusion)) {
+				return conclusion;
+			}
 		}
-
-		if (!checkIssuerSerialMatchConstraint(conclusion)) {
-			return conclusion;
-		}
-
 		// This validation process returns VALID
 		conclusion.setIndication(VALID);
 		return conclusion;
@@ -204,6 +220,7 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
 	 * @param signingCertificateId
 	 * @return false if the check failed and the process should stop, true otherwise.
 	 */
+
 	private boolean checkRecognitionConstraint(final Conclusion conclusion, final boolean signingCertificateRecognised, String signingCertificateId) {
 
 		final Constraint constraint = constraintData.getSigningCertificateRecognitionConstraint(contextName);
@@ -216,6 +233,19 @@ public class IdentificationOfTheSignersCertificate implements Indication, SubInd
 			constraint.setAttribute(CERTIFICATE_ID, signingCertificateId);
 		}
 		constraint.setIndications(INDETERMINATE, NO_SIGNER_CERTIFICATE_FOUND, BBB_ICS_ISCI_ANS);
+		constraint.setConclusionReceiver(conclusion);
+
+		return constraint.check();
+	}
+
+
+	private boolean checkSignedSigningCertificateConstraint(final Constraint constraint, final Conclusion conclusion, final String signedElement) {
+
+		constraint.create(validationDataXmlNode, BBB_ICS_ISCS);
+		final boolean signed = XPathQueryHolder.XMLE_X509CERTIFICATE.equals(signedElement) || XPathQueryHolder.XMLE_X509DATA.equals(signedElement) || XPathQueryHolder.XMLE_KEYINFO
+			  .equals(signedElement);
+		constraint.setValue(signed);
+		constraint.setIndications(INVALID, FORMAT_FAILURE, BBB_ICS_ISCS_ANS);
 		constraint.setConclusionReceiver(conclusion);
 
 		return constraint.check();

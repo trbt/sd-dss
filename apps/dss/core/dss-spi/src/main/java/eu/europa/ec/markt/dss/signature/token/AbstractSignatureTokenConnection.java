@@ -20,8 +20,6 @@
 
 package eu.europa.ec.markt.dss.signature.token;
 
-import java.io.InputStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,18 +40,6 @@ public abstract class AbstractSignatureTokenConnection implements SignatureToken
 
     protected static String getCauseMessage(final Exception e) {
         return (e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
-    }
-
-    @Override
-    @Deprecated
-    public byte[] sign(final InputStream stream, final DigestAlgorithm digestAlgorithm, final DSSPrivateKeyEntry keyEntry) throws DSSException {
-
-        final EncryptionAlgorithm encryptionAlgorithm = keyEntry.getEncryptionAlgorithm();
-        LOG.info("Signature algorithm: " + encryptionAlgorithm + "/" + digestAlgorithm);
-        final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.getAlgorithm(encryptionAlgorithm, digestAlgorithm);
-        final String javaSignatureAlgorithm = signatureAlgorithm.getJCEId();
-        final byte[] encryptedBytes = DSSUtils.encrypt(javaSignatureAlgorithm, keyEntry.getPrivateKey(), stream);
-        return encryptedBytes;
     }
 
     @Override

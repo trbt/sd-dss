@@ -35,7 +35,7 @@ public class PAdESSignatureScopeFinder implements SignatureScopeFinder<PAdESSign
     public List<SignatureScope> findSignatureScope(final PAdESSignature pAdESSignature) {
 
         List<SignatureScope> result = new ArrayList<SignatureScope>();
-        final PdfSignatureInfo pdfSignature = pAdESSignature.getPdfSignature();
+        final PdfSignatureInfo pdfSignature = pAdESSignature.getPdfSignatureInfo();
         final int outerSignatureSize = pdfSignature.getOuterSignatures().size();
         if (pAdESSignature.hasOuterSignatures()) {
             result.add(new PdfByteRangeSignatureScope("PDF previous version #" + outerSignatureSize, pdfSignature.getSignatureByteRange()));

@@ -28,6 +28,8 @@ import java.util.List;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.bouncycastle.cms.CMSException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import eu.europa.ec.markt.dss.signature.InMemoryDocument;
 import eu.europa.ec.markt.dss.signature.pdf.PdfDict;
@@ -39,81 +41,84 @@ import eu.europa.ec.markt.dss.validation102853.cades.CAdESSignature;
 
 class PdfBoxSignatureInfo extends PdfBoxCMSInfo implements PdfSignatureInfo {
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(PdfBoxSignatureInfo.class);
-    private CAdESSignature cades;
+	private static final Logger LOG = LoggerFactory.getLogger(PdfBoxSignatureInfo.class);
+	private CAdESSignature cades;
 
-    /**
-     * @param validationCertPool
-     * @param outerCatalog       the PDF Dict of the outer document, if the PDFDocument in a enclosed revision. Can be null.
-     * @param document           the signed PDFDocument
-     * @param cms                the CMS (CAdES) bytes
-     * @param inputStream        the stream of the whole signed document
-     * @throws IOException
-     */
-    PdfBoxSignatureInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, byte[] cms, InputStream inputStream) throws IOException {
-        super(validationCertPool, outerCatalog, document, signature, cms, inputStream);
-        try {
-            cades = new CAdESSignature(cms, validationCertPool);
-        } catch (CMSException e) {
-            throw new IOException(e);
-        }
+	/**
+	 * @param validationCertPool
+	 * @param outerCatalog       the PDF Dict of the outer document, if the PDFDocument in a enclosed revision. Can be null.
+	 * @param document           the signed PDFDocument
+	 * @param cms                the CMS (CAdES) bytes
+	 * @param inputStream        the stream of the whole signed document
+	 * @throws IOException
+	 */
+	PdfBoxSignatureInfo(CertificatePool validationCertPool, PdfDict outerCatalog, PDDocument document, PDSignature signature, byte[] cms,
+	                    InputStream inputStream) throws IOException {
+		super(validationCertPool, outerCatalog, document, signature, cms, inputStream);
+		try {
+			cades = new CAdESSignature(cms, validationCertPool);
+			final InMemoryDocument detachedContent = new InMemoryDocument(signedBytes);
+			cades.setDetachedContent(detachedContent);
+		} catch (CMSException e) {
+			throw new IOException(e);
+		}
 
-    }
+	}
 
-    @Override
-    protected SignatureCryptographicVerification checkIntegrityOnce() {
-        return cades.checkIntegrity(new InMemoryDocument(signedBytes));
-    }
+	@Override
+	protected SignatureCryptographicVerification checkIntegrityOnce() {
+		return cades.checkSignatureIntegrity();
+	}
 
-    @Override
-    public X509Certificate getSigningCertificate() {
-        CertificateToken signingCertificate = cades.getSigningCertificateToken();
-        return signingCertificate == null ? null : signingCertificate.getCertificate();
-    }
+	@Override
+	public X509Certificate getSigningCertificate() {
+		CertificateToken signingCertificate = cades.getSigningCertificateToken();
+		return signingCertificate == null ? null : signingCertificate.getCertificate();
+	}
 
-    @Override
-    public X509Certificate[] getCertificates() {
-        final List<CertificateToken> certificates = cades.getCertificates();
-        return toX509CertificateArray(certificates);
+	@Override
+	public X509Certificate[] getCertificates() {
+		final List<CertificateToken> certificates = cades.getCertificates();
+		return toX509CertificateArray(certificates);
 
-    }
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof PdfBoxSignatureInfo)) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof PdfBoxSignatureInfo)) {
+			return false;
+		}
+		if (!super.equals(o)) {
+			return false;
+		}
 
 
-        PdfBoxSignatureInfo that = (PdfBoxSignatureInfo) o;
+		PdfBoxSignatureInfo that = (PdfBoxSignatureInfo) o;
 
-        if (!cades.equals(that.cades)) {
-            return false;
-        }
+		if (!cades.equals(that.cades)) {
+			return false;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + cades.hashCode();
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		int result = super.hashCode();
+		result = 31 * result + cades.hashCode();
+		return result;
+	}
 
-    @Override
-    public boolean isTimestamp() {
-        return false;
-    }
+	@Override
+	public boolean isTimestamp() {
+		return false;
+	}
 
-    @Override
-    public CAdESSignature getCades() {
-        return cades;
-    }
+	@Override
+	public CAdESSignature getCades() {
+		return cades;
+	}
 }

@@ -90,6 +90,7 @@ class PdfBoxDocTimestampInfo extends PdfBoxCMSInfo implements PdfDocTimestampInf
 
     @Override
     public SignatureCryptographicVerification checkIntegrityOnce() {
+
         final SignatureCryptographicVerification signatureCryptographicVerification = new SignatureCryptographicVerification();
         signatureCryptographicVerification.setReferenceDataFound(false);
         signatureCryptographicVerification.setReferenceDataIntact(false);

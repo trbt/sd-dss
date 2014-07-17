@@ -48,6 +48,31 @@ import eu.europa.ec.markt.dss.validation102853.ocsp.OfflineOCSPSource;
 public interface AdvancedSignature {
 
 	/**
+	 * @return in the case of the detached signature this is the signed content.
+	 */
+	public DSSDocument getDetachedContent();
+
+	/**
+	 * This method allows to set the signed content in the case of the detached signature.
+	 *
+	 * @param detachedContent {@code DSSDocument} representing the signed detached content.
+	 */
+	public void setDetachedContent(final DSSDocument detachedContent);
+
+	/**
+	 * @return This method returns the provided signing certificate or {@code null}
+	 */
+	public CertificateToken getProvidedSigningCertificateToken();
+
+	/**
+	 * This method allows to provide a signing certificate to be used in the validation process. It can happen in the case of a non-AdES signature without the signing certificate
+	 * within the signature.
+	 *
+	 * @param certificateToken {@code CertificateToken} representing the signing certificate token.
+	 */
+	public void setProvidedSigningCertificateToken(final CertificateToken certificateToken);
+
+	/**
 	 * Specifies the format of the signature
 	 */
 	public SignatureForm getSignatureForm();
@@ -56,22 +81,22 @@ public interface AdvancedSignature {
 	 * Retrieves the signature algorithm (or cipher) used for generating the signature.
 	 * XAdES: http://www.w3.org/TR/2013/NOTE-xmlsec-algorithms-20130411/
 	 *
-	 * @return
+	 * @return {@code EncryptionAlgorithm}
 	 */
-	public EncryptionAlgorithm getEncryptionAlgo();
+	public EncryptionAlgorithm getEncryptionAlgorithm();
 
 	/**
 	 * Retrieves the signature algorithm (or cipher) used for generating the signature.
 	 * XAdES: http://www.w3.org/TR/2013/NOTE-xmlsec-algorithms-20130411/
 	 *
-	 * @return
+	 * @return {@code DigestAlgorithm}
 	 */
-	public DigestAlgorithm getDigestAlgo();
+	public DigestAlgorithm getDigestAlgorithm();
 
 	/**
-	 * Returns the signing time information.
+	 * Returns the signing time included within the signature.
 	 *
-	 * @return
+	 * @return {@code Date} representing the signing time or null
 	 */
 	public Date getSigningTime();
 
@@ -108,28 +133,26 @@ public interface AdvancedSignature {
 	public List<String> getInfo();
 
 	/**
-	 * This method returns the signing certificate token or null if there is no valid signing certificate.
+	 * This method returns the signing certificate token or null if there is no valid signing certificate. Note that to determinate the signing certificate the signature must be
+	 * validated: the method {@code checkSignatureIntegrity} must be called.
 	 *
 	 * @return
 	 */
 	public CertificateToken getSigningCertificateToken();
 
 	/**
-	 * Verifies the signature integrity; checks if the signed content has not been tampered with.
+	 * Verifies the signature integrity; checks if the signed content has not been tampered with. In the case of a non-AdES signature no including the signing certificate then the
+	 * latter  must be provided by calling {@code setProvidedSigningCertificateToken} In the case of a detached signature the signed content must be provided by calling {@code
+	 * setProvidedSigningCertificateToken}
 	 *
-	 * @param detachedDocument the original document concerned by the signature if not part of the actual object.
 	 * @return SignatureCryptographicVerification with all the information collected during the validation process.
 	 */
-	public SignatureCryptographicVerification checkIntegrity(final DSSDocument detachedDocument);
+	public SignatureCryptographicVerification checkSignatureIntegrity();
 
 	/**
-	 * Verifies the signature integrity; checks if the signed content has not been tampered with.
-	 *
-	 * @param detachedDocument           the original document concerned by the signature if not part of the actual object.
-	 * @param providedSigningCertificate In case of a non AdES signature the signing certificate can be provided.
-	 * @return SignatureCryptographicVerification with all the information collected during the validation process.
+	 * This method checks the protection of the certificates included within the signature (XAdES: KeyInfo) against the substitution attack.
 	 */
-	public SignatureCryptographicVerification checkIntegrity(final DSSDocument detachedDocument, final CertificateToken providedSigningCertificate);
+	public void checkSigningCertificate();
 
 	/**
 	 * Returns the Signature Policy OID from the signature.
@@ -309,15 +332,15 @@ public interface AdvancedSignature {
 	public Set<DigestAlgorithm> getUsedCertificatesDigestAlgorithms();
 
 	/**
-	 * @param signatureLevel
-	 * @return true if the signature contains the data needed for this signatureLevel. Doesn't mean any validity of the data found.
+	 * @param signatureLevel {@code SignatureLevel} to be checked
+	 * @return true if the signature contains the data needed for this {@code SignatureLevel}. Doesn't mean any validity of the data found.
 	 */
 	boolean isDataForSignatureLevelPresent(final SignatureLevel signatureLevel);
 
 	SignatureLevel getDataFoundUpToLevel();
 
 	/**
-	 * @return the list of signature levels for this kind of signature, in the simple to complete order. Example: B,T,LT,LTA
+	 * @return the list of signature levels for this type of signature, in the simple to complete order. Example: B,T,LT,LTA
 	 */
 	SignatureLevel[] getSignatureLevels();
 

@@ -22,7 +22,7 @@ package eu.europa.ec.markt.dss.validation102853.rules;
 
 public interface AttributeValue {
 
-    public static final String EXPIRED_CERTS_REVOCATION_INFO = "expiredCertsRevocationInfo";
+    public static final String EXPIRED_CERTS_REVOCATION_INFO = "ExpiredCertsRevocationInfo";
     public static final String REVOCATION = "Revocation";
 
     public static final String CERTIFICATE = "Certificate";

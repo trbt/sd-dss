@@ -96,6 +96,7 @@ import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSSignedDataParser;
 import org.bouncycastle.cms.CMSSignerDigestMismatchException;
+import org.bouncycastle.cms.CMSTypedData;
 import org.bouncycastle.cms.CMSTypedStream;
 import org.bouncycastle.cms.SignerId;
 import org.bouncycastle.cms.SignerInformation;
@@ -161,23 +162,12 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
 	private final SignerInformation signerInformation;
 
-	/**
-	 * The detached signed content if signature is a detached signature
-	 */
-	private final DSSDocument externalContent;
-
 	private CAdESCertificateSource certSource;
 
 	/**
 	 * The reference to the signing certificate. If the signing certificate is an input provided by the DA then getSigningCer MUST be called.
 	 */
 	private SigningCertificateValidity signingCertificateValidity;
-
-	/**
-	 * This is the reference to the global (external) pool of certificates. All encapsulated certificates in the signature are added to this pool. See {@link
-	 * eu.europa.ec.markt.dss.validation102853.CertificatePool}
-	 */
-	private final CertificatePool certPool;
 
 	/**
 	 * This list represents all digest algorithms used to calculate the digest values of certificates.
@@ -232,10 +222,10 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 	/**
 	 * @param cmsSignedData     CMSSignedData
 	 * @param signerInformation an expanded SignerInfo block from a CMS Signed message
-	 * @param externalContent   the external signed content if detached signature
+	 * @param detachedContent   the external signed content if detached signature
 	 */
-	public CAdESSignature(final CMSSignedData cmsSignedData, final SignerInformation signerInformation, final DSSDocument externalContent) {
-		this(cmsSignedData, signerInformation, new CertificatePool(), externalContent);
+	public CAdESSignature(final CMSSignedData cmsSignedData, final SignerInformation signerInformation, final DSSDocument detachedContent) {
+		this(cmsSignedData, signerInformation, new CertificatePool(), detachedContent);
 	}
 
 	/**
@@ -244,14 +234,14 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 	 * @param cmsSignedData     CMSSignedData
 	 * @param signerInformation an expanded SignerInfo block from a CMS Signed message
 	 * @param certPool          can be null
-	 * @param externalContent   the external signed content if detached signature
+	 * @param detachedContent   the external signed content if detached signature
 	 */
-	public CAdESSignature(final CMSSignedData cmsSignedData, final SignerInformation signerInformation, final CertificatePool certPool, final DSSDocument externalContent) {
+	public CAdESSignature(final CMSSignedData cmsSignedData, final SignerInformation signerInformation, final CertificatePool certPool, final DSSDocument detachedContent) {
 
+		super(certPool);
 		this.cmsSignedData = cmsSignedData;
 		this.signerInformation = signerInformation;
-		this.certPool = certPool;
-		this.externalContent = externalContent;
+		this.detachedContent = detachedContent;
 	}
 
 	/**
@@ -335,9 +325,8 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 		final SignerId sid = signerInformation.getSID();
 		for (final CertificateToken certificateToken : keyInfoCertificates) {
 
-			final SigningCertificateValidity signingCertificateValidity = new SigningCertificateValidity();
-			signingCertificateValidity.setCertificateToken(certificateToken);
-			candidatesForSigningCertificate.addSigningCertificateValidityList(signingCertificateValidity);
+			final SigningCertificateValidity signingCertificateValidity = new SigningCertificateValidity(certificateToken);
+			candidatesForSigningCertificate.add(signingCertificateValidity);
 
 			final X509CertificateHolder x509CertificateHolder = DSSUtils.getX509CertificateHolder(certificateToken);
 			final boolean match = sid.match(x509CertificateHolder);
@@ -1004,7 +993,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 	}
 
 	@Override
-	public EncryptionAlgorithm getEncryptionAlgo() {
+	public EncryptionAlgorithm getEncryptionAlgorithm() {
 
 		String oid = signerInformation.getEncryptionAlgOID();
 
@@ -1015,57 +1004,53 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 		}
 
 		// fallback to identify via signature algorithm
-		SignatureAlgorithm signatureAlgo = SignatureAlgorithm.forOID(oid);
-		return signatureAlgo.getEncryptionAlgo();
+		final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.forOID(oid);
+		return signatureAlgorithm.getEncryptionAlgorithm();
 	}
 
 	@Override
-	public DigestAlgorithm getDigestAlgo() {
+	public DigestAlgorithm getDigestAlgorithm() {
 
 		final String digestAlgOID = signerInformation.getDigestAlgOID();
 		return DigestAlgorithm.forOID(digestAlgOID);
 	}
 
 	@Override
-	public SignatureCryptographicVerification checkIntegrity(final DSSDocument detachedDocument) {
+	public SignatureCryptographicVerification checkSignatureIntegrity() {
 
-		return checkIntegrity(detachedDocument, null);
-	}
-
-	@Override
-	public SignatureCryptographicVerification checkIntegrity(final DSSDocument detachedDocument, final CertificateToken providedSigningCertificate) {
-
-		final SignatureCryptographicVerification scv = new SignatureCryptographicVerification();
+		if (signatureCryptographicVerification != null) {
+			return signatureCryptographicVerification;
+		}
+		signatureCryptographicVerification = new SignatureCryptographicVerification();
 		try {
 
 			final SignerInformation signerInformationToCheck;
-			if (detachedDocument == null) {
+			if (detachedContent == null) {
 				signerInformationToCheck = signerInformation;
 			} else {
 				// Recreate a SignerInformation with the content using a CMSSignedDataParser
-				final CMSTypedStream signedContent = new CMSTypedStream(detachedDocument.openStream());
+				final CMSTypedStream signedContent = new CMSTypedStream(detachedContent.openStream());
 				final CMSSignedDataParser sp = new CMSSignedDataParser(new BcDigestCalculatorProvider(), signedContent, cmsSignedData.getEncoded());
 				sp.getSignedContent().drain();
 				final SignerId sid = signerInformation.getSID();
 				signerInformationToCheck = sp.getSignerInfos().get(sid);
 			}
 			final List<SigningCertificateValidity> signingCertificateValidityList;
-			if (providedSigningCertificate == null) {
+			if (providedSigningCertificateToken == null) {
 
 				// To determine the signing certificate it is necessary to browse through all candidates found before.
 				final CandidatesForSigningCertificate candidatesForSigningCertificate = getCandidatesForSigningCertificate();
 				signingCertificateValidityList = candidatesForSigningCertificate.getSigningCertificateValidityList();
 				if (signingCertificateValidityList.size() == 0) {
 
-					scv.setErrorMessage("There is no signing certificate within the signature.");
-					return scv;
+					signatureCryptographicVerification.setErrorMessage("There is no signing certificate within the signature.");
+					return signatureCryptographicVerification;
 				}
 			} else {
 
 				candidatesForSigningCertificate = new CandidatesForSigningCertificate();
-				final SigningCertificateValidity signingCertificateValidity = new SigningCertificateValidity();
-				signingCertificateValidity.setCertificateToken(providedSigningCertificate);
-				candidatesForSigningCertificate.addSigningCertificateValidityList(signingCertificateValidity);
+				final SigningCertificateValidity signingCertificateValidity = new SigningCertificateValidity(providedSigningCertificateToken);
+				candidatesForSigningCertificate.add(signingCertificateValidity);
 				signingCertificateValidityList = candidatesForSigningCertificate.getSigningCertificateValidityList();
 
 			}
@@ -1087,9 +1072,9 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 					LOG.debug(" - WITH SIGNING CERTIFICATE: " + certificateToken.getAbbreviation());
 
 					boolean signatureIntact = signerInformationToCheck.verify(signerInformationVerifier);
-					scv.setReferenceDataFound(signatureIntact);
-					scv.setReferenceDataIntact(signatureIntact);
-					scv.setSignatureIntact(signatureIntact);
+					signatureCryptographicVerification.setReferenceDataFound(signatureIntact);
+					signatureCryptographicVerification.setReferenceDataIntact(signatureIntact);
+					signatureCryptographicVerification.setSignatureIntact(signatureIntact);
 					if (signatureIntact) {
 						break;
 					}
@@ -1101,33 +1086,40 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 					LOG.warn(e.getMessage(), e);
 				} catch (CMSSignerDigestMismatchException e) {
 					LOG.error(e.getMessage(), e);
-					scv.setReferenceDataFound(true);
-					scv.setReferenceDataIntact(false);
-					scv.setSignatureIntact(false);
-					scv.setErrorMessage(e.getMessage());
+					signatureCryptographicVerification.setReferenceDataFound(true);
+					signatureCryptographicVerification.setReferenceDataIntact(false);
+					signatureCryptographicVerification.setSignatureIntact(false);
+					signatureCryptographicVerification.setErrorMessage(e.getMessage());
 				} catch (OperatorCreationException e) {
 					LOG.error(e.getMessage(), e);
-					scv.setErrorMessage(e.getMessage());
+					signatureCryptographicVerification.setErrorMessage(e.getMessage());
 				} catch (CMSException e) {
 					LOG.error(e.getMessage(), e);
-					scv.setErrorMessage(e.getMessage());
+					signatureCryptographicVerification.setErrorMessage(e.getMessage());
 				} catch (IllegalArgumentException e) {
 					// Can arrive when for example:
 					// java.lang.IllegalArgumentException: Unknown signature type requested: RIPEMD160WITH0.4.0.127.0.7.1.1.4.1.6
 					// at org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder.generate(Unknown Source) ~[bcpkix-jdk15on-1.49.jar:1.49.0]
 					LOG.error(e.getMessage(), e);
-					scv.setErrorMessage(e.getMessage());
+					signatureCryptographicVerification.setErrorMessage(e.getMessage());
 				}
 			}
 		} catch (CMSException e) {
 			LOG.error(e.getMessage(), e);
-			scv.setErrorMessage(e.getMessage());
+			signatureCryptographicVerification.setErrorMessage(e.getMessage());
 		} catch (IOException e) {
 			LOG.error(e.getMessage(), e);
-			scv.setErrorMessage(e.getMessage());
+			signatureCryptographicVerification.setErrorMessage(e.getMessage());
 		}
-		LOG.debug(" - RESULT: " + scv.isReferenceDataFound() + "/" + scv.isReferenceDataIntact() + "/" + scv.isSignatureIntact());
-		return scv;
+		LOG.debug(" - RESULT: " + signatureCryptographicVerification.isReferenceDataFound() + "/" + signatureCryptographicVerification
+			  .isReferenceDataIntact() + "/" + signatureCryptographicVerification.isSignatureIntact());
+		return signatureCryptographicVerification;
+	}
+
+	@Override
+	public void checkSigningCertificate() {
+
+		// TODO-Bob (13/07/2014):
 	}
 
 	@Override
@@ -1432,19 +1424,22 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 
 	private byte[] getOriginalDocumentBytes() throws DSSException {
 
-		try {
-			final java.io.ByteArrayOutputStream originalSignedFileByteArrayOutputStream = new java.io.ByteArrayOutputStream();
-			if (cmsSignedData.getSignedContent() != null) {
-				cmsSignedData.getSignedContent().write(originalSignedFileByteArrayOutputStream);
-			} else {
-				originalSignedFileByteArrayOutputStream.write(externalContent.getBytes());
-			}
+		final CMSTypedData signedContent = cmsSignedData.getSignedContent();
+		if (signedContent != null) {
 
-			return originalSignedFileByteArrayOutputStream.toByteArray();
-		} catch (IOException e) {
-			throw new DSSException(e);
-		} catch (CMSException e) {
-			throw new DSSException(e);
+			try {
+
+				final ByteArrayOutputStream originalSignedFileByteArrayOutputStream = new ByteArrayOutputStream();
+				signedContent.write(originalSignedFileByteArrayOutputStream);
+				return originalSignedFileByteArrayOutputStream.toByteArray();
+			} catch (IOException e) {
+				throw new DSSException(e);
+			} catch (CMSException e) {
+				throw new DSSException(e);
+			}
+		} else {
+			// TODO (14/07/2014): detachedContent can be null!
+			return detachedContent.getBytes();
 		}
 	}
 
@@ -1754,6 +1749,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 		return dataForProfilePresent;
 	}
 
+	@Override
 	public SignatureLevel[] getSignatureLevels() {
 		return new SignatureLevel[]{SignatureLevel.CAdES_BASELINE_B, SignatureLevel.CAdES_BASELINE_T, SignatureLevel.CAdES_101733_C, SignatureLevel.CAdES_101733_X, SignatureLevel.CAdES_BASELINE_LT, SignatureLevel.CAdES_101733_A, SignatureLevel.CAdES_BASELINE_LTA};
 	}
