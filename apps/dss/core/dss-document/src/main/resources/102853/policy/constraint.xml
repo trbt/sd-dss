@@ -19,6 +19,7 @@
 			<DigestValuePresent Level="FAIL"/>
 			<DigestValueMatch Level="FAIL">true</DigestValueMatch>
 			<IssuerSerialMatch Level="WARN">true</IssuerSerialMatch>
+			<Signed Level="FAIL" />
 			<Signature Level="FAIL"/>
 			<Expiration Level="FAIL"/>
 			<RevocationDataAvailable Level="FAIL"/>
@@ -40,13 +41,14 @@
 					<Algo>ECDSA</Algo>
 				</AcceptableEncryptionAlgo>
 				<MiniPublicKeySize>
+	                <Algo Size="128">DSA</Algo>
 					<Algo Size="1024">RSA</Algo>
-					<Algo Size="128">DSA</Algo>
 					<Algo Size="192">ECDSA</Algo>
 				</MiniPublicKeySize>
 				<AcceptableDigestAlgo>
 					<Algo>SHA1</Algo>
 					<Algo>SHA256</Algo>
+					<Algo>SHA384</Algo>
 					<Algo>SHA512</Algo>
 					<Algo>RIPEMD160</Algo>
 				</AcceptableDigestAlgo>
@@ -65,12 +67,14 @@
 					<Algo>DSA</Algo>
 				</AcceptableEncryptionAlgo>
 				<MiniPublicKeySize>
+	                <Algo Size="128">DSA</Algo>
 					<Algo Size="1024">RSA</Algo>
-					<Algo Size="128">DSA</Algo>
+	                <Algo Size="192">ECDSA</Algo>
 				</MiniPublicKeySize>
 				<AcceptableDigestAlgo>
 					<Algo>SHA1</Algo>
 					<Algo>SHA256</Algo>
+					<Algo>SHA384</Algo>
 					<Algo>SHA512</Algo>
 					<Algo>RIPEMD160</Algo>
 				</AcceptableDigestAlgo>
@@ -83,13 +87,14 @@
 				<Algo>ECDSA</Algo>
 			</AcceptableEncryptionAlgo>
 			<MiniPublicKeySize>
+	            <Algo Size="128">DSA</Algo>
 				<Algo Size="1024">RSA</Algo>
-				<Algo Size="128">DSA</Algo>
 				<Algo Size="192">ECDSA</Algo>
 			</MiniPublicKeySize>
 			<AcceptableDigestAlgo>
 				<Algo>SHA1</Algo>
 				<Algo>SHA256</Algo>
+				<Algo>SHA384</Algo>
 				<Algo>SHA512</Algo>
 				<Algo>RIPEMD160</Algo>
 			</AcceptableDigestAlgo>
@@ -107,6 +112,7 @@
 		<BestSignatureTimeBeforeIssuanceDateOfSigningCertificate Level="FAIL"/>
 		<SigningCertificateValidityAtBestSignatureTime Level="FAIL"/>
 		<AlgorithmReliableAtBestSignatureTime Level="FAIL"/>
+		<Coherence Level="FAIL"/>
 		<SigningCertificate>
 			<Recognition Level="FAIL"/>
 			<DigestValueMatch Level="FAIL">true</DigestValueMatch>
@@ -127,13 +133,14 @@
 					<Algo>ECDSA</Algo>
 				</AcceptableEncryptionAlgo>
 				<MiniPublicKeySize>
+	                <Algo Size="128">DSA</Algo>
 					<Algo Size="1024">RSA</Algo>
-					<Algo Size="128">DSA</Algo>
-					<Algo Size="256">ECDSA</Algo>
+					<Algo Size="192">ECDSA</Algo>
 				</MiniPublicKeySize>
 				<AcceptableDigestAlgo>
 					<Algo>SHA1</Algo>
 					<Algo>SHA256</Algo>
+					<Algo>SHA384</Algo>
 					<Algo>SHA512</Algo>
 					<Algo>RIPEMD160</Algo>
 				</AcceptableDigestAlgo>
@@ -153,13 +160,14 @@
 					<Algo>ECDSA</Algo>
 				</AcceptableEncryptionAlgo>
 				<MiniPublicKeySize>
+	                <Algo Size="128">DSA</Algo>
 					<Algo Size="1024">RSA</Algo>
-					<Algo Size="128">DSA</Algo>
-					<Algo Size="256">ECDSA</Algo>
+					<Algo Size="192">ECDSA</Algo>
 				</MiniPublicKeySize>
 				<AcceptableDigestAlgo>
 					<Algo>SHA1</Algo>
 					<Algo>SHA256</Algo>
+					<Algo>SHA384</Algo>
 					<Algo>SHA512</Algo>
 					<Algo>RIPEMD160</Algo>
 				</AcceptableDigestAlgo>
@@ -182,13 +190,14 @@
 					<Algo>ECDSA</Algo>
 				</AcceptableEncryptionAlgo>
 				<MiniPublicKeySize>
+	                <Algo Size="128">DSA</Algo>
 					<Algo Size="1024">RSA</Algo>
-					<Algo Size="128">DSA</Algo>
-					<Algo Size="256">ECDSA</Algo>
+					<Algo Size="192">ECDSA</Algo>
 				</MiniPublicKeySize>
 				<AcceptableDigestAlgo>
 					<Algo>SHA1</Algo>
 					<Algo>SHA256</Algo>
+					<Algo>SHA384</Algo>
 					<Algo>SHA512</Algo>
 					<Algo>RIPEMD160</Algo>
 				</AcceptableDigestAlgo>
@@ -208,13 +217,14 @@
 					<Algo>ECDSA</Algo>
 				</AcceptableEncryptionAlgo>
 				<MiniPublicKeySize>
+	                <Algo Size="128">DSA</Algo>
 					<Algo Size="1024">RSA</Algo>
-					<Algo Size="128">DSA</Algo>
-					<Algo Size="256">ECDSA</Algo>
+					<Algo Size="192">ECDSA</Algo>
 				</MiniPublicKeySize>
 				<AcceptableDigestAlgo>
 					<Algo>SHA1</Algo>
 					<Algo>SHA256</Algo>
+					<Algo>SHA384</Algo>
 					<Algo>SHA512</Algo>
 					<Algo>RIPEMD160</Algo>
 				</AcceptableDigestAlgo>
@@ -225,9 +235,10 @@
 		<AlgoExpirationDate Format="yyyy-MM-dd">
 			<Algo Date="2017-02-24">SHA1</Algo>
 			<Algo Date="2035-02-24">SHA256</Algo>
+			<Algo Date="2035-02-24">SHA384</Algo>
 			<Algo Date="2035-02-24">SHA512</Algo>
-			<Algo Date="2017-02-24">DSA128</Algo>
 			<Algo Date="2017-02-24">RIPEMD160</Algo>
+			<Algo Date="2017-02-24">DSA128</Algo>
 			<Algo Date="2015-02-24">RSA1024</Algo>
 			<Algo Date="2015-02-24">RSA1536</Algo>
 			<Algo Date="2020-02-24">RSA2048</Algo>

@@ -159,6 +159,7 @@
 			<xs:element type="xs:boolean" name="DigestValuePresent"/>
 			<xs:element type="xs:boolean" name="DigestValueMatch"/>
 			<xs:element type="xs:boolean" name="IssuerSerialMatch"/>
+			<xs:element type="xs:string" name="Signed"/>
 		</xs:sequence>
 		<xs:attribute type="xs:int" name="Id" use="required"/>
 	</xs:complexType>
