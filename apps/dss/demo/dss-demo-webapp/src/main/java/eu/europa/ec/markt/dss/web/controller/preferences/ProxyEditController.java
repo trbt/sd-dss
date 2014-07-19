@@ -34,8 +34,7 @@ import eu.europa.ec.markt.dss.web.model.PreferenceForm;
 
 /**
  * TODO
- *
- * <p>
+ * <p/>
  * DISCLAIMER: Project owner DG-MARKT.
  *
  * @author <a href="mailto:dgmarkt.Project-DSS@arhs-developments.com">ARHS Developments</a>
@@ -45,45 +44,48 @@ import eu.europa.ec.markt.dss.web.model.PreferenceForm;
 @RequestMapping(value = "/admin/proxy")
 public class ProxyEditController {
 
-    @Autowired
-    private ProxyPreferenceManager proxyPreferenceManager;
+	@Autowired
+	private ProxyPreferenceManager proxyPreferenceManager;
 
-    /**
-     * @param webRequest The web request
-     * @return a proxy form bean
-     */
-    @ModelAttribute("preferenceForm")
-    public final PreferenceForm setupForm(final WebRequest webRequest) {
+	/**
+	 * @param webRequest The web request
+	 * @return a proxy form bean
+	 */
+	@ModelAttribute("preferenceForm")
+	public final PreferenceForm setupForm(final WebRequest webRequest) {
 
-        final String requestKey = webRequest.getParameter("key");
-        final PreferenceForm form = new PreferenceForm();
-        final ProxyPreference preference = proxyPreferenceManager.get(ProxyKey.fromKey(requestKey));
+		final String requestKey = webRequest.getParameter("key");
+		//		System.out.println("#requestKey: " + requestKey);
+		final PreferenceForm form = new PreferenceForm();
+		final ProxyKey proxyKey = ProxyKey.fromKey(requestKey);
+		//		System.out.println("proxyKey: " + proxyKey);
+		final ProxyPreference preference = proxyPreferenceManager.get(proxyKey);
 
-        form.setKey(preference.getProxyKey().getKeyName());
-        form.setValue(preference.getValue());
+		form.setKey(preference.getProxyKey().getKeyName());
+		form.setValue(preference.getValue());
 
-        return form;
-    }
+		return form;
+	}
 
-    /**
-     * @param model The view model
-     * @return a view name
-     */
-    @RequestMapping(value = "/edit", method = RequestMethod.GET)
-    public String showForm(final Model model) {
+	/**
+	 * @param model The view model
+	 * @return a view name
+	 */
+	@RequestMapping(value = "/edit", method = RequestMethod.GET)
+	public String showForm(final Model model) {
 
-        return "admin-proxy-edit";
-    }
+		return "admin-proxy-edit";
+	}
 
-    /**
-     * @param form The proxy form bean
-     * @return a view name
-     */
-    @RequestMapping(value = "/edit", method = RequestMethod.POST)
-    public String updatePreferences(@ModelAttribute("preferenceForm") final PreferenceForm form) {
+	/**
+	 * @param form The proxy form bean
+	 * @return a view name
+	 */
+	@RequestMapping(value = "/edit", method = RequestMethod.POST)
+	public String updatePreferences(@ModelAttribute("preferenceForm") final PreferenceForm form) {
 
-        final String proxyKeyString = form.getKey();
-        proxyPreferenceManager.update(proxyKeyString, form.getValue());
-        return "redirect:/admin/proxy";
-    }
+		final String proxyKeyString = form.getKey();
+		proxyPreferenceManager.update(proxyKeyString, form.getValue());
+		return "redirect:/admin/proxy";
+	}
 }
