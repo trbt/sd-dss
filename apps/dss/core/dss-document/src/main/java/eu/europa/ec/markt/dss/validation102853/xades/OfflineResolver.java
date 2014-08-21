@@ -16,6 +16,8 @@
  */
 package eu.europa.ec.markt.dss.validation102853.xades;
 
+import java.io.InputStream;
+
 import org.apache.xml.security.Init;
 import org.apache.xml.security.signature.XMLSignatureInput;
 import org.apache.xml.security.utils.resolver.ResourceResolverContext;
@@ -101,9 +103,8 @@ public class OfflineResolver extends ResourceResolverSpi {
 		String uriNodeValue = uriAttr.getNodeValue();
 		if (uriNodeValue.equals(documentURI) || document != null) {
 
-			final byte[] bytes = document.getBytes();
-			LOG.debug("Available bytes = " + bytes.length);
-			XMLSignatureInput result = new XMLSignatureInput(bytes);
+			final InputStream inputStream = document.openStream();
+			final XMLSignatureInput result = new XMLSignatureInput(inputStream);
 			result.setSourceURI(uriNodeValue);
 			final MimeType mimeType = document.getMimeType();
 			if (mimeType != null) {

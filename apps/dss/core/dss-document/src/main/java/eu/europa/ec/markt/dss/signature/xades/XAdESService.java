@@ -33,6 +33,7 @@ import eu.europa.ec.markt.dss.signature.DSSDocument;
 import eu.europa.ec.markt.dss.signature.ProfileParameters;
 import eu.europa.ec.markt.dss.signature.ProfileParameters.Operation;
 import eu.europa.ec.markt.dss.signature.SignatureExtension;
+import eu.europa.ec.markt.dss.signature.SignatureLevel;
 import eu.europa.ec.markt.dss.signature.SignaturePackaging;
 import eu.europa.ec.markt.dss.signature.token.DSSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.signature.token.SignatureTokenConnection;
@@ -79,7 +80,7 @@ public class XAdESService extends AbstractSignatureService {
 	public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters, final byte[] signatureValue) throws DSSException {
 
 		if (parameters.getSignatureLevel() == null) {
-			throw new DSSNullException(SignatureParameters.class);
+			throw new DSSNullException(SignatureLevel.class);
 		}
 		assertSigningDateInCertificateValidityRange(parameters);
 		parameters.getContext().setOperationKind(Operation.SIGNING);
@@ -101,6 +102,7 @@ public class XAdESService extends AbstractSignatureService {
 				parameters.setDetachedContent(toSignDocument);
 			}
 			final DSSDocument dssExtendedDocument = extension.extendSignatures(signedDoc, parameters);
+			// The deterministic id is reset between two consecutive signing operations. It prevents having two signatures with the same Id within the same document.
 			parameters.setDeterministicId(null);
 			return dssExtendedDocument;
 		}
@@ -112,7 +114,7 @@ public class XAdESService extends AbstractSignatureService {
 	public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
 
 		if (parameters.getSignatureLevel() == null) {
-			throw new DSSNullException(SignatureParameters.class);
+			throw new DSSNullException(SignatureLevel.class);
 		}
 		final SignatureTokenConnection signingToken = parameters.getSigningToken();
 		if (signingToken == null) {

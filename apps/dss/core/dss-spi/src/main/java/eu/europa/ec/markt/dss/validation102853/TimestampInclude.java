@@ -15,6 +15,11 @@ public class TimestampInclude {
         this.referencedData = Boolean.parseBoolean(referencedData);
     }
 
+    public TimestampInclude(String uri, boolean referencedData) {
+        this.uri = uri;
+        this.referencedData = referencedData;
+    }
+
     public String getURI() {
         return uri;
     }
