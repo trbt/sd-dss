@@ -243,39 +243,6 @@ public class ASiCSService extends AbstractSignatureService {
     return asicSignature;
   }
 
-  public DSSDocument createContainer(final DSSDocument toSignDocument, final SignatureParameters parameters, DSSDocument signature) throws DSSException {
-    final ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-    final ZipOutputStream outZip = new ZipOutputStream(outBytes);
-
-    final String toSignDocumentName = toSignDocument.getName();
-
-    final MimeType signedFileMimeType = toSignDocument.getMimeType();
-    outZip.setComment("mimetype=" + signedFileMimeType.getCode());
-
-    ASiCParameters asicParameters = new ASiCParameters();
-    asicParameters.setMimeType(signedFileMimeType.getCode());
-
-    storeMimetype(asicParameters, outZip, signedFileMimeType);
-
-    storeSignedFile(toSignDocument, outZip);
-    try {
-      final ZipEntry entrySignature = new ZipEntry(ZIP_ENTRY_METAINF_XADES_SIGNATURE);
-      outZip.putNextEntry(entrySignature);
-      newInstance().newTransformer().transform(new DOMSource(buildDOM(signature)), new StreamResult(outZip));
-
-    } catch (TransformerException e) {
-      throw new DSSException(e);
-    } catch (IOException e) {
-      throw new DSSException(e);
-    }
-
-    DSSUtils.close(outZip);
-
-    final byte[] documentBytes = outBytes.toByteArray();
-    final String name = toSignDocumentName != null ? toSignDocumentName + ASICS_EXTENSION : null;
-    final InMemoryDocument asicSignature = new InMemoryDocument(documentBytes, name, MimeType.ASICS);
-    return asicSignature;
-  }
 
   @Override
   public DSSDocument signDocument(final DSSDocument toSignDocument, final SignatureParameters parameters) throws DSSException {
