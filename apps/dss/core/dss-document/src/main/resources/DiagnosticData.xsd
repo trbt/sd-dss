@@ -9,6 +9,7 @@
 				<xs:element name="Signature" maxOccurs="unbounded" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence>
+							<xs:element type="xs:boolean" name="SignatureValid" minOccurs="0"/>
 							<xs:element type="xs:string" name="ErrorMessage" minOccurs="0"/>
 							<xs:element type="xs:dateTime" name="DateTime"/>
 							<xs:element type="xs:string" name="SignatureFormat"/>
@@ -93,6 +94,7 @@
 										<xs:element type="xs:dateTime" name="NotBefore"/>
 										<xs:element type="xs:int" name="PublicKeySize"/>
 										<xs:element type="xs:string" name="PublicKeyEncryptionAlgo"/>
+										<xs:element type="xs:base64Binary" name="X509Data"/>
 
 										<xs:element type="xs:boolean" name="IdKpOCSPSigning" minOccurs="0"/>
 										<xs:element type="xs:boolean" name="IdPkixOcspNoCheck" minOccurs="0"/>

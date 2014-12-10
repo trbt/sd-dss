@@ -490,8 +490,9 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			xmlTimestamps = dealTimestamps(xmlTimestamps, signature.getArchiveTimestamps());
 
 			xmlSignature.setTimestamps(xmlTimestamps);
+			xmlSignature.setSignatureValid(true);
 		} catch (Exception e) {
-
+			xmlSignature.setSignatureValid(false);
 			// Any raised error is just logged and the process continues with the next signature.
 			LOG.warn(e.getMessage(), e);
 			addErrorMessage(xmlSignature, e);
@@ -768,7 +769,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		final PublicKey publicKey = certToken.getPublicKey();
 		xmlCert.setPublicKeySize(DSSPKUtils.getPublicKeySize(publicKey));
 		xmlCert.setPublicKeyEncryptionAlgo(DSSPKUtils.getPublicKeyEncryptionAlgo(publicKey));
-
+		// VS: send also cert info back
+                xmlCert.setX509Data(certToken.getEncoded());
 		if (certToken.isOCSPSigning()) {
 
 			xmlCert.setIdKpOCSPSigning(true);

@@ -1075,6 +1075,16 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 					signatureCryptographicVerification.setReferenceDataFound(signatureIntact);
 					signatureCryptographicVerification.setReferenceDataIntact(signatureIntact);
 					signatureCryptographicVerification.setSignatureIntact(signatureIntact);
+					LOG.info("Signer: " + certificate.getSubjectDN().getName());
+                                        boolean keyUsages[] = certificate.getKeyUsage();
+                                        if(keyUsages == null || keyUsages.length < 2 || keyUsages[1] != true) {
+                                                LOG.info("Signer: " + certificate.getSubjectDN().getName() + " does not have non-repu bit set!");
+                                                signatureIntact = false;
+                                                signatureCryptographicVerification.setSignatureIntact(signatureIntact);
+                                                signatureCryptographicVerification.setErrorMessage("Signers certificate does not have non-repudiation flag!");
+                                                //throw new CMSException("Signers certificate does not have non-repudiation flag!");
+                                        }
+
 					if (signatureIntact) {
 						break;
 					}

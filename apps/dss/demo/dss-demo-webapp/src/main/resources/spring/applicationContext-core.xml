@@ -41,6 +41,11 @@
 
 	<bean id="ocspSource" class="eu.europa.ec.markt.dss.validation102853.ocsp.OnlineOCSPSource">
 		<property name="dataLoader" ref="ocspDataLoader"/>
+<!--
+		<property name="ocspUri" value="http://ocsp.sk.ee"/>
+		<property name="ocspPkcs12File" value="your-pkcs12-token-file-and-path"/>
+		<property name="ocspPkcs12Pswd" value="your-pkcs12-pswd8"/>
+-->
 	</bean>
 
 	<bean id="trustedListSource"
@@ -51,8 +56,19 @@
 		<property name="lotlUrl" value="https://ec.europa.eu/information_society/policy/esignature/trusted-list/tl-mp.xml"/>
 	</bean>
 
+<!--
+        <bean id="trustedListSource"
+              class="eu.europa.ec.markt.dss.validation102853.tsl.ReloadableTrustedListCertificateSource">
+                <property name="dataLoader" ref="fileCacheDataLoader"/>
+                <property name="checkSignature" value="false"/>
+                <property name="lotlCertificate" value="classpath://trusted-test-tsl.crt"/>
+                <property name="lotlUrl" value="http://10.0.25.57/tsl/trusted-test-mp.xml"/>
+        </bean>
+-->
+
 	<bean id="tspSource" class="eu.europa.ec.markt.dss.validation102853.tsp.OnlineTSPSource">
-		<property name="tspServer" value="http://tsa.belgium.be/connect"/>
+<!--		<property name="tspServer" value="http://tsa.belgium.be/connect"/> -->
+		<property name="tspServer" value="http://tsa.sk.ee"/>
 	</bean>
 
 </beans>
