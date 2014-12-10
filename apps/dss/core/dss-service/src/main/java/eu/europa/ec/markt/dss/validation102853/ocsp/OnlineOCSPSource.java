@@ -21,6 +21,7 @@
 package eu.europa.ec.markt.dss.validation102853.ocsp;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.Security;
 import java.security.cert.X509Certificate;
@@ -38,6 +39,7 @@ import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509Extension;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import org.bouncycastle.cert.ocsp.CertificateID;
 import org.bouncycastle.cert.ocsp.OCSPException;
@@ -45,6 +47,9 @@ import org.bouncycastle.cert.ocsp.OCSPReq;
 import org.bouncycastle.cert.ocsp.OCSPReqBuilder;
 import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.ContentSigner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +57,20 @@ import eu.europa.ec.markt.dss.DSSRevocationUtils;
 import eu.europa.ec.markt.dss.DSSUtils;
 import eu.europa.ec.markt.dss.exception.DSSException;
 import eu.europa.ec.markt.dss.exception.DSSNullException;
+import eu.europa.ec.markt.dss.signature.token.KSPrivateKeyEntry;
 import eu.europa.ec.markt.dss.validation102853.https.OCSPDataLoader;
 import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
+
+
+
+//import eu.europa.ec.markt.dss.signature.token.Pkcs12SignatureToken;
+import java.security.KeyStore;
+import java.security.KeyStore.PasswordProtection;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStore.TrustedCertificateEntry;
+import java.security.PrivateKey;
+import java.util.Enumeration;
+
 
 /**
  * Online OCSP repository. This implementation will contact the OCSP Responder to retrieve the OCSP response.
@@ -64,7 +81,10 @@ import eu.europa.ec.markt.dss.validation102853.loader.DataLoader;
 public class OnlineOCSPSource implements OCSPSource {
 
 	private static final Logger LOG = LoggerFactory.getLogger(OnlineOCSPSource.class);
-
+	private String m_ocspUri = null;
+	private String m_ocspPkcs12File = null;
+	private String m_ocspPkcs12Pswd = null;
+	
 	static {
 
 		Security.addProvider(new BouncyCastleProvider());
@@ -104,6 +124,15 @@ public class OnlineOCSPSource implements OCSPSource {
 
 		this.dataLoader = dataLoader;
 	}
+	
+	public void setOcspUri(String s) { m_ocspUri = s; }
+	public String getOcspUri() { return m_ocspUri; }
+	public void setOcspPkcs12File(String s) { m_ocspPkcs12File = s; }
+	public String getOcspPkcs12File() { return m_ocspPkcs12File; }
+	public void setOcspPkcs12Pswd(String s) { m_ocspPkcs12Pswd = s; }
+	public String getOcspPkcs12Pswd() { return m_ocspPkcs12Pswd; }
+	
+	
 
 	@Override
 	public BasicOCSPResp getOCSPResponse(final X509Certificate x509Certificate, final X509Certificate issuerX509Certificate) {
@@ -114,14 +143,23 @@ public class OnlineOCSPSource implements OCSPSource {
 		}
 		try {
 
-			final String ocspUri = getAccessLocation(x509Certificate);
+			final String ocspUri = ((m_ocspUri != null) ? m_ocspUri : getAccessLocation(x509Certificate));
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("OCSP URI: " + ocspUri);
 			}
 			if (ocspUri == null) {
-
 				return null;
 			}
+			/*int nHrWait = 25;
+			do {
+				System.out.println("Wait: " + nHrWait + " more hours");
+				try {
+				Thread.sleep(1000);
+				} catch(InterruptedException ex) {
+					System.err.println("Interruped: " + ex);
+				}
+				nHrWait--;
+			} while(nHrWait > 0);*/
 			final byte[] content = buildOCSPRequest(x509Certificate, issuerX509Certificate);
 
 			final byte[] ocspRespBytes = dataLoader.post(ocspUri, content);
@@ -180,6 +218,35 @@ public class OnlineOCSPSource implements OCSPSource {
 				final Extensions extensions = new Extensions(extension);
 				ocspReqBuilder.setRequestExtensions(extensions);
 			}
+			if (m_ocspPkcs12File != null && m_ocspPkcs12Pswd != null) {
+		        JcaContentSignerBuilder signerBuilder = new JcaContentSignerBuilder("SHA1withRSA");
+		        LOG.info("loading keystore: " + m_ocspPkcs12File);
+		        KeyStore ks = KeyStore.getInstance("PKCS12");
+		        ks.load(new FileInputStream(m_ocspPkcs12File), m_ocspPkcs12Pswd.toCharArray());
+		        LOG.info("keystore: " + m_ocspPkcs12File + " loaded");
+		        Enumeration<String> aliases = ks.aliases();
+		        PrivateKeyEntry pkEntry = null;
+		        X509Certificate cert = null;
+		        PrivateKey pkey = null;
+		        PasswordProtection pp = new KeyStore.PasswordProtection(m_ocspPkcs12Pswd.toCharArray());
+		        while (aliases.hasMoreElements()) {
+	                String alias = aliases.nextElement();
+	                LOG.info("Alias: " + alias + " pkey: " + ks.isKeyEntry(alias) + " cert: " + ks.isCertificateEntry(alias));
+	                if (ks.isKeyEntry(alias)) {
+	                	pkEntry = (PrivateKeyEntry) ks.getEntry(alias, pp);
+	                	pkey = pkEntry.getPrivateKey();
+	                	cert = (X509Certificate)pkEntry.getCertificate();
+	                }
+	            }
+		        LOG.info("Creatign ocsp req: " + " pkey: " + ((pkey != null) ? "OK" : "NULL") + " cert: " + ((cert != null) ? "OK" : "NULL"));
+		        ContentSigner contentSigner = signerBuilder.build(pkey);
+		        X509Certificate ocspSignerCert = cert;
+		        X509CertificateHolder[] chain = {new X509CertificateHolder(ocspSignerCert.getEncoded())};
+		        GeneralName generalName = new GeneralName(new JcaX509CertificateHolder(ocspSignerCert).getSubject());
+		        ocspReqBuilder.setRequestorName(generalName);
+		        return ocspReqBuilder.build(contentSigner, chain).getEncoded();
+		      }
+			
 			final OCSPReq ocspReq = ocspReqBuilder.build();
 			final byte[] ocspReqData = ocspReq.getEncoded();
 			return ocspReqData;
@@ -187,6 +254,9 @@ public class OnlineOCSPSource implements OCSPSource {
 			throw new DSSException(e);
 		} catch (IOException e) {
 			throw new DSSException(e);
+		} catch(Exception ex) {
+			LOG.error("Error handling ocsp req: " + ex);
+			throw new DSSException(ex);
 		}
 	}
 

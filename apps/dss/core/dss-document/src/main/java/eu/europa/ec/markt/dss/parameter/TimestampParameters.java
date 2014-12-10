@@ -66,7 +66,7 @@ public class TimestampParameters {
 
 	public String toString() {
 		return "TimestampParameters{" +
-				", digestAlgorithm=" + digestAlgorithm.getName() +
+				", digestAlgorithm=" + ((digestAlgorithm != null) ? digestAlgorithm.getName() : "NULL") +
 				", canonicalizationMethod=" + canonicalizationMethod +
 				"}";
 	}

@@ -168,9 +168,13 @@ class PAdESLevelBaselineLT implements SignatureExtension {
             final ByteArrayOutputStream tDoc = new ByteArrayOutputStream();
             final PDFTimestampService timestampService = factory.newTimestampSignatureService();
             Map.Entry<String, PdfDict> dictToAdd = new AbstractMap.SimpleEntry<String, PdfDict>("DSS", dssDictionary);
+            System.out.println("Extend, get TS sig: " + ((parameters != null) ? parameters.getToCounterSignSignatureId() : "NULL") + 
+            		" level: " + ((parameters != null && parameters.getSignatureLevel() != null) ? parameters.getSignatureLevel().toString() : "NULL") + 
+            		" arc: " + ((parameters != null && parameters.getArchiveTimestampParameters() != null) ? parameters.getArchiveTimestampParameters().toString() : "NULL"));
             timestampService.timestamp(document, tDoc, parameters, tspSource, dictToAdd);
             return new InMemoryDocument(tDoc.toByteArray());
-
+            //System.out.println("Extend do nothing!");
+            //return new InMemoryDocument(document.getBytes());
         } catch (IOException e) {
             throw new DSSException(e);
         }

@@ -367,6 +367,7 @@ public class SignatureServiceImpl implements SignatureService {
 				LOG.info("WsSignDocument: begin");
 			}
 			final SignatureParameters params = createParameters(wsParameters);
+			LOG.info("Sign doc counter sign: " + params.getToCounterSignSignatureId() + " val: " + params.getToCounterSignSignatureValueId() + " level: " + params.getSignatureLevel().name());
 			final DSSDocument dssDocument = DSSWSUtils.createDssDocument(wsDocument);
 			final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
 
@@ -395,6 +396,9 @@ public class SignatureServiceImpl implements SignatureService {
 				LOG.info("WsExtendSignature: begin");
 			}
 			final SignatureParameters params = createParameters(wsParameters);
+			LOG.info("Extend doc counter sign: " + ((params != null) ? params.getToCounterSignSignatureId() : "NULL") + " val: " + 
+					((params != null) ? params.getToCounterSignSignatureValueId() : "NULL") + 
+					" level: " + ((params != null && params.getSignatureLevel() != null) ? params.getSignatureLevel().name() : "NULL"));
 			final DSSDocument dssDocument = DSSWSUtils.createDssDocument(wsDocument);
 			final DocumentSignatureService service = getServiceForSignatureLevel(params.getSignatureLevel());
 			final DSSDocument signatureDssDocument = service.extendDocument(dssDocument, params);

@@ -327,7 +327,7 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 			LOG.debug("--> Signing certificate not found: " + sid);
 			return candidatesForSigningCertificate;
 		}
-
+		
 		final IssuerSerial signingTokenIssuerSerial = DSSUtils.getIssuerSerial(signingCertificateValidity.getCertificateToken());
 		final BigInteger signingTokenSerialNumber = signingTokenIssuerSerial.getSerial().getValue();
 		final GeneralNames signingTokenIssuerName = signingTokenIssuerSerial.getIssuer();
@@ -1056,10 +1056,28 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 					// TODO: (Bob: 2013 Dec 06) The BC does not implement if way indicated in ETSI 102853 the validation of the signature. Each time a problem is encountered an exception
 					// TODO: (Bob: 2013 Dec 06) is raised. Solution extract the BC method and adapt.
 					LOG.debug(" - WITH SIGNING CERTIFICATE: " + certificateToken.getAbbreviation());
+					LOG.debug("Calling verify");
 					boolean signatureIntact = signerInformationToCheck.verify(signerInformationVerifier);
+					LOG.debug("Calling setReferenceDataFound");
 					signatureCryptographicVerification.setReferenceDataFound(signatureIntact);
+					LOG.debug("Calling setReferenceDataIntact");
 					signatureCryptographicVerification.setReferenceDataIntact(signatureIntact);
+					LOG.debug("Calling setSignatureIntact");
 					signatureCryptographicVerification.setSignatureIntact(signatureIntact);
+					
+					LOG.info("Signer: " + certificate.getSubjectDN().getName());
+					boolean keyUsages[] = certificate.getKeyUsage();
+					if(keyUsages != null && keyUsages.length > 2) {
+						LOG.info("Signer non-repu: " + keyUsages[1]);
+					}
+					if(keyUsages == null || keyUsages.length < 2 || keyUsages[1] != true) {
+						LOG.info("Signer: " + certificate.getSubjectDN().getName() + " does not have non-repu bit set!");
+						signatureIntact = false;
+						signatureCryptographicVerification.setSignatureIntact(signatureIntact);
+						signatureCryptographicVerification.setErrorMessage("Signers certificate does not have non-repudiation flag!");
+						//throw new CMSException("Signers certificate does not have non-repudiation flag!");
+					}
+					
 					if (signatureIntact) {
 						break;
 					}
