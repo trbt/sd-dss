@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2013 European Commission, Directorate-General Internal Market and Services (DG MARKT), B-1049 Bruxelles/Brussel
  *
- * Developed by: 2013 ARHS Developments S.A. (rue Nicolas Bové 2B, L-1253 Luxembourg) http://www.arhs-developments.com
+ * Developed by: 2013 ARHS Developments S.A. (rue Nicolas Bov�� 2B, L-1253 Luxembourg) http://www.arhs-developments.com
  *
  * This file is part of the "DSS - Digital Signature Services" project.
  *
@@ -71,7 +71,7 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
      */
     public Pkcs11SignatureToken(String pkcs11Path) {
         this(pkcs11Path, (PasswordInputCallback) null);
-        this.slotIndex = 0;
+        this.slotIndex = 1;
     }
 
     /**
@@ -84,7 +84,7 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
     public Pkcs11SignatureToken(String pkcs11Path, PasswordInputCallback callback) {
         this.pkcs11Path = pkcs11Path;
         this.callback = callback;
-        this.slotIndex = 0;
+        this.slotIndex = 1;
     }
 
     /**
@@ -96,7 +96,7 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
      */
     public Pkcs11SignatureToken(String pkcs11Path, char[] password) {
         this(pkcs11Path, new PrefilledPasswordCallback(password));
-        this.slotIndex = 0;
+        this.slotIndex = 1;
     }
 
     /**
@@ -158,14 +158,15 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
          */
         String aPKCS11LibraryFileName = getPkcs11Path();
         String pkcs11ConfigSettings = "name = SmartCard" + smartCardNameIndex + "\n" + "library = " + aPKCS11LibraryFileName + "\nslotListIndex = " + slotIndex;
-
+        System.out.println("PCS11 config\n---\n"+pkcs11ConfigSettings+"\n---\n");
         byte[] pkcs11ConfigBytes = pkcs11ConfigSettings.getBytes();
         ByteArrayInputStream confStream = new ByteArrayInputStream(pkcs11ConfigBytes);
 
         sun.security.pkcs11.SunPKCS11 pkcs11 = new sun.security.pkcs11.SunPKCS11(confStream);
         _pkcs11Provider = pkcs11;
-
+        System.out.println("PKCS11 loaded");
         Security.addProvider(_pkcs11Provider);
+        System.out.println("PKCS11 provider added");
         smartCardNameIndex++;
     }
 
@@ -200,7 +201,7 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
                         throw new DSSBadPasswordException(MSG.PKCS11_BAD_PASSWORD, e);
                     }
                 }
-                throw new KeyStoreException("Can't initialize Sun PKCS#11 security provider. Reason: " + getCauseMessage(e), e);
+                throw new KeyStoreException("Can't initialize Sun PKCS#11 security provider1. Reason: " + getCauseMessage(e), e);
             }
         }
         return _keyStore;
@@ -240,7 +241,7 @@ public class Pkcs11SignatureToken extends AbstractSignatureTokenConnection {
             }
 
         } catch (Exception e) {
-            throw new DSSException("Can't initialize Sun PKCS#11 security " + "provider. Reason: " + getCauseMessage(e), e);
+            throw new DSSException("Can't initialize Sun PKCS#11 security " + "provider2. Reason: " + getCauseMessage(e), e);
         }
         return list;
     }

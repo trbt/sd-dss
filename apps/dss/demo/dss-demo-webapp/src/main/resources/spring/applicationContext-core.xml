@@ -42,9 +42,8 @@
 	<bean id="ocspSource" class="eu.europa.ec.markt.dss.validation102853.ocsp.OnlineOCSPSource">
 		<property name="dataLoader" ref="ocspDataLoader"/>
 <!--   	    <property name="ocspUri" value="http://ocsp.sk.ee"/> -->
-<!--     	<property name="ocspPkcs12File" value="e:/775726.p12d"/>
- 	    <property name="ocspPkcs12Pswd" value="AS2oUVK8"/> -->
- 	<!--   <property name="ocspUri" value="http://www.openxades.org/cgi-bin/ocsp.cgi"/>   -->
+<!--        <property name="ocspPkcs12File" value="your-pkcs12-toke-file-and-path"/>
+ 	    <property name="ocspPkcs12Pswd" value="your-pkcs12-token-password"/> -->
 	</bean>
 	
 	<bean id="trustedListSource"
@@ -64,10 +63,6 @@
         </bean>
 -->
 
-<!--  	<bean id="tspSource" class="eu.europa.ec.markt.dss.validation102853.tsp.OnlineTSPSource">
-		<property name="tspServer" value="http://tsa.belgium.be/connect"/>
-	</bean> -->
-	
 	<bean id="tspSource" class="eu.europa.ec.markt.dss.validation102853.tsp.OnlineTSPSource">
 		<property name="tspServer" value="http://tsa.sk.ee"/>
 	</bean>
