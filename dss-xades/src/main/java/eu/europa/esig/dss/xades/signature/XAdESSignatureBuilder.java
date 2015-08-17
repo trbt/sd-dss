@@ -367,8 +367,11 @@ public abstract class XAdESSignatureBuilder extends XAdESBuilder implements Sign
 		incorporateDigestValue(referenceDom, digestAlgorithm, canonicalizedDocument);
 	}
 
+	//TODO was added by Nortal DDS team, but breaks signature ID encodings. Investigate if should be added back
 	static String uriEncode(String string) {
-	    try {
+		return string;
+		/*
+		try {
 	        return URLEncoder.encode(string, "UTF-8")
 	                .replaceAll("\\+", "%20")
 	                .replaceAll("\\%21", "!")
@@ -379,6 +382,7 @@ public abstract class XAdESSignatureBuilder extends XAdESBuilder implements Sign
 	    } catch (UnsupportedEncodingException e) {
 	        throw new RuntimeException(e);
 	    }
+	    */
     }
 
     static void createTransform(final Document document, final DSSTransform dssTransform, final Element transformDom) {
