@@ -394,6 +394,15 @@ public class CAdESSignature extends DefaultAdvancedSignature {
 		return candidatesForSigningCertificate;
 	}
 
+	/**
+	 * Returns the signature value in bytes
+	 */
+	@Override
+	public byte[] getSignatureInBytes() {
+		//TODO implement
+		throw new RuntimeException("CAdESSignature getSignatureInBytes() is not yet implemented");
+	}
+
 	private boolean verifySignedReferencesToSigningCertificate() {
 
 		final IssuerSerial signingTokenIssuerSerial = DSSUtils.getIssuerSerial(signingCertificateValidity.getCertificateToken());

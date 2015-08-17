@@ -146,6 +146,11 @@ public interface AdvancedSignature extends Serializable {
 	AdvancedSignature getMasterSignature();
 
 	/**
+	 * Returns the signature value in bytes
+	 */
+	byte[] getSignatureInBytes();
+
+	/**
 	 * This method returns the signing certificate token or null if there is no valid signing certificate. Note that to determinate the signing certificate the signature must be
 	 * validated: the method {@code checkSignatureIntegrity} must be called.
 	 *

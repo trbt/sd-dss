@@ -395,6 +395,14 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 		return candidatesForSigningCertificate;
 	}
 
+	/**
+	 * Returns the signature value in bytes
+	 */
+	@Override
+	public byte[] getSignatureInBytes() {
+		return Base64.decodeBase64(getSignatureValue().getFirstChild().getNodeValue().getBytes());
+	}
+
 	@Override
 	public void checkSigningCertificate() {
 

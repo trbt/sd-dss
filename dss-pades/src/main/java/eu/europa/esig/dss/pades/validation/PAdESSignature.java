@@ -152,6 +152,15 @@ public class PAdESSignature extends DefaultAdvancedSignature {
 		return cadesSignature.getCandidatesForSigningCertificate();
 	}
 
+	/**
+	 * Returns the signature value in bytes
+	 */
+	@Override
+	public byte[] getSignatureInBytes() {
+		//TODO implement
+		throw new RuntimeException("PAdESSignature getSignatureInBytes() is not yet implemented");
+	}
+
 	@Override
 	public Date getSigningTime() {
 		return pdfSignatureInfo.getSigningDate();

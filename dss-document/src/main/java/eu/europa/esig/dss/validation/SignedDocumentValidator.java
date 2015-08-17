@@ -1337,8 +1337,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
       byte[] foundHash = ((DEROctetString) ASN1Sequence.getInstance(octets).getObjectAt(1)).getOctets();
 
-      byte[] signatureValue = Base64.decodeBase64(((XAdESSignature) signature).getSignatureValue().getFirstChild().
-          getNodeValue().getBytes());
+      byte[] signatureValue = signature.getSignatureInBytes();
 
       byte[] digest = digest(usedDigestAlgorithm, signatureValue);
 
