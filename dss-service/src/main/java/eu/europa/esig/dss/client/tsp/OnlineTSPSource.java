@@ -21,7 +21,10 @@
 package eu.europa.esig.dss.client.tsp;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -34,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.europa.esig.dss.DSSException;
+import eu.europa.esig.dss.DSSUtils;
 import eu.europa.esig.dss.DigestAlgorithm;
 import eu.europa.esig.dss.client.NonceSource;
 import eu.europa.esig.dss.client.http.DataLoader;
@@ -150,12 +154,14 @@ public class OnlineTSPSource implements TSPSource {
 			}
 
 			final byte[] requestBytes = timeStampRequest.getEncoded();
-
+			/*
 			// Call the communications layer
 			if (dataLoader == null) {
 				dataLoader = new NativeHTTPDataLoader();
 			}
 			byte[] respBytes = dataLoader.post(tspServer, requestBytes);
+			*/
+			byte[] respBytes = getTSAResponse(requestBytes);
 
 			// Handle the TSA response
 			final TimeStampResponse timeStampResponse = new TimeStampResponse(respBytes);
@@ -182,7 +188,43 @@ public class OnlineTSPSource implements TSPSource {
 		}
 	}
 
+	/**
+	 * Get timestamp token - communications layer
+	 *
+	 * @return - byte[] - TSA response, raw bytes (RFC 3161 encoded)
+	 */
+	protected byte[] getTSAResponse(final byte[] requestBytes) throws DSSException {
+
+		// Setup the TSA connection
+		final URLConnection tsaConnection = DSSUtils.openURLConnection(tspServer);
+
+		tsaConnection.setDoInput(true);
+		tsaConnection.setDoOutput(true);
+		tsaConnection.setUseCaches(false);
+		tsaConnection.setRequestProperty("Content-Type", "application/timestamp-query");
+		tsaConnection.setRequestProperty("Content-Transfer-Encoding", "binary");
 		if (StringUtils.isNotBlank(userAgent)) {
 			tsaConnection.setRequestProperty("User-Agent", userAgent);
 		}
+
+		DSSUtils.writeToURLConnection(tsaConnection, requestBytes);
+
+		// Get TSA response as a byte array
+		byte[] respBytes = getReadFromURLConnection(tsaConnection);
+		final String encoding = tsaConnection.getContentEncoding();
+		if ("base64".equalsIgnoreCase(encoding)) {
+			respBytes = Base64.decodeBase64(respBytes);
+		}
+		return respBytes;
+	}
+
+	private byte[] getReadFromURLConnection(final URLConnection tsaConnection) throws DSSException {
+
+		try {
+			final InputStream inputStream = tsaConnection.getInputStream();
+			return DSSUtils.toByteArray(inputStream);
+		} catch (IOException e) {
+			throw new DSSException(e);
+		}
+	}
 }
