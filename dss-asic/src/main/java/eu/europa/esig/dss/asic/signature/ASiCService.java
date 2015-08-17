@@ -579,6 +579,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		xadesParameters.setSignaturePackaging(SignaturePackaging.DETACHED);
 		xadesParameters.setSignedInfoCanonicalizationMethod(parameters.getSignedInfoCanonicalizationMethod());
 		xadesParameters.setSignedPropertiesCanonicalizationMethod(parameters.getSignedPropertiesCanonicalizationMethod());
+		xadesParameters.setDeterministicId(parameters.getDeterministicId());
 		return xadesParameters;
 	}
 
