@@ -112,7 +112,7 @@ public class OCSPToken extends RevocationToken {
 			try {
 				reasonId = revokedStatus.getRevocationReason();
 			} catch (IllegalStateException e) {
-				LOG.warn(e.getMessage());
+				logger.warn(e.getMessage());
 			}
 			final CRLReason crlReason = CRLReason.lookup(reasonId);
 			reason = crlReason.toString();

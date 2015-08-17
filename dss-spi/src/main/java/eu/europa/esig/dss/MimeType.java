@@ -20,9 +20,6 @@
  */
 package eu.europa.esig.dss;
 
-import eu.europa.ec.markt.dss.DSSUtils;
-import eu.europa.ec.markt.dss.exception.DSSException;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;

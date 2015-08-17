@@ -1,6 +1,9 @@
 package eu.europa.esig.dss;
 
 import java.io.Serializable;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class allows to define the signature policy.
@@ -14,6 +17,8 @@ public class Policy implements Serializable {
 	private DigestAlgorithm digestAlgorithm;
 
 	private byte[] digestValue;
+
+	private List<URI> qualifiers = new ArrayList<URI>();
 
 	private String spuri;
 
@@ -36,6 +41,25 @@ public class Policy implements Serializable {
 	 */
 	public void setId(final String id) {
 		this.id = id;
+	}
+
+	/**
+	 * Set list of Signature policy qualifiers
+	 * Only URI qualifiers are supported
+	 *
+	 * @param qualifiers List of qualifiers
+	 */
+	public void setSigPolicyQualifiers(List<URI> qualifiers) {
+		this.qualifiers = qualifiers;
+	}
+
+	/**
+	 * Get list of signature policy qualifiers
+	 *
+	 * @return qualifiers
+	 */
+	public List<URI> getSigPolicyQualifiers() {
+		return qualifiers;
 	}
 
 	/**

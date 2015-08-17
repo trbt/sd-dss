@@ -279,7 +279,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		final boolean asice = isAsice(asicParameters);
 		final boolean cadesForm = isCAdESForm(asicParameters);
 
-		String toSignDocumentName = getSignableDocumentName(toSignDocument, underlyingParameters);
+		String toSignDocumentName = getSignableDocumentName(toSignDocument, parameters);
 
 		final ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
 		ZipOutputStream zipOutputStream = new ZipOutputStream(outBytes);
@@ -293,7 +293,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 			storeMimetype(asicParameters, zipOutputStream);
 		}
 		if (asice && cadesForm) {
-			storeAsicManifest(underlyingParameters, toSignDocument, zipOutputStream);
+			storeAsicManifest(parameters, toSignDocument, zipOutputStream);
 		} else if (isAsice(asicParameters) && isXAdESForm(asicParameters)) {
 			storeManifest(toSignDocument, zipOutputStream);
 		}
@@ -319,9 +319,9 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		IOUtils.closeQuietly(zipInputStream);
 	}
 
-	private String getSignableDocumentName(DSSDocument toSignDocument, SignatureParameters underlyingParameters) {
-		if(underlyingParameters.getDetachedContent() != null) {
-			DSSDocument detachedDocument = underlyingParameters.getDetachedContent();
+	private String getSignableDocumentName(DSSDocument toSignDocument, ASiCSignatureParameters parameters) {
+		if(parameters.getDetachedContent() != null) {
+			DSSDocument detachedDocument = parameters.getDetachedContent();
 			return detachedDocument.getName();
 		} else {
 			return toSignDocument.getName();
@@ -442,7 +442,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 
 	private void storeZipComment(final ASiCParameters asicParameters, final ZipOutputStream outZip, final String toSignDocumentName) {
 		String zipComment = asicParameters.getZipComment();
-		if ((zipComment != null) && DSSUtils.isNotEmpty(toSignDocumentName)) {
+		if ((zipComment != null) && StringUtils.isNotEmpty(toSignDocumentName)) {
 
 			outZip.setComment(zipComment);
 		}

@@ -20,12 +20,13 @@
  */
 package eu.europa.esig.dss.validation.process;
 
-import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ADEST_NONCE;
-import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ADEST_NONCE_ANS;
-import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ADEST_RATSD;
-import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ADEST_RATSD_ANS;
-import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ADEST_TSSIG;
-import static eu.europa.ec.markt.dss.validation102853.rules.MessageTag.ADEST_TSSIG_ANS;
+import static eu.europa.esig.dss.validation.policy.rules.MessageTag.ADEST_NONCE;
+import static eu.europa.esig.dss.validation.policy.rules.MessageTag.ADEST_NONCE_ANS;
+import static eu.europa.esig.dss.validation.policy.rules.MessageTag.ADEST_RATSD;
+import static eu.europa.esig.dss.validation.policy.rules.MessageTag.ADEST_RATSD_ANS;
+import static eu.europa.esig.dss.validation.policy.rules.MessageTag.ADEST_TSSIG;
+import static eu.europa.esig.dss.validation.policy.rules.MessageTag.ADEST_TSSIG_ANS;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -414,8 +415,8 @@ public class AdESTValidation {
     final Constraint constraint = new Constraint("FAIL");
     constraint.setExpectedValue("true");
     constraint.create(timestampXmlNode, ADEST_TSSIG);
-    constraint.setValue(timestamp.getBoolValue(XP_SIGNATURE_VALID));
-    constraint.setIndications(INVALID, null, ADEST_TSSIG_ANS);
+    constraint.setValue(timestamp.getBoolValue(ValidationXPathQueryHolder.XP_SIGNATURE_VALID));
+    constraint.setIndications(Indication.INVALID, null, ADEST_TSSIG_ANS);
     constraint.setConclusionReceiver(conclusion);
 
     return constraint.check();
@@ -433,7 +434,7 @@ public class AdESTValidation {
     constraint.setExpectedValue("true");
     constraint.create(timestampXmlNode, ADEST_RATSD);
     constraint.setValue(delta == null || delta <= deltaInMilliseconds);
-    constraint.setIndications(INVALID, null, ADEST_RATSD_ANS);
+    constraint.setIndications(Indication.INVALID, null, ADEST_RATSD_ANS);
     constraint.setConclusionReceiver(conclusion);
 
     return constraint.check();
@@ -446,7 +447,7 @@ public class AdESTValidation {
     constraint.create(signatureXmlNode, ADEST_NONCE);
     String value = signatureXmlDom.getElements("./OcspNonce").get(0).getText();
     constraint.setValue("none".equals(value) || "true".equals(value));
-    constraint.setIndications(INVALID, null, ADEST_NONCE_ANS);
+    constraint.setIndications(Indication.INVALID, null, ADEST_NONCE_ANS);
     constraint.setConclusionReceiver(conclusion);
 
     return constraint.check();

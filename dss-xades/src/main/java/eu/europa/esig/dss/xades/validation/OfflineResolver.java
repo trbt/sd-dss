@@ -37,6 +37,7 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
 
 import eu.europa.esig.dss.DSSDocument;
+import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.MimeType;
 
 /**

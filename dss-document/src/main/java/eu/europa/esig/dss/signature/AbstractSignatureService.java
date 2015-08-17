@@ -23,11 +23,10 @@ package eu.europa.esig.dss.signature;
 import java.security.Security;
 import java.util.Date;
 
-import eu.europa.ec.markt.dss.exception.SigningCertificateExpiredException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import eu.europa.esig.dss.AbstractSignatureParameters;
-import eu.europa.esig.dss.DSSException;
+import eu.europa.esig.dss.exception.SigningCertificateExpiredException;
 import eu.europa.esig.dss.validation.CertificateVerifier;
 import eu.europa.esig.dss.x509.CertificateToken;
 import eu.europa.esig.dss.x509.tsp.TSPSource;

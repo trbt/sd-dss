@@ -51,11 +51,14 @@ import eu.europa.esig.dss.InMemoryDocument;
 import eu.europa.esig.dss.MimeType;
 import eu.europa.esig.dss.SignatureLevel;
 import eu.europa.esig.dss.TimestampParameters;
+import eu.europa.esig.dss.XAdESNamespaces;
+import eu.europa.esig.dss.exception.SigningCertificateUnknownException;
 import eu.europa.esig.dss.signature.SignatureExtension;
 import eu.europa.esig.dss.signature.SignaturePackaging;
 import eu.europa.esig.dss.validation.CertificateVerifier;
 import eu.europa.esig.dss.validation.ValidationContext;
 import eu.europa.esig.dss.x509.CertificatePool;
+import eu.europa.esig.dss.x509.CertificateSourceType;
 import eu.europa.esig.dss.x509.CertificateToken;
 import eu.europa.esig.dss.x509.TimestampType;
 import eu.europa.esig.dss.x509.tsp.TSPSource;
@@ -244,11 +247,9 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 				LOG.warn("The trust anchor is missing but its inclusion is required by the signature policy!");
 			}
 			//Custom Estoninan functionality: must contain OCSP request
-			/*
 			if (!ocspCertificateIncluded) {
 				throw new DSSException("OCSP request failed");
 			}
-			*/
 			//End of Custom Estonian functionality
 		}
 	}

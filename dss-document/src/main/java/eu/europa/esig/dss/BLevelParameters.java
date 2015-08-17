@@ -21,13 +21,11 @@
 package eu.europa.esig.dss;
 
 import java.io.Serializable;
-import org.apache.commons.lang.StringUtils;
-
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 public class BLevelParameters implements Serializable {
 
 	/**
@@ -242,37 +240,11 @@ public class BLevelParameters implements Serializable {
 	}
 
 	/**
-		private List<URI> qualifiers = new ArrayList<URI>();
-
-			qualifiers = new ArrayList<URI>(policy.qualifiers.size());
-			for (URI qualifier : policy.qualifiers) {
-				qualifiers.add(qualifier);
-			}
-		}
-
-    /**
-     * Set list of Signature policy qualifiers
-     * Only URI qualifiers are supported
-     *
-     * @param qualifiers List of qualifiers
-     */
-		public void setSigPolicyQualifiers(List<URI> qualifiers) {
-			this.qualifiers = qualifiers;
-		}
-
-    /**
-     * Get list of signature policy qualifiers
-     *
-     * @return qualifiers
-     */
-		public List<URI> getSigPolicyQualifiers() {
-			return qualifiers;
 	 * Set the signing date
 	 *
 	 * @param signingDate the value
 	 */
 	public void setSigningDate(final Date signingDate) {
-
 		this.signingDate = signingDate;
 	}
 

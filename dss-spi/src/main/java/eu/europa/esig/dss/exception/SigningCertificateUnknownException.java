@@ -1,4 +1,6 @@
-package eu.europa.ec.markt.dss.exception;
+package eu.europa.esig.dss.exception;
+
+import eu.europa.esig.dss.DSSException;
 
 public class SigningCertificateUnknownException extends DSSException {
     public SigningCertificateUnknownException() {

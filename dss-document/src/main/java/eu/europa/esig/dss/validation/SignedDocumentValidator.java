@@ -20,7 +20,7 @@
  */
 package eu.europa.esig.dss.validation;
 
-import static eu.europa.ec.markt.dss.DSSUtils.digest;
+import static eu.europa.esig.dss.DSSUtils.digest;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +29,7 @@ import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.ASN1Encodable;
@@ -117,7 +117,6 @@ import eu.europa.esig.dss.x509.SignaturePolicy;
 import eu.europa.esig.dss.x509.TimestampType;
 import eu.europa.esig.dss.x509.crl.ListCRLSource;
 import eu.europa.esig.dss.x509.ocsp.ListOCSPSource;
-import eu.europa.ec.markt.dss.validation102853.xades.XAdESSignature;
 
 
 /**
@@ -241,11 +240,6 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 				}
 			} catch (Exception e) {
 				LOG.error("Cannot instanciate class '" + clazz.getName() + "' : " + e.getMessage(), e);
-			//TODO investigate the commented code below why is it necessary
-			/* Committed by Codeborne
-			if (!dssDocument.getMimeType().equals(MimeType.ASICE)) {
-				return null;
-			}*/
 			}
 		}
 		throw new DSSException("Document format not recognized/handled");
