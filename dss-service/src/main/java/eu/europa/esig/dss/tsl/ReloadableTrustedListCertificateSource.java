@@ -46,10 +46,15 @@ public class ReloadableTrustedListCertificateSource extends TrustedListsCertific
     private static final Logger LOG = LoggerFactory.getLogger(ReloadableTrustedListCertificateSource.class);
 
     protected TrustedListsCertificateSource currentSource = new TrustedListsCertificateSource();
+    private String lotlCertificate;
 
     public ReloadableTrustedListCertificateSource() {
 
         super();
+    }
+
+    public void setLotlCertificate(String lotlCertificate) {
+        this.lotlCertificate = lotlCertificate;
     }
 
     static class Reloader implements Runnable {
