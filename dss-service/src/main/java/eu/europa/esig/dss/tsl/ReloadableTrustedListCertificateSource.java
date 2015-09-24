@@ -137,7 +137,6 @@ public class ReloadableTrustedListCertificateSource extends TrustedListsCertific
 
         setTslRefreshInfo(target, reloader);
 
-        updateEndTime = new Date();
         currentSource = newSource;
     }
 
