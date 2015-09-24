@@ -71,7 +71,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
 	protected transient DataLoader dataLoader;
 
-	private Map<String, String> diagnosticInfo = new HashMap<String, String>();
+	private Map<String, DiagnosticInfo> diagnosticInfo = new LinkedHashMap<>();
 
 	private KeyStoreCertificateSource keyStoreCertificateSource;
 
@@ -189,8 +189,19 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 	 * @return the diagnosticInfo
 	 */
 	public Map<String, String> getDiagnosticInfo() {
+		Map<String, String> result = new LinkedHashMap<>();
+		for (Map.Entry<String, DiagnosticInfo> entry : diagnosticInfo.entrySet()) {
+			result.put(entry.getKey(), entry.getValue().getLoadingDiagnosticInfo());
+		}
+		return Collections.unmodifiableMap(result); // Returning an unmodifiable map to remain strictly compatible with upstream API
+	}
 
-		return Collections.unmodifiableMap(diagnosticInfo);
+	public Map<String, DiagnosticInfo> getDiagnosticInfoExtended() {
+		return diagnosticInfo;
+	}
+
+	public void setDiagnosticInfo(Map<String, DiagnosticInfo> diagnosticInfo) {
+		this.diagnosticInfo = diagnosticInfo;
 	}
 
 	/**
@@ -200,9 +211,10 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 	 *            of the TSL to load
 	 * @param signingCertList
 	 *            the {@code List} of the possible signing certificates
+	 * @param diagnosticInfo
 	 * @return {@code TrustStatusList}
 	 */
-	private TrustStatusList getTrustStatusList(final String url, final Set<CertificateToken> signingCertList) {
+	private TrustStatusList getTrustStatusList(final String url, final Set<CertificateToken> signingCertList, DiagnosticInfo diagnosticInfo) {
 
 		boolean refresh = shouldRefresh(url);
 		final byte[] bytes = dataLoader.get(url, refresh);
@@ -211,16 +223,16 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 			throw new NullPointerException(url);
 		}
 
-		boolean coreValidity = !checkSignature || validateTslSignature(signingCertList, bytes);
+		boolean coreValidity = !checkSignature || validateTslSignature(signingCertList, bytes, diagnosticInfo);
 		final Document doc = DSSXMLUtils.buildDOM(bytes);
 		final TrustStatusList trustStatusList = TrustServiceListFactory.newInstance(doc);
+		diagnosticInfo.setTslNextUpdate(trustStatusList.getNextUpdate());
 		trustStatusList.setWellSigned(coreValidity);
 		updateTslNextUpdateDate(url, trustStatusList);
 		return trustStatusList;
 	}
 
-	private boolean validateTslSignature(final Set<CertificateToken> signingCertList, final byte[] bytes) {
-
+	private boolean validateTslSignature(final Set<CertificateToken> signingCertList, final byte[] bytes, DiagnosticInfo diagnosticInfo) {
 		boolean coreValidity = false;
 		if (signingCertList != null) {
 
@@ -230,6 +242,7 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 				throw new DSSException("Not ETSI compliant signature. The Xml is not signed.");
 			}
 			final Reports reports = xmlDocumentValidator.validateDocument(ValidationResourceManager.class.getResourceAsStream("/policy/tsl-constraint.xml"));
+			diagnosticInfo.setUsedSigningCertificatesValidityEndDates(getUsedSigningCertificatesValidityEndDates(xmlDocumentValidator));
 			final SimpleReport simpleReport = reports.getSimpleReport();
 			final List<String> signatureIdList = simpleReport.getSignatureIdList();
 			final String signatureId = signatureIdList.get(0);
@@ -243,6 +256,14 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 			}
 		}
 		return coreValidity;
+	}
+
+	private static List<Date> getUsedSigningCertificatesValidityEndDates(XMLDocumentValidator xmlDocumentValidator) {
+		List<Date> result = new ArrayList<>();
+		for(AdvancedSignature signature: xmlDocumentValidator.getSignatures()) {
+			result.add(signature.getSigningCertificateToken().getNotAfter());
+		}
+		return result;
 	}
 
 	protected void updateTSLHashCode(final String url, final String currentHashValue) {
@@ -391,14 +412,25 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 
 			logger.info("Downloading LOTL from url= {}", lotlUrl);
 			Set<CertificateToken> lotlCertificates = new HashSet<CertificateToken>(trustedCertificatesFromKeyStore);
-			lotl = getTrustStatusList(lotlUrl, lotlCertificates);
+			lotl = getTrustStatusList(lotlUrl, lotlCertificates, getOrCreateDiagnosticInfoForUrl(lotlUrl));
 		} catch (DSSException e) {
 
 			logger.error("The LOTL cannot be loaded: " + e.getMessage(), e);
 			throw e;
 		}
-		diagnosticInfo.put(lotlUrl, "Loaded " + new Date().toString());
+		getOrCreateDiagnosticInfoForUrl(lotlUrl).setLoadingDiagnosticMessage("Loaded " + new Date().toString());
 		return lotl;
+	}
+
+	private DiagnosticInfo getOrCreateDiagnosticInfoForUrl(String url) {
+		DiagnosticInfo existing = this.diagnosticInfo.get(url);
+		if(existing != null) {
+			return existing;
+		}
+
+		DiagnosticInfo newDiagnosticInfo = new DiagnosticInfo();
+		this.diagnosticInfo.put(url, newDiagnosticInfo);
+		return newDiagnosticInfo;
 	}
 
 	/**
@@ -428,15 +460,15 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 		final String trimmedUrl = url.trim();
 		try {
 
-			diagnosticInfo.put(trimmedUrl, "Loading");
+			getOrCreateDiagnosticInfoForUrl(trimmedUrl).setLoadingDiagnosticMessage("Loading");
 			logger.info("Downloading TrustStatusList for '{}' from url='{}'", territory, trimmedUrl);
-			final TrustStatusList countryTSL = getTrustStatusList(trimmedUrl, signingCertList);
+			final TrustStatusList countryTSL = getTrustStatusList(trimmedUrl, signingCertList, getOrCreateDiagnosticInfoForUrl(trimmedUrl));
 			loadAllCertificatesFromOneTSL(countryTSL);
 			logger.info(".... done for '{}'", territory);
-			diagnosticInfo.put(trimmedUrl, "Loaded " + new Date().toString());
+			getOrCreateDiagnosticInfoForUrl(trimmedUrl).setLoadingDiagnosticMessage("Loaded " + new Date().toString());
 		} catch (final Exception e) {
 			logger.error("An error occurred while loading url " + url + " : " + e.getMessage(), e);
-			diagnosticInfo.put(url, "Unable to load TSL : " + e.getMessage());
+			getOrCreateDiagnosticInfoForUrl(url).setLoadingDiagnosticMessage("Unable to load TSL : " + e.getMessage());
 		}
 	}
 
@@ -591,6 +623,36 @@ public class TrustedListsCertificateSource extends CommonTrustedCertificateSourc
 			properties.store(fileOutputStream, null);
 		} catch (Exception e) {
 			logger.error("Impossible to save: '{}'", file.getAbsolutePath(), e);
+		}
+	}
+
+	public static class DiagnosticInfo {
+		private String loadingDiagnosticInfo;
+		private List<Date> usedSigningCertificatesValidityEndDates;
+		private Date tslNextUpdate;
+
+		public void setLoadingDiagnosticMessage(String loadingDiagnosticInfo) {
+			this.loadingDiagnosticInfo = loadingDiagnosticInfo;
+		}
+
+		public String getLoadingDiagnosticInfo() {
+			return loadingDiagnosticInfo;
+		}
+
+		public void setUsedSigningCertificatesValidityEndDates(List<Date> usedSigningCertificatesValidityEndDates) {
+			this.usedSigningCertificatesValidityEndDates = usedSigningCertificatesValidityEndDates;
+		}
+
+		public List<Date> getUsedSigningCertificatesValidityEndDates() {
+			return usedSigningCertificatesValidityEndDates;
+		}
+
+		public void setTslNextUpdate(Date tslNextUpdate) {
+			this.tslNextUpdate = tslNextUpdate;
+		}
+
+		public Date getTslNextUpdate() {
+			return tslNextUpdate;
 		}
 	}
 }

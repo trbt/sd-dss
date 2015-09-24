@@ -97,6 +97,10 @@ public class ReloadableTrustedListCertificateSource extends TrustedListsCertific
             return ended;
         }
 
+        protected Map<String, DiagnosticInfo> getLoadingDiagnosticInfoPerTslUrl() {
+            return underlyingSource.getDiagnosticInfoExtended();
+        }
+
         protected String getErrorMessage() {
             return errorMessage;
         }
@@ -147,6 +151,7 @@ public class ReloadableTrustedListCertificateSource extends TrustedListsCertific
             setUpdateEndTime(target.getEnded());
             setUpdateStartDate(target.getStarted());
             setTslUpdateMessage(target.getErrorMessage());
+            setDiagnosticInfo(target.getLoadingDiagnosticInfoPerTslUrl());
 
             LOG.info("TSL Update error occurred: {}", target.getErrorMessage());
             LOG.info("TSL loading started: {}", getUpdateStartDate());
