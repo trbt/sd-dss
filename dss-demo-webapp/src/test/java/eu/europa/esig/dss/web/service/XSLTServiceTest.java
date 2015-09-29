@@ -1,11 +1,10 @@
 package eu.europa.esig.dss.web.service;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.InputStream;
-
+import eu.europa.esig.dss.DSSXMLUtils;
+import eu.europa.esig.dss.validation.report.DetailedReport;
+import eu.europa.esig.dss.validation.report.SimpleReport;
 import org.apache.commons.lang.StringUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -15,10 +14,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
 
-import eu.europa.esig.dss.DSSXMLUtils;
-import eu.europa.esig.dss.validation.report.DetailedReport;
-import eu.europa.esig.dss.validation.report.SimpleReport;
+import java.io.InputStream;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+@Ignore
 @ContextConfiguration("/spring/applicationContext.xml")
 @RunWith(SpringJUnit4ClassRunner.class)
 public class XSLTServiceTest {

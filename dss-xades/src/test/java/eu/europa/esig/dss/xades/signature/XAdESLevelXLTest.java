@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package known.issues.DSS631;
+package eu.europa.esig.dss.xades.signature;
 
 import eu.europa.esig.dss.*;
 import eu.europa.esig.dss.signature.AbstractTestSignature;
@@ -29,13 +29,15 @@ import eu.europa.esig.dss.test.mock.MockPrivateKeyEntry;
 import eu.europa.esig.dss.test.mock.MockTSPSource;
 import eu.europa.esig.dss.validation.CertificateVerifier;
 import eu.europa.esig.dss.validation.CommonCertificateVerifier;
+import eu.europa.esig.dss.validation.report.DiagnosticData;
 import eu.europa.esig.dss.xades.XAdESSignatureParameters;
-import eu.europa.esig.dss.xades.signature.XAdESService;
 import org.junit.Before;
 import org.junit.Ignore;
 
 import java.io.File;
 import java.util.Date;
+
+import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class XAdESLevelXLTest extends AbstractTestSignature {
@@ -63,6 +65,11 @@ public class XAdESLevelXLTest extends AbstractTestSignature {
 		service = new XAdESService(certificateVerifier);
 		service.setTspSource(new MockTSPSource(certificateService.generateTspCertificate(SignatureAlgorithm.RSA_SHA256), new Date()));
 
+	}
+
+	@Override
+	protected void checkSignatureLevel(DiagnosticData diagnosticData) {
+		assertEquals(SignatureLevel.XAdES_BASELINE_LT.name(), diagnosticData.getSignatureFormat(diagnosticData.getFirstSignatureId()));
 	}
 
 	@Override

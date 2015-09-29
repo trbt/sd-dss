@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<parent>
         <artifactId>pdf-validator</artifactId>
         <groupId>eu.europa.ec.joinup.sd-dss</groupId>
@@ -12,7 +12,7 @@
 
 	<groupId>eu.europa.ec.joinup.sd-dss</groupId>
 	<artifactId>sd-dss</artifactId>
-	<version>4.5.RC1</version>
+	<version>4.5.0</version>
 	<packaging>pom</packaging>
 	<name>Digital Signature Services</name>
 
@@ -133,9 +133,9 @@
 						</goals>
 						<configuration>
 							<skipTests>false</skipTests>
-							<testFailureIgnore>false</testFailureIgnore>
+							<testFailureIgnore>false</testFailureIgnore>		
 							<includes>
-								<include>eu/**/*Test.java</include>
+								<include>eu/**/*Test.java</include>	
 							</includes>
 						</configuration>
 					</execution>
@@ -147,9 +147,9 @@
 						</goals>
 						<configuration>
 							<skipTests>false</skipTests>
-							<testFailureIgnore>true</testFailureIgnore>
+							<testFailureIgnore>true</testFailureIgnore>		
 							<includes>
-								<include>plugtests/**/*Test.java</include>
+								<include>plugtests/**/*Test.java</include>	
 							</includes>
 						</configuration>
 					</execution>
@@ -161,9 +161,9 @@
 						</goals>
 						<configuration>
 							<skipTests>false</skipTests>
-							<testFailureIgnore>true</testFailureIgnore>
+							<testFailureIgnore>true</testFailureIgnore>						
 							<includes>
-								<include>known/issues/**/*Test.java</include>
+								<include>known/issues/**/*Test.java</include>	
 							</includes>
 						</configuration>
 					</execution>
@@ -373,7 +373,6 @@
 				<version>${project.version}</version>
 				<scope>test</scope>
 			</dependency>
-
 			<!-- Public Dependencies -->
 			<dependency>
 				<groupId>org.apache.httpcomponents</groupId>
@@ -529,7 +528,7 @@
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-log4j12</artifactId>
 				<version>${slf4j.version}</version>
-				<!--<scope>runtime</scope>-->
+				<scope>runtime</scope>
 			</dependency>
 			<dependency>
 				<groupId>commons-logging</groupId>
@@ -576,7 +575,7 @@
 				<artifactId>junit</artifactId>
 				<version>${junit.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.mockito</groupId>
 				<artifactId>mockito-all</artifactId>
@@ -617,29 +616,8 @@
 			<id>joinup-dss-thirdparty</id>
 			<url>http://joinup.ec.europa.eu/site/sd-dss/maven2</url>
 		</repository>
-        <repository>
-            <id>spring-snapshots</id>
-            <url>http://repo.spring.io/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>spring-milestones</id>
-            <url>http://repo.spring.io/milestone</url>
-        </repository>
 	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>spring-snapshots</id>
-			<url>http://repo.spring.io/snapshot</url>
-		</pluginRepository>
-		<pluginRepository>
-			<id>spring-milestones</id>
-			<url>http://repo.spring.io/milestone</url>
-		</pluginRepository>
-	</pluginRepositories>
-	
+
 	<distributionManagement>
 		<repository>
 			<id>joinup-nexus</id>

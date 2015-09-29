@@ -18,9 +18,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package known.issues.DSS631;
+package eu.europa.esig.dss.asic.signature.asice;
 
 import eu.europa.esig.dss.*;
+import eu.europa.esig.dss.asic.ASiCSignatureParameters;
+import eu.europa.esig.dss.asic.signature.ASiCService;
 import eu.europa.esig.dss.signature.AbstractTestSignature;
 import eu.europa.esig.dss.signature.DocumentSignatureService;
 import eu.europa.esig.dss.signature.SignaturePackaging;
@@ -29,55 +31,59 @@ import eu.europa.esig.dss.test.mock.MockPrivateKeyEntry;
 import eu.europa.esig.dss.test.mock.MockTSPSource;
 import eu.europa.esig.dss.validation.CertificateVerifier;
 import eu.europa.esig.dss.validation.CommonCertificateVerifier;
-import eu.europa.esig.dss.xades.XAdESSignatureParameters;
-import eu.europa.esig.dss.xades.signature.XAdESService;
+import eu.europa.esig.dss.validation.report.DiagnosticData;
 import org.junit.Before;
 import org.junit.Ignore;
 
-import java.io.File;
 import java.util.Date;
 
-@Ignore
-public class XAdESLevelLTATest extends AbstractTestSignature {
+import static org.junit.Assert.assertEquals;
 
-	private DocumentSignatureService<XAdESSignatureParameters> service;
-	private XAdESSignatureParameters signatureParameters;
+@Ignore
+public class ASiCELevelLTATest extends AbstractTestSignature {
+
+	private DocumentSignatureService<ASiCSignatureParameters> service;
+	private ASiCSignatureParameters signatureParameters;
 	private DSSDocument documentToSign;
 	private MockPrivateKeyEntry privateKeyEntry;
 
 	@Before
 	public void init() throws Exception {
-		documentToSign = new FileDocument(new File("src/test/resources/sample.xml"));
+		documentToSign = new InMemoryDocument("Hello Wolrd !".getBytes(), "test.text");
 
 		CertificateService certificateService = new CertificateService();
 		privateKeyEntry = certificateService.generateCertificateChain(SignatureAlgorithm.RSA_SHA256);
 
-		signatureParameters = new XAdESSignatureParameters();
+		signatureParameters = new ASiCSignatureParameters();
 		signatureParameters.bLevel().setSigningDate(new Date());
 		signatureParameters.setSigningCertificate(privateKeyEntry.getCertificate());
 		signatureParameters.setCertificateChain(privateKeyEntry.getCertificateChain());
 		signatureParameters.setSignaturePackaging(SignaturePackaging.ENVELOPING);
-		signatureParameters.setSignatureLevel(SignatureLevel.XAdES_BASELINE_LTA);
+		signatureParameters.setSignatureLevel(SignatureLevel.ASiC_E_BASELINE_LTA);
 
 		CertificateVerifier certificateVerifier = new CommonCertificateVerifier();
-		service = new XAdESService(certificateVerifier);
-		service.setTspSource(new MockTSPSource(certificateService.generateTspCertificate(SignatureAlgorithm.RSA_SHA256), new Date()));
-
+		service = new ASiCService(certificateVerifier);
+		service.setTspSource(new MockTSPSource(certificateService.generateTspCertificate(SignatureAlgorithm.RSA_SHA1), new Date()));
 	}
 
 	@Override
-	protected DocumentSignatureService<XAdESSignatureParameters> getService() {
+	protected void checkSignatureLevel(DiagnosticData diagnosticData) {
+		assertEquals(SignatureLevel.XAdES_BASELINE_LTA.name(), diagnosticData.getSignatureFormat(diagnosticData.getFirstSignatureId()));
+	}
+
+	@Override
+	protected DocumentSignatureService<ASiCSignatureParameters> getService() {
 		return service;
 	}
 
 	@Override
-	protected XAdESSignatureParameters getSignatureParameters() {
+	protected ASiCSignatureParameters getSignatureParameters() {
 		return signatureParameters;
 	}
 
 	@Override
 	protected MimeType getExpectedMime() {
-		return MimeType.XML;
+		return MimeType.ASICE;
 	}
 
 	@Override
