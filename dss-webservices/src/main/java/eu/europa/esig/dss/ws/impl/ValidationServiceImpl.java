@@ -20,15 +20,6 @@
  */
 package eu.europa.esig.dss.ws.impl;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.jws.WebService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import eu.europa.esig.dss.DSSDocument;
 import eu.europa.esig.dss.DSSException;
 import eu.europa.esig.dss.validation.CertificateVerifier;
@@ -41,6 +32,21 @@ import eu.europa.esig.dss.ws.DSSWSUtils;
 import eu.europa.esig.dss.ws.ValidationService;
 import eu.europa.esig.dss.ws.WSDocument;
 import eu.europa.esig.dss.ws.report.WSValidationReport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import javax.jws.WebService;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of the Interface for the Contract of the Validation Web Service.
@@ -96,12 +102,16 @@ public class ValidationServiceImpl implements ValidationService {
 			wsValidationReport.setXmlSimpleReport(simpleReportXml);
 			wsValidationReport.setXmlDetailedReport(detailedReportXml);
 			if (diagnosticDataToBeReturned) {
-
 				final DiagnosticData diagnosticData = reports.getDiagnosticData();
 				final String diagnosticDataXml = diagnosticData.toString();
 				wsValidationReport.setXmlDiagnosticData(diagnosticDataXml);
 			}
 			if (logger.isInfoEnabled()) {
+				logger.info(
+						"Validation completed. Total signature count: {} and valid signature count: {}",
+						simpleReport.getElement("//SignaturesCount").getText(),
+						simpleReport.getElement("//ValidSignaturesCount").getText()
+				);
 
 				logger.info("WsValidateDocument: end");
 			}
@@ -112,5 +122,15 @@ public class ValidationServiceImpl implements ValidationService {
 		}
 		logger.info("WsValidateDocument: end with exception");
 		throw new DSSException(exceptionMessage);
+	}
+
+
+
+	private Document getDocument(String xml) throws ParserConfigurationException, IOException, SAXException {
+		DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+		InputSource inputSource = new InputSource();
+		inputSource.setCharacterStream(new StringReader(xml));
+
+		return documentBuilder.parse(inputSource);
 	}
 }

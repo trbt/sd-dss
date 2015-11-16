@@ -54,9 +54,7 @@ public class CRLCertificateVerifier implements CertificateStatusVerifier {
     public RevocationToken check(final CertificateToken certificateToken) {
 
         try {
-
             if (crlSource == null) {
-
                 certificateToken.extraInfo().infoCRLSourceIsNull();
                 return null;
             }
