@@ -40,6 +40,8 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.digidoc4j.dss.asic.Manifest;
+import org.digidoc4j.dss.asic.ManifestCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -286,6 +288,11 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 
 			storeMimetype(asicParameters, zipOutputStream);
 		}
+		// BDoc functionality
+		if (isAsice(asicParameters) && isXAdESForm(asicParameters)) {
+			ManifestCreator.storeManifest(toSignDocument, zipOutputStream);
+		}
+		// End of BDoc functionality
 		storeSignedFiles(toSignDocument, zipOutputStream);
 
 		storesSignature(asicParameters, signature, zipOutputStream);
@@ -304,6 +311,11 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		final InputStream inputStream = toSignAsicContainer.openStream();
 		final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
 		for (ZipEntry entry = getNextZipEntry(zipInputStream); entry != null; entry = getNextZipEntry(zipInputStream)) {
+			// BDoc functionality
+			if (entry.getName().equals(Manifest.XML_PATH)) {
+				continue; //Skip copying manifest.xml file
+			}
+			// End of BDoc functionality
 
 			createZipEntry(zipOutputStream, entry);
 			IOUtils.copy(zipInputStream, zipOutputStream);
