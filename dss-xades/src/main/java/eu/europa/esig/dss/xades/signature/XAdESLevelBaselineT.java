@@ -37,6 +37,7 @@ import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.tsp.TimeStampToken;
+import org.digidoc4j.dss.xades.BDocTmPolicySupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -160,6 +161,12 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 		ensureUnsignedProperties();
 		ensureUnsignedSignatureProperties();
 		ensureSignedDataObjectProperties();
+
+		//BDoc support - do not add Timestamp for BDoc Timemark signatures
+		if (BDocTmPolicySupport.isBdocTmSignatureProfile(params)) {
+			return;
+		}
+		//End of BDoc support
 
 		// The timestamp must be added only if there is no one or the extension -T level is being created
 		if (!xadesSignature.hasTProfile() || XAdES_BASELINE_T.equals(params.getSignatureLevel())) {

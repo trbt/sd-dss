@@ -32,6 +32,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.digidoc4j.dss.xades.BDocTmPolicySupport;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -461,7 +462,14 @@ public abstract class XAdESSignatureBuilder extends XAdESBuilder implements Sign
 				final Element signaturePolicyIdDom = DSSXMLUtils.addElement(documentDom, signaturePolicyIdentifierDom, XAdES, XADES_SIGNATURE_POLICY_ID);
 				final Element sigPolicyIdDom = DSSXMLUtils.addElement(documentDom, signaturePolicyIdDom, XAdES, XADES_SIG_POLICY_ID);
 
-				DSSXMLUtils.addTextElement(documentDom, sigPolicyIdDom, XAdES, XADES_IDENTIFIER, signaturePolicyId);
+				//Element policyIdElement = DSSXMLUtils.addTextElement(documentDom, sigPolicyIdDom, XAdES, XADES_IDENTIFIER, signaturePolicyId);
+				Element policyIdElement = DSSXMLUtils.addTextElement(documentDom, sigPolicyIdDom, XAdES, XADES_IDENTIFIER, signaturePolicyId); //Estonian BDoc TM support
+
+				//Estonian bdoc TM support
+				if (signaturePolicyId.equals(BDocTmPolicySupport.BDOC_TM_POLICY_ID)) {
+					policyIdElement.setAttribute("Qualifier", BDocTmPolicySupport.BDOC_TM_POLICY_QUALIFIER);
+				}
+				//End of Estonian bdoc TM support
 
 				String description = signaturePolicy.getDescription();
 				if (StringUtils.isNotEmpty(description)){
