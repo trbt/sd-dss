@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import eu.europa.esig.dss.DSSASN1Utils;
 import eu.europa.esig.dss.DSSDocument;
 import eu.europa.esig.dss.DSSException;
 import eu.europa.esig.dss.DSSUtils;
@@ -220,6 +221,7 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 			final CertificatePool certificatePool = getCertificatePool();
 			final boolean trustAnchorBPPolicy = params.bLevel().isTrustAnchorBPPolicy();
 			boolean trustAnchorIncluded = false;
+			boolean ocspCertificateIncluded = false;	//Needed for BDoc-TM functionality
 			for (final CertificateToken certificateToken : toIncludeCertificates) {
 
 				if (trustAnchorBPPolicy && (certificatePool != null)) {
@@ -231,11 +233,28 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 				}
 				final byte[] bytes = certificateToken.getEncoded();
 				final String base64EncodeCertificate = Base64.encodeBase64String(bytes);
-				DSSXMLUtils.addTextElement(documentDom, certificateValuesDom, XAdES, XADES_ENCAPSULATED_X509_CERTIFICATE, base64EncodeCertificate);
+				//DSSXMLUtils.addTextElement(documentDom, certificateValuesDom, XAdES, XADES_ENCAPSULATED_X509_CERTIFICATE, base64EncodeCertificate);
+				Element element = DSSXMLUtils.addElement(documentDom, certificateValuesDom, XAdES, XADES_ENCAPSULATED_X509_CERTIFICATE);
+
+				//BDoc-TM functionality: OCSP responder certificate must have RESPONDER_CERT id attribute (needed only for jDigidoc interoperability)
+				if(DSSASN1Utils.isOCSPSigning(certificateToken)) {
+					ocspCertificateIncluded = true;
+					element.setAttribute("Id", xadesSignature.getId() + "-RESPONDER_CERT");
+				}
+				//End of BDoc-TM functionality
+
+				DSSXMLUtils.setTextNode(documentDom, element, base64EncodeCertificate);
 			}
 			if (trustAnchorBPPolicy && !trustAnchorIncluded) {
 				LOG.warn("The trust anchor is missing but its inclusion is required by the signature policy!");
 			}
+
+			//BDoc-TM functionality: must contain OCSP request
+			if (!ocspCertificateIncluded) {
+				LOG.error("OCSP responder certificate has not been included");
+				throw new DSSException("OCSP request failed");
+			}
+			//End of BDoc-TM functionality
 		}
 	}
 
