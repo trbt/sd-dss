@@ -1177,7 +1177,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		xmlPolicy.setIdentified(true);
 
 		//BDoc-TM support
-		if(StringUtils.equalsIgnoreCase("urn:oid:1.3.6.1.4.1.10015.1000.3.2.1", policyId)) { // Do not download and verify BDoc-TM signature policy PDF specification
+		if(StringUtils.equalsIgnoreCase("urn:oid:1.3.6.1.4.1.10015.1000.3.2.1", StringUtils.trim(policyId))) { // Do not download and verify BDoc-TM signature policy PDF specification
 			return;
 		}
 		//End of BDoc-TM support

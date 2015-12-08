@@ -20,7 +20,9 @@
  */
 package org.digidoc4j.dss.xades;
 
+import eu.europa.esig.dss.Policy;
 import eu.europa.esig.dss.xades.XAdESSignatureParameters;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 
@@ -33,6 +35,11 @@ public class BDocTmPolicySupport implements Serializable {
     public static final String BDOC_TM_POLICY_QUALIFIER = "OIDAsURN";
 
     public static boolean isBdocTmSignatureProfile(XAdESSignatureParameters params) {
-        return params.bLevel().getSignaturePolicy() != null && BDOC_TM_POLICY_ID.equals(params.bLevel().getSignaturePolicy().getId());
+        Policy signaturePolicy = params.bLevel().getSignaturePolicy();
+        if(signaturePolicy == null) {
+            return false;
+        }
+        String policyId = StringUtils.trim(signaturePolicy.getId());
+        return BDOC_TM_POLICY_ID.equals(policyId);
     }
 }

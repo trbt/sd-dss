@@ -59,6 +59,14 @@ public class BDocXadesTest extends XAdESLevelLTTest {
     }
 
     @Test
+    public void bdocTM_shouldNotContainTimestamp_whenPolicyIdContainsWhitespaceCharacters() throws Exception {
+        addSignaturePolicy("\n urn:oid:1.3.6.1.4.1.10015.1000.3.2.1\t \n");
+        DSSDocument signedDocument = sign();
+        XAdESSignature xAdESSignature =  extractXadesSignature(signedDocument);
+        assertTrue(isTimestampEmpty(xAdESSignature));
+    }
+
+    @Test
     public void bdocTM_shouldContainPolicyId() throws Exception {
         XAdESSignature xAdESSignature = createXadesSignatureForBdocTm();
         SignaturePolicy policy = xAdESSignature.getPolicyId();
@@ -94,8 +102,12 @@ public class BDocXadesTest extends XAdESLevelLTTest {
     }
 
     private void addSignaturePolicy() {
+        addSignaturePolicy(TM_POLICY);
+    }
+
+    private void addSignaturePolicy(String policyId) {
         Policy signaturePolicy = new Policy();
-        signaturePolicy.setId(TM_POLICY);
+        signaturePolicy.setId(policyId);
         signaturePolicy.setDigestValue(decodeBase64("3Tl1oILSvOAWomdI9VeWV6IA/32eSXRUri9kPEz1IVs="));
         signaturePolicy.setDigestAlgorithm(SHA256);
         signaturePolicy.setSpuri("https://www.sk.ee/repository/bdoc-spec21.pdf");
