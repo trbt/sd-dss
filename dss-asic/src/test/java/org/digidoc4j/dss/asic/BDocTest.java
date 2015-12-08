@@ -31,6 +31,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 public class BDocTest extends ASiCELevelLTTest {
 
     private DSSDocument documentToSign;
@@ -53,6 +55,14 @@ public class BDocTest extends ASiCELevelLTTest {
         documentToSign = sign();
         SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(documentToSign);
         Assert.assertTrue("BDoc does not contain META-INF/manifest.xml", containsManifest(validator));
+    }
+
+    @Test
+    public void settingSignatureIdWhenSigningAsic() throws Exception {
+        getSignatureParameters().setDeterministicId("SIGNATURE-1");
+        documentToSign = sign();
+        SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(documentToSign);
+        assertEquals("SIGNATURE-1", validator.getSignatures().get(0).getId());
     }
 
     @Override

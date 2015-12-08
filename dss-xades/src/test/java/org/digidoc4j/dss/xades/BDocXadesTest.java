@@ -20,9 +20,11 @@
  */
 package org.digidoc4j.dss.xades;
 
+
 import eu.europa.esig.dss.DSSDocument;
 import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.Policy;
+import eu.europa.esig.dss.SignatureLevel;
 import eu.europa.esig.dss.XPathQueryHolder;
 import eu.europa.esig.dss.validation.AdvancedSignature;
 import eu.europa.esig.dss.validation.SignedDocumentValidator;
@@ -51,6 +53,9 @@ public class BDocXadesTest extends XAdESLevelLTTest {
     public void bdocTM_shouldNotContainTimestamp() throws Exception {
         XAdESSignature xAdESSignature = createXadesSignatureForBdocTm();
         assertTrue(isTimestampEmpty(xAdESSignature));
+        SignatureLevel signatureLevel = xAdESSignature.getDataFoundUpToLevel();
+        //TODO
+        //assertEquals(SignatureLevel.XAdES_BASELINE_LT, signatureLevel);
     }
 
     @Test
@@ -69,9 +74,20 @@ public class BDocXadesTest extends XAdESLevelLTTest {
         assertEquals(OIDAS_URN, qualifier);
     }
 
+    @Test
+    public void setSignatureId_whenCreatingXadesSignature() throws Exception {
+        getSignatureParameters().setDeterministicId("SIGNATURE-1");
+        XAdESSignature signature = createXadesSignatureForBdocTm();
+        assertEquals("SIGNATURE-1", signature.getId());
+    }
+
     private XAdESSignature createXadesSignatureForBdocTm() {
         addSignaturePolicy();
         DSSDocument signedDocument = sign();
+        return extractXadesSignature(signedDocument);
+    }
+
+    private XAdESSignature extractXadesSignature(DSSDocument signedDocument) {
         SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(signedDocument);
         List<AdvancedSignature> signatureList = validator.getSignatures();
         return (XAdESSignature)signatureList.get(0);
