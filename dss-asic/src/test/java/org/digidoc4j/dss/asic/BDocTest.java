@@ -21,12 +21,18 @@
 package org.digidoc4j.dss.asic;
 
 import eu.europa.esig.dss.DSSDocument;
+import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.InMemoryDocument;
+import eu.europa.esig.dss.XPathQueryHolder;
 import eu.europa.esig.dss.asic.signature.asice.ASiCELevelLTTest;
 import eu.europa.esig.dss.validation.SignedDocumentValidator;
+import eu.europa.esig.dss.xades.validation.XAdESSignature;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,6 +58,7 @@ public class BDocTest extends ASiCELevelLTTest {
     @Test
     public void signingTwiceShouldNotCreateConflictingManifest() throws Exception {
         documentToSign = sign();
+        getSignatureParameters().aSiC().setSignatureFileName("signatures002.xml");
         documentToSign = sign();
         SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(documentToSign);
         Assert.assertTrue("BDoc does not contain META-INF/manifest.xml", containsManifest(validator));
@@ -63,6 +70,17 @@ public class BDocTest extends ASiCELevelLTTest {
         documentToSign = sign();
         SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(documentToSign);
         assertEquals("SIGNATURE-1", validator.getSignatures().get(0).getId());
+    }
+
+    @Test
+    public void signatureReferences_ShouldUseUriEncoding() throws Exception {
+        documentToSign = new InMemoryDocument("Hello Wolrd !".getBytes(), "dds_JÜRIÖÖ € žŠ päev.txt");
+        getSignatureParameters().setDetachedContent(documentToSign);
+        documentToSign = sign();
+        SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(documentToSign);
+        XAdESSignature signature = (XAdESSignature)validator.getSignatures().get(0);
+        String referenceUri = getSignedDataFileReferenceUri(signature);
+        assertEquals("dds_J%C3%9CRI%C3%96%C3%96%20%E2%82%AC%20%C5%BE%C5%A0%20p%C3%A4ev.txt", referenceUri);
     }
 
     @Override
@@ -83,5 +101,14 @@ public class BDocTest extends ASiCELevelLTTest {
             }
         }
         return false;
+    }
+
+    private String getSignedDataFileReferenceUri(XAdESSignature xAdESSignature) {
+        XPathQueryHolder xPathQueryHolder = xAdESSignature.getXPathQueryHolder();
+        Element signatureElement = xAdESSignature.getSignatureElement();
+        NodeList references = DSSXMLUtils.getNodeList(signatureElement, xPathQueryHolder.XPATH_REFERENCE);
+        Node dataFileReference = references.item(0);
+        String uri = dataFileReference.getAttributes().getNamedItem("URI").getNodeValue();
+        return uri;
     }
 }

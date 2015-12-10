@@ -37,7 +37,7 @@ import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.tsp.TimeStampToken;
-import org.digidoc4j.dss.xades.BDocTmPolicySupport;
+import org.digidoc4j.dss.xades.BDocTmSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -164,7 +164,7 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 		ensureSignedDataObjectProperties();
 
 		//BDoc support - do not add Timestamp for BDoc Timemark signatures
-		if (BDocTmPolicySupport.isBdocTmSignatureProfile(params)) {
+		if (BDocTmSupport.isBdocTmSignatureProfile(params)) {
 			return;
 		}
 		//End of BDoc support

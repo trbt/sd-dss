@@ -25,11 +25,13 @@ import eu.europa.esig.dss.xades.XAdESSignatureParameters;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  * Support for BDoc TM profile signatures
  */
-public class BDocTmPolicySupport implements Serializable {
+public class BDocTmSupport implements Serializable {
 
     public static final String BDOC_TM_POLICY_ID = "urn:oid:1.3.6.1.4.1.10015.1000.3.2.1";
     public static final String BDOC_TM_POLICY_QUALIFIER = "OIDAsURN";
@@ -41,5 +43,19 @@ public class BDocTmPolicySupport implements Serializable {
         }
         String policyId = StringUtils.trim(signaturePolicy.getId());
         return BDOC_TM_POLICY_ID.equals(policyId);
+    }
+
+    public static String uriEncode(String string) {
+        try {
+            return URLEncoder.encode(string, "UTF-8")
+                    .replaceAll("\\+", "%20")
+                    .replaceAll("\\%21", "!")
+                    .replaceAll("\\%27", "'")
+                    .replaceAll("\\%28", "(")
+                    .replaceAll("\\%29", ")")
+                    .replaceAll("\\%7E", "~");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
