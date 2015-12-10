@@ -267,7 +267,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		return null;
 	}
 
-	private InMemoryDocument buildASiCContainer(final DSSDocument toSignDocument, DSSDocument signDocument, final ASiCSignatureParameters parameters,
+	public InMemoryDocument buildASiCContainer(final DSSDocument toSignDocument, DSSDocument signDocument, final ASiCSignatureParameters parameters,
 			final DSSDocument signature) throws IOException {
 
 		ASiCParameters asicParameters = parameters.aSiC();
