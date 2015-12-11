@@ -221,7 +221,6 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 			final CertificatePool certificatePool = getCertificatePool();
 			final boolean trustAnchorBPPolicy = params.bLevel().isTrustAnchorBPPolicy();
 			boolean trustAnchorIncluded = false;
-			boolean ocspCertificateIncluded = false;	//Needed for BDoc-TM functionality
 			for (final CertificateToken certificateToken : toIncludeCertificates) {
 
 				if (trustAnchorBPPolicy && (certificatePool != null)) {
@@ -238,7 +237,6 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 
 				//BDoc-TM functionality: OCSP responder certificate must have RESPONDER_CERT id attribute (needed only for jDigidoc interoperability)
 				if(DSSASN1Utils.isOCSPSigning(certificateToken)) {
-					ocspCertificateIncluded = true;
 					element.setAttribute("Id", xadesSignature.getId() + "-RESPONDER_CERT");
 				}
 				//End of BDoc-TM functionality
@@ -248,13 +246,6 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 			if (trustAnchorBPPolicy && !trustAnchorIncluded) {
 				LOG.warn("The trust anchor is missing but its inclusion is required by the signature policy!");
 			}
-
-			//BDoc-TM functionality: must contain OCSP request
-			if (!ocspCertificateIncluded) {
-				LOG.error("OCSP responder certificate has not been included");
-				throw new DSSException("OCSP request failed");
-			}
-			//End of BDoc-TM functionality
 		}
 	}
 
