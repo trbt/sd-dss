@@ -20,9 +20,12 @@
  */
 package org.digidoc4j.dss.xades;
 
+import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.Policy;
+import eu.europa.esig.dss.XPathQueryHolder;
 import eu.europa.esig.dss.xades.XAdESSignatureParameters;
 import org.apache.commons.lang.StringUtils;
+import org.w3c.dom.Element;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -43,6 +46,18 @@ public class BDocTmSupport implements Serializable {
         }
         String policyId = StringUtils.trim(signaturePolicy.getId());
         return BDOC_TM_POLICY_ID.equals(policyId);
+    }
+
+    public static boolean hasBDocTmPolicyId(Element signatureElement, XPathQueryHolder xPathQueryHolder) {
+        Element policyIdentifier = DSSXMLUtils.getElement(signatureElement, xPathQueryHolder.XPATH_SIGNATURE_POLICY_IDENTIFIER);
+        if (policyIdentifier != null) {
+            final Element policyId = DSSXMLUtils.getElement(policyIdentifier, xPathQueryHolder.XPATH__POLICY_ID);
+            if (policyId != null) {
+                String policyIdString = StringUtils.trim(policyId.getTextContent());
+                return StringUtils.equalsIgnoreCase(BDocTmSupport.BDOC_TM_POLICY_ID, policyIdString);
+            }
+        }
+        return false;
     }
 
     public static String uriEncode(String string) {
