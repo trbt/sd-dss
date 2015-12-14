@@ -23,10 +23,15 @@ package org.digidoc4j.dss.asic;
 import eu.europa.esig.dss.DSSDocument;
 import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.InMemoryDocument;
+import eu.europa.esig.dss.Policy;
 import eu.europa.esig.dss.XPathQueryHolder;
 import eu.europa.esig.dss.asic.signature.asice.ASiCELevelLTTest;
+import eu.europa.esig.dss.validation.AdvancedSignature;
 import eu.europa.esig.dss.validation.SignedDocumentValidator;
+import eu.europa.esig.dss.validation.TimestampToken;
+import eu.europa.esig.dss.x509.SignaturePolicy;
 import eu.europa.esig.dss.xades.validation.XAdESSignature;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,9 +42,15 @@ import org.w3c.dom.NodeList;
 import java.io.IOException;
 import java.util.List;
 
+import static eu.europa.esig.dss.DigestAlgorithm.SHA256;
+import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class BDocTest extends ASiCELevelLTTest {
+
+    private static final String TM_POLICY = "urn:oid:1.3.6.1.4.1.10015.1000.3.2.1";
+    private static final String OIDAS_URN = "OIDAsURN";
 
     private DSSDocument documentToSign;
 
@@ -83,6 +94,43 @@ public class BDocTest extends ASiCELevelLTTest {
         assertEquals("dds_J%C3%9CRI%C3%96%C3%96%20%E2%82%AC%20%C5%BE%C5%A0%20p%C3%A4ev.txt", referenceUri);
     }
 
+    @Test
+    public void bdocTM_shouldNotContainTimestamp() throws Exception {
+        XAdESSignature xAdESSignature = createXadesSignatureForBdocTm();
+        assertTrue(isTimestampEmpty(xAdESSignature));
+    }
+
+    @Test
+    public void bdocTM_shouldNotContainTimestamp_whenPolicyIdContainsWhitespaceCharacters() throws Exception {
+        addSignaturePolicy("\n urn:oid:1.3.6.1.4.1.10015.1000.3.2.1\t \n");
+        DSSDocument signedDocument = sign();
+        XAdESSignature xAdESSignature =  extractXadesSignature(signedDocument);
+        assertTrue(isTimestampEmpty(xAdESSignature));
+    }
+
+    @Test
+    public void bdocTM_shouldContainPolicyId() throws Exception {
+        XAdESSignature xAdESSignature = createXadesSignatureForBdocTm();
+        SignaturePolicy policy = xAdESSignature.getPolicyId();
+        String policyIdentifier = policy.getIdentifier().trim();
+        assertEquals(TM_POLICY, policyIdentifier);
+        assertTrue(StringUtils.isNotBlank(policy.getUrl()));
+    }
+
+    @Test
+    public void bdocTM_shoudlContainPolicyQualifier() throws Exception {
+        XAdESSignature xAdESSignature = createXadesSignatureForBdocTm();
+        String qualifier = getSignaturePolicyQualifier(xAdESSignature);
+        assertEquals(OIDAS_URN, qualifier);
+    }
+
+    @Test
+    public void setSignatureId_whenCreatingXadesSignature() throws Exception {
+        getSignatureParameters().setDeterministicId("SIGNATURE-1");
+        XAdESSignature signature = createXadesSignatureForBdocTm();
+        assertEquals("SIGNATURE-1", signature.getId());
+    }
+
     @Override
     protected DSSDocument getDocumentToSign() {
         return documentToSign;
@@ -110,5 +158,43 @@ public class BDocTest extends ASiCELevelLTTest {
         Node dataFileReference = references.item(0);
         String uri = dataFileReference.getAttributes().getNamedItem("URI").getNodeValue();
         return uri;
+    }
+
+    private XAdESSignature createXadesSignatureForBdocTm() {
+        addTmSignaturePolicy();
+        DSSDocument signedDocument = sign();
+        return extractXadesSignature(signedDocument);
+    }
+
+    private XAdESSignature extractXadesSignature(DSSDocument signedDocument) {
+        SignedDocumentValidator validator = SignedDocumentValidator.fromDocument(signedDocument);
+        List<AdvancedSignature> signatureList = validator.getSignatures();
+        return (XAdESSignature)signatureList.get(0);
+    }
+
+    private void addTmSignaturePolicy() {
+        addSignaturePolicy(TM_POLICY);
+    }
+
+    private void addSignaturePolicy(String policyId) {
+        Policy signaturePolicy = new Policy();
+        signaturePolicy.setId(policyId);
+        signaturePolicy.setDigestValue(decodeBase64("3Tl1oILSvOAWomdI9VeWV6IA/32eSXRUri9kPEz1IVs="));
+        signaturePolicy.setDigestAlgorithm(SHA256);
+        signaturePolicy.setSpuri("https://www.sk.ee/repository/bdoc-spec21.pdf");
+        getSignatureParameters().bLevel().setSignaturePolicy(signaturePolicy);
+    }
+
+    private boolean isTimestampEmpty(XAdESSignature xAdESSignature) {
+        List<TimestampToken> signatureTimestamps = xAdESSignature.getSignatureTimestamps();
+        return signatureTimestamps == null || signatureTimestamps.size() == 0;
+    }
+
+    private String getSignaturePolicyQualifier(XAdESSignature xAdESSignature) {
+        XPathQueryHolder xPathQueryHolder = xAdESSignature.getXPathQueryHolder();
+        Element signatureElement = xAdESSignature.getSignatureElement();
+        Element element = DSSXMLUtils.getElement(signatureElement, xPathQueryHolder.XPATH_SIGNATURE_POLICY_IDENTIFIER);
+        Element identifier = DSSXMLUtils.getElement(element, "./xades:SignaturePolicyId/xades:SigPolicyId/xades:Identifier");
+        return identifier.getAttribute("Qualifier");
     }
 }
