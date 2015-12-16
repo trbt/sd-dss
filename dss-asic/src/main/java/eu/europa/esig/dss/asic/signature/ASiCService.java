@@ -415,7 +415,8 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 
 	private void storeZipComment(final ASiCParameters asicParameters, final ZipOutputStream outZip, final String toSignDocumentName) {
 		if (asicParameters.isZipComment() && StringUtils.isNotEmpty(toSignDocumentName)) {
-			outZip.setComment("mimetype=" + getMimeTypeBytes(asicParameters));
+			//outZip.setComment("mimetype=" + getMimeTypeBytes(asicParameters));
+			outZip.setComment(asicParameters.getZipCommentValue()); //BDoc specific functionality
 		}
 	}
 

@@ -34,13 +34,16 @@ import eu.europa.esig.dss.xades.validation.XAdESSignature;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.zip.ZipFile;
 
 import static eu.europa.esig.dss.DigestAlgorithm.SHA256;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
@@ -53,6 +56,9 @@ public class BDocTest extends ASiCELevelLTTest {
     private static final String OIDAS_URN = "OIDAsURN";
 
     private DSSDocument documentToSign;
+
+    @Rule
+    public TemporaryFolder testFolder = new TemporaryFolder();
 
     @Before
     public void setUp() throws Exception {
@@ -129,6 +135,17 @@ public class BDocTest extends ASiCELevelLTTest {
         getSignatureParameters().setDeterministicId("SIGNATURE-1");
         XAdESSignature signature = createXadesSignatureForBdocTm();
         assertEquals("SIGNATURE-1", signature.getId());
+    }
+
+    @Test
+    public void bdocShouldContainZipComment() throws Exception {
+        getSignatureParameters().aSiC().setZipComment(true);
+        getSignatureParameters().aSiC().setZipCommentValue("My name is Maximus Decimus Meridius");
+        DSSDocument signedDocument = sign();
+        String containerPath = testFolder.newFile().getPath();
+        signedDocument.save(containerPath);
+        ZipFile zipFile = new ZipFile(containerPath);
+        assertEquals("My name is Maximus Decimus Meridius", zipFile.getComment());
     }
 
     @Override

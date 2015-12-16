@@ -36,6 +36,8 @@ public class ASiCParameters implements Serializable {
 	 */
 	private boolean zipComment = false;
 
+	private String zipCommentValue;	//BDoc specific functionality
+
 	/**
 	 * Indicates the mime-type to be set within the mimetype file. If null the stored mime-type is that of the signed content.
 	 */
@@ -75,6 +77,7 @@ public class ASiCParameters implements Serializable {
 	public ASiCParameters(final ASiCParameters source) {
 
 		zipComment = source.zipComment;
+		zipCommentValue = source.zipCommentValue;	//BDoc specific functionality
 		mimeType = source.mimeType;
 		underlyingForm = source.underlyingForm;
 		containerForm = source.containerForm;
@@ -99,6 +102,16 @@ public class ASiCParameters implements Serializable {
 	public void setZipComment(final boolean zipComment) {
 		this.zipComment = zipComment;
 	}
+
+	//BDoc specific functionality
+	public String getZipCommentValue() {
+		return zipCommentValue;
+	}
+
+	public void setZipCommentValue(String zipCommentValue) {
+		this.zipCommentValue = zipCommentValue;
+	}
+	//End of BDoc specific functionality
 
 	public String getMimeType() {
 		return mimeType;
