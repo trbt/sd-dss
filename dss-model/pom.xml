@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+		<groupId>org.digidoc4j.dss</groupId>
 		<artifactId>sd-dss</artifactId>
 		<version>4.6.RC1.d4j.2</version>
 	</parent>
@@ -14,6 +14,49 @@
 	<artifactId>dss-model</artifactId>
 	<name>DSS Model</name>
 	<description>DSS Model contains the data model representation for DSS. All classes should be serializable (REST/SOAP)</description>
+
+	<url>https://github.com/open-eid/sd-dss</url>
+	<licenses>
+		<license>
+			<name>GNU Lesser General Public License, Version 2.1</name>
+			<url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<id>naramski</id>
+			<name>David Naramski</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>vandenbroucke</id>
+			<name>Pierrick Vandenbroucke</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>pirard</id>
+			<name>Nicolas Pirard</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>abinet</id>
+			<name>Axel Abinet</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:git@github.com:open-eid/sd-dss.git</connection>
+		<developerConnection>scm:git:git@github.com:open-eid/sd-dss.git</developerConnection>
+		<url>https://github.com/open-eid/sd-dss.git</url>
+	</scm>
 	
 	<dependencies>
 		<!-- No other dependencies than in scope test  -->

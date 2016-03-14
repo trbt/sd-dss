@@ -4,12 +4,20 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+	<groupId>org.digidoc4j.dss</groupId>
 	<artifactId>sd-dss</artifactId>
 	<version>4.6.RC1.d4j.2</version>
 	<packaging>pom</packaging>
 	<name>Digital Signature Services</name>
 
+	<description>Java library for digitally signing and validating documents</description>
+	<url>https://github.com/open-eid/sd-dss</url>
+	<licenses>
+		<license>
+			<name>GNU Lesser General Public License, Version 2.1</name>
+			<url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+		</license>
+	</licenses>
 	<developers>
 		<developer>
 			<id>naramski</id>
@@ -39,7 +47,21 @@
 				<role>developer</role>
 			</roles>
 		</developer>
-		
+		<developer>
+			<name>Rainer Villido</name>
+			<organization>Nortal</organization>
+			<organizationUrl>http://www.nortal.com</organizationUrl>
+		</developer>
+		<developer>
+			<name>Aho Augasmägi</name>
+			<organization>Codeborne</organization>
+			<organizationUrl>http://www.codeborne.com</organizationUrl>
+		</developer>
+		<developer>
+			<name>Allan Juhanson</name>
+			<organization>Nortal</organization>
+			<organizationUrl>http://www.nortal.com</organizationUrl>
+		</developer>
 	</developers>
 	
 	<properties>
@@ -103,6 +125,8 @@
 						<java.util.logging.config.file>../logging.properties</java.util.logging.config.file>
 					</systemProperties>
 				</configuration>
+				<!-- Configuration not used by DigiDoc4j -->
+				<!--
 				<executions>
 					<execution>
 						<id>non-regression</id>
@@ -161,6 +185,7 @@
 						</configuration>
 					</execution>
 				</executions>
+				-->
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -177,14 +202,17 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-<!-- 				<executions> -->
-<!-- 					<execution> -->
-<!-- 						<id>attach-javadocs</id> -->
-<!-- 						<goals> -->
-<!-- 							<goal>jar</goal> -->
-<!-- 						</goals>	 -->
-<!-- 					</execution> -->
-<!-- 				</executions> -->
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<additionalparam>-Xdoclint:none</additionalparam>
+				</configuration>
 			</plugin>
 			<plugin>
 				<!-- explicitly define maven-deploy-plugin after other to force exec order -->
@@ -309,174 +337,191 @@
 	</build>
 
 	<scm>
-		<url>https://github.com/esig/dss.git</url>
-		<connection>scm:git:https://github.com/esig/dss.git</connection>
-		<developerConnection>scm:git:https://github.com/esig/dss.git</developerConnection>
-		<tag>HEAD</tag>
+		<connection>scm:git:git@github.com:open-eid/sd-dss.git</connection>
+		<developerConnection>scm:git:git@github.com:open-eid/sd-dss.git</developerConnection>
+		<url>https://github.com/open-eid/sd-dss.git</url>
 	</scm>
 
 	<dependencyManagement>
 		<dependencies>
 			<!-- Internal Dependencies -->
+			<!-- Dependencies not used by DigiDoc4j -->
+			<!--
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>sscd-mocca-adapter</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-demo-applet</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-demo-applet-package</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-light-applet-package</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-demo-webapp</artifactId>
 				<type>war</type>
 				<version>${project.version}</version>
 			</dependency>
+			-->
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-spi</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-service</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-document</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-document</artifactId>
 				<type>test-jar</type>
 				<version>${project.version}</version>
 			</dependency>
+			<!-- Dependencies not used by DigiDoc4j -->
+			<!--
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-webservices</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-webservices-client</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			-->
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-asic</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-cades</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<!-- Dependency not used by DigiDoc4j -->
+			<!--
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-pades</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			-->
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-xades</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-model</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
+			<!-- Dependencies not used by DigiDoc4j -->
+			<!--
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-remote-services</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-rest</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-rest-client</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-soap</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-soap-client</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-light-applet</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
+	        -->
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-token</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-tsl-jaxb</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-tsl-validation</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 	        <dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-diagnostic-jaxb</artifactId>
 				<version>${project.version}</version>
 	        </dependency>
+			<!-- Dependency not used by DigiDoc4j -->
+			<!--
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-policy-jaxb</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			-->
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>validation-policy</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<!-- Dependencies not used by DigiDoc4j -->
+			<!--
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-standalone-app</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-standalone-app-package</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-cookbook</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			-->
 			<dependency>
-				<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-test</artifactId>
 				<version>${project.version}</version>
 				<scope>test</scope>
@@ -695,6 +740,8 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	<!-- Repositories are not used by DigiDoc4j -->
+	<!--
 	<repositories>
 		<repository>
 			<id>jboss-public</id>
@@ -717,105 +764,31 @@
 			<url>http://joinup.ec.europa.eu/site/sd-dss/maven2</url>
 		</repository>
 	</repositories>
-
-	<distributionManagement>
-		<repository>
-			<id>joinup-nexus</id>
-			<url>https://joinup.ec.europa.eu/nexus/content/repositories/releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>joinup-nexus</id>
-			<url>https://joinup.ec.europa.eu/nexus/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<site>
-			<id>joinup-site</id>
-			<url>dav:https://joinup.ec.europa.eu/webdav/sd-dss/www</url>
-		</site>
-	</distributionManagement>
+	-->
 
 	<profiles>
-		<profile>
-			<id>notJava8</id>
-			
-			<activation>
-				<jdk>[1.6,1.8)</jdk>
-			</activation>
 
-			<!-- Skip dss-standalone-app (JavaFX) -->
-			<modules>
-				<module>dss-model</module>
-				<module>dss-token</module>
-				<module>dss-document</module>
-				<module>dss-service</module>
-				<module>dss-spi</module>
-				<module>dss-test</module>
-				<module>sscd-mocca-adapter</module>
-				<module>dss-webservices</module>
-				<module>dss-webservices-client</module>
-				<module>dss-demo-applet</module>
-				<module>dss-demo-applet-package</module>
-				<module>dss-light-applet</module>
-				<module>dss-light-applet-package</module>
-				<module>dss-cookbook</module>
-				<module>dss-demo-webapp</module>
-				<module>dss-demo-bundle</module>
-				<module>dss-policy-jaxb</module>
-				<module>dss-tsl-jaxb</module>
-				<module>dss-diagnostic-jaxb</module>
-				<module>validation-policy</module>
-				<module>dss-asic</module>
-				<module>dss-cades</module>
-				<module>dss-pades</module>
-				<module>dss-xades</module>
-				<module>dss-remote-services</module>
-				<module>dss-rest-client</module>
-				<module>dss-rest</module>
-				<module>dss-soap-client</module>
-				<module>dss-soap</module>
-				<module>dss-tsl-validation</module>
-			</modules>
-		</profile>
-		
 		<profile>
-			<id>java8</id>
-			
+			<!-- Using only the modules used by Digidoc4j -->
+			<id>digidoc4j</id>
 			<activation>
-				<jdk>[1.8,</jdk>
+				<activeByDefault>true</activeByDefault>
 			</activation>
 
 			<modules>
-				<module>dss-model</module>
-				<module>dss-token</module>
-				<module>dss-document</module>
-				<module>dss-service</module>
-				<module>dss-spi</module>
-				<module>dss-test</module>
-				<module>sscd-mocca-adapter</module>
-				<module>dss-webservices</module>
-				<module>dss-webservices-client</module>
-				<module>dss-demo-applet</module>
-				<module>dss-demo-applet-package</module>
-				<module>dss-light-applet</module>
-				<module>dss-light-applet-package</module>
-				<module>dss-standalone-app</module>
-				<module>dss-standalone-app-package</module>
-				<module>dss-cookbook</module>
-				<module>dss-demo-webapp</module>
-				<module>dss-demo-bundle</module>
-				<module>dss-policy-jaxb</module>
-				<module>dss-tsl-jaxb</module>
-				<module>dss-diagnostic-jaxb</module>
-				<module>validation-policy</module>
 				<module>dss-asic</module>
 				<module>dss-cades</module>
-				<module>dss-pades</module>
-				<module>dss-xades</module>
-				<module>dss-remote-services</module>
-				<module>dss-rest-client</module>
-				<module>dss-rest</module>
-				<module>dss-soap-client</module>
-				<module>dss-soap</module>
+				<module>dss-diagnostic-jaxb</module>
+				<module>dss-document</module>
+				<module>dss-model</module>
+				<module>dss-service</module>
+				<module>dss-spi</module>
+				<module>dss-token</module>
+				<module>dss-tsl-jaxb</module>
 				<module>dss-tsl-validation</module>
+				<module>dss-xades</module>
+				<module>validation-policy</module>
+				<module>dss-test</module>
 			</modules>
 		</profile>
 	
@@ -827,6 +800,7 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
 							<skip>true</skip>
+							<skipTests>true</skipTests>
 						</configuration>
 					</plugin>
 					<plugin>
