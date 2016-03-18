@@ -1,18 +1,61 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+		<groupId>org.digidoc4j.dss</groupId>
 		<artifactId>sd-dss</artifactId>
-		<version>4.6.RC1</version>
+		<version>4.6.RC1.d4j.2</version>
 	</parent>
 
 	<artifactId>dss-token</artifactId>
 	<name>DSS Token</name>
 	<description>Token implementations for PKCS11, PKCS12, MsCapi and JKS</description>
 
+	<url>https://github.com/open-eid/sd-dss</url>
+	<licenses>
+		<license>
+			<name>GNU Lesser General Public License, Version 2.1</name>
+			<url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<id>naramski</id>
+			<name>David Naramski</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>vandenbroucke</id>
+			<name>Pierrick Vandenbroucke</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>pirard</id>
+			<name>Nicolas Pirard</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>abinet</id>
+			<name>Axel Abinet</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:git@github.com:open-eid/sd-dss.git</connection>
+		<developerConnection>scm:git:git@github.com:open-eid/sd-dss.git</developerConnection>
+		<url>https://github.com/open-eid/sd-dss.git</url>
+	</scm>
+
 	<dependencies>
 		<dependency>
-			<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+			<groupId>org.digidoc4j.dss</groupId>
 			<artifactId>dss-model</artifactId>
 		</dependency>
 		<dependency>

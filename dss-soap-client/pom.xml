@@ -2,9 +2,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+		<groupId>org.digidoc4j.dss</groupId>
 		<artifactId>sd-dss</artifactId>
-		<version>4.6.RC1</version>
+		<version>4.6.RC1.d4j.2</version>
 	</parent>
 
 	<artifactId>dss-soap-client</artifactId>
@@ -13,7 +13,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+			<groupId>org.digidoc4j.dss</groupId>
 			<artifactId>dss-model</artifactId>
 		</dependency>
 		<dependency>
@@ -59,7 +59,7 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+			<groupId>org.digidoc4j.dss</groupId>
 			<artifactId>dss-test</artifactId>
 			<scope>test</scope>
 		</dependency>

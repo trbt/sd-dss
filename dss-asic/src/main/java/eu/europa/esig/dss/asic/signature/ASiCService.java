@@ -40,6 +40,8 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.digidoc4j.dss.asic.Manifest;
+import org.digidoc4j.dss.asic.ManifestCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -265,7 +267,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		return null;
 	}
 
-	private InMemoryDocument buildASiCContainer(final DSSDocument toSignDocument, DSSDocument signDocument, final ASiCSignatureParameters parameters,
+	public InMemoryDocument buildASiCContainer(final DSSDocument toSignDocument, DSSDocument signDocument, final ASiCSignatureParameters parameters,
 			final DSSDocument signature) throws IOException {
 
 		ASiCParameters asicParameters = parameters.aSiC();
@@ -286,6 +288,11 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 
 			storeMimetype(asicParameters, zipOutputStream);
 		}
+		// BDoc functionality
+		if (isAsice(asicParameters) && isXAdESForm(asicParameters)) {
+			ManifestCreator.storeManifest(toSignDocument, zipOutputStream);
+		}
+		// End of BDoc functionality
 		storeSignedFiles(toSignDocument, zipOutputStream);
 
 		storesSignature(asicParameters, signature, zipOutputStream);
@@ -304,6 +311,11 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		final InputStream inputStream = toSignAsicContainer.openStream();
 		final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
 		for (ZipEntry entry = getNextZipEntry(zipInputStream); entry != null; entry = getNextZipEntry(zipInputStream)) {
+			// BDoc functionality
+			if (entry.getName().equals(Manifest.XML_PATH)) {
+				continue; //Skip copying manifest.xml file
+			}
+			// End of BDoc functionality
 
 			createZipEntry(zipOutputStream, entry);
 			IOUtils.copy(zipInputStream, zipOutputStream);
@@ -403,7 +415,8 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 
 	private void storeZipComment(final ASiCParameters asicParameters, final ZipOutputStream outZip, final String toSignDocumentName) {
 		if (asicParameters.isZipComment() && StringUtils.isNotEmpty(toSignDocumentName)) {
-			outZip.setComment("mimetype=" + getMimeTypeBytes(asicParameters));
+			//outZip.setComment("mimetype=" + getMimeTypeBytes(asicParameters));
+			outZip.setComment(asicParameters.getZipCommentValue()); //BDoc specific functionality
 		}
 	}
 
@@ -538,6 +551,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		xadesParameters.setSignaturePackaging(SignaturePackaging.DETACHED);
 		xadesParameters.setSignedInfoCanonicalizationMethod(parameters.getSignedInfoCanonicalizationMethod());
 		xadesParameters.setSignedPropertiesCanonicalizationMethod(parameters.getSignedPropertiesCanonicalizationMethod());
+		xadesParameters.setDeterministicId(parameters.getDeterministicId());
 		return xadesParameters;
 	}
 
@@ -568,6 +582,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		}
 		cadesParameters.setSignatureLevel(underlyingLevel);
 		cadesParameters.setSignaturePackaging(SignaturePackaging.DETACHED);
+		cadesParameters.setDeterministicId(parameters.getDeterministicId());
 		return cadesParameters;
 	}
 
@@ -580,6 +595,7 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 		parameters.setDetachedContent(originalParameters.getDetachedContent());
 		parameters.setBLevelParams(originalParameters.bLevel());
 		parameters.setDigestAlgorithm(originalParameters.getDigestAlgorithm());
+		parameters.setEncryptionAlgorithm(originalParameters.getEncryptionAlgorithm());
 		parameters.setContentTimestampParameters(originalParameters.getContentTimestampParameters());
 		parameters.setContentTimestamps(originalParameters.getContentTimestamps());
 		parameters.setSignatureTimestampParameters(originalParameters.getSignatureTimestampParameters());
@@ -602,20 +618,14 @@ public class ASiCService extends AbstractSignatureService<ASiCSignatureParameter
 	}
 
 	private String getSignatureFileName(final ASiCParameters asicParameters) {
+		if(StringUtils.isNotBlank(asicParameters.getSignatureFileName())) {
+			return META_INF + asicParameters.getSignatureFileName();
+		}
 		final boolean asice = isAsice(asicParameters);
-		final DSSDocument enclosedSignature = asicParameters.getEnclosedSignature();
 		if (isXAdESForm(asicParameters)) {
-			if (asice && (enclosedSignature != null)) {
-				return META_INF + asicParameters.getSignatureFileName();
-			} else {
-				return asice ? ZIP_ENTRY_ASICE_METAINF_XADES_SIGNATURE : ZIP_ENTRY_ASICS_METAINF_XADES_SIGNATURE;
-			}
+			return asice ? ZIP_ENTRY_ASICE_METAINF_XADES_SIGNATURE : ZIP_ENTRY_ASICS_METAINF_XADES_SIGNATURE;
 		} else if (isCAdESForm(asicParameters)) {
-			if (asice && (enclosedSignature != null)) {
-				return META_INF + asicParameters.getSignatureFileName();
-			} else {
-				return asice ? ZIP_ENTRY_ASICE_METAINF_CADES_SIGNATURE : ZIP_ENTRY_ASICS_METAINF_CADES_SIGNATURE;
-			}
+			return asice ? ZIP_ENTRY_ASICE_METAINF_CADES_SIGNATURE : ZIP_ENTRY_ASICS_METAINF_CADES_SIGNATURE;
 		} else {
 			throw new DSSException("ASiC signature form must be XAdES or CAdES!");
 		}

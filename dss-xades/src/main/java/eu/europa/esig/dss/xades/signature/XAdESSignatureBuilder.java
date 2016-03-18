@@ -32,6 +32,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.digidoc4j.dss.xades.BDocTmSupport;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -340,7 +341,7 @@ public abstract class XAdESSignatureBuilder extends XAdESBuilder implements Sign
 
 		final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, XMLNS, DS_REFERENCE);
 		referenceDom.setAttribute(ID, dssReference.getId());
-		final String uri = dssReference.getUri();
+		final String uri = BDocTmSupport.uriEncode(dssReference.getUri());	//BDoc-TM functionality needs the data file reference uri to be encoded
 		referenceDom.setAttribute(URI, uri);
 		referenceDom.setAttribute(TYPE, dssReference.getType());
 
@@ -461,7 +462,14 @@ public abstract class XAdESSignatureBuilder extends XAdESBuilder implements Sign
 				final Element signaturePolicyIdDom = DSSXMLUtils.addElement(documentDom, signaturePolicyIdentifierDom, XAdES, XADES_SIGNATURE_POLICY_ID);
 				final Element sigPolicyIdDom = DSSXMLUtils.addElement(documentDom, signaturePolicyIdDom, XAdES, XADES_SIG_POLICY_ID);
 
-				DSSXMLUtils.addTextElement(documentDom, sigPolicyIdDom, XAdES, XADES_IDENTIFIER, signaturePolicyId);
+				//Element policyIdElement = DSSXMLUtils.addTextElement(documentDom, sigPolicyIdDom, XAdES, XADES_IDENTIFIER, signaturePolicyId);
+				Element policyIdElement = DSSXMLUtils.addTextElement(documentDom, sigPolicyIdDom, XAdES, XADES_IDENTIFIER, signaturePolicyId); //Estonian BDoc TM support
+
+				//Estonian bdoc TM support
+				if (signaturePolicyId.equals(BDocTmSupport.BDOC_TM_POLICY_ID)) {
+					policyIdElement.setAttribute("Qualifier", BDocTmSupport.BDOC_TM_POLICY_QUALIFIER);
+				}
+				//End of Estonian bdoc TM support
 
 				String description = signaturePolicy.getDescription();
 				if (StringUtils.isNotEmpty(description)){

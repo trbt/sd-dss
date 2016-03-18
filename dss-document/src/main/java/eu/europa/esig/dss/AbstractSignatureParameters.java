@@ -188,4 +188,7 @@ public abstract class AbstractSignatureParameters extends AbstractSerializableSi
 		deterministicId = null;
 	}
 
+	public void setDeterministicId(String deterministicId) {
+		this.deterministicId = deterministicId;
+	}
 }
