@@ -1,25 +1,15 @@
-## DSS : Digital Signature Service
+## DSS : Digital Signature Service for DigiDoc4j
 
-This is the official repository for project DSS : https://joinup.ec.europa.eu/asset/sd-dss/description. 
+This is a Digital Signature Service project used by DigiDoc4j. This fork contains mainly BDoc-TM specific changes.
 
-# Demo
+DigiDoc4j is locaded at https://github.com/open-eid/digidoc4j
 
-A demo is available on http://dss.nowina.lu
+This is a forked repository from the original DSS project located at https://github.com/esig/dss and https://joinup.ec.europa.eu/asset/sd-dss/description. 
 
 # Issue Tracker
 
-Please, use the new JIRA for project is on https://esig-dss.atlassian.net/projects/DSS . 
+Please, use Pivotal on https://www.pivotaltracker.com/n/projects/1110130
 
 # Maven repository
 
-The release is published on Joinup repository : 
-
-https://joinup.ec.europa.eu/nexus/index.html#welcome
-
-<pre>
-&lt;repository&gt;
-  &lt;id&gt;joinup&lt;/id&gt;
-  &lt;name&gt;Joinup&lt;/name&gt;
-  &lt;url&gt;https://joinup.ec.europa.eu/nexus/content/repositories/releases/&lt;/url&gt;
-&lt;/repository&gt;
-</pre>
+The modules needed by DigiDoc4j are published to the Maven Central (http://mvnrepository.com/artifact/org.digidoc4j.dss)
