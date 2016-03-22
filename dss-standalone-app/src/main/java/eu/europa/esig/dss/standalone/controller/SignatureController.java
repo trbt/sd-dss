@@ -71,6 +71,9 @@ public class SignatureController implements Initializable {
 
 	@FXML
 	private ComboBox<SignatureLevel> comboLevel;
+	
+	@FXML
+	private Label warningLabel;
 
 	@FXML
 	private TypedToggleGroup<DigestAlgorithm> toggleDigestAlgo;
@@ -111,6 +114,11 @@ public class SignatureController implements Initializable {
 
 	private RemoteDocumentSignatureService<RemoteDocument, RemoteSignatureParameters> signatureService;
 
+	static {
+		// Fix a freeze in Windows 10, JDK 8 and touchscreen 
+		System.setProperty("glass.accessible.force", "false");
+	}
+	
 	public void setStage(Stage stage) {
 		this.stage = stage;
 	}
@@ -129,7 +137,7 @@ public class SignatureController implements Initializable {
 		hPkcsPassword.managedProperty().bind(hPkcsPassword.visibleProperty());
 		labelPkcs11File.managedProperty().bind(labelPkcs11File.visibleProperty());
 		labelPkcs12File.managedProperty().bind(labelPkcs12File.visibleProperty());
-
+		
 		fileSelectButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -185,7 +193,8 @@ public class SignatureController implements Initializable {
 
 		pkcsPassword.textProperty().bindBidirectional(model.passwordProperty());
 
-		BooleanBinding isPkcs11Or12 = model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS11).or(model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS12));
+		BooleanBinding isPkcs11Or12 = model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS11)
+				.or(model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS12));
 
 		hPkcsFile.visibleProperty().bind(isPkcs11Or12);
 		hPkcsPassword.visibleProperty().bind(isPkcs11Or12);
@@ -193,16 +202,16 @@ public class SignatureController implements Initializable {
 		labelPkcs11File.visibleProperty().bind(model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS11));
 		labelPkcs12File.visibleProperty().bind(model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS12));
 
-		BooleanBinding isMandatoryFieldsEmpty = model.fileToSignProperty().isNull().or(model.signatureFormProperty().isNull()).or(model.signaturePackagingProperty().isNull())
-				.or(model.digestAlgorithmProperty().isNull()).or(model.tokenTypeProperty().isNull());
+		BooleanBinding isMandatoryFieldsEmpty = model.fileToSignProperty().isNull().or(model.signatureFormProperty().isNull())
+				.or(model.signaturePackagingProperty().isNull()).or(model.digestAlgorithmProperty().isNull()).or(model.tokenTypeProperty().isNull());
 
-		BooleanBinding isUnderlyingEmpty = model.signatureFormProperty().isEqualTo(SignatureForm.ASiC_S).or(model.signatureFormProperty().isEqualTo(SignatureForm.ASiC_E))
-				.and(model.asicUnderlyingFormProperty().isNull());
+		BooleanBinding isUnderlyingEmpty = model.signatureFormProperty().isEqualTo(SignatureForm.ASiC_S)
+				.or(model.signatureFormProperty().isEqualTo(SignatureForm.ASiC_E)).and(model.asicUnderlyingFormProperty().isNull());
 
 		BooleanBinding isEmptyFileOrPassword = model.pkcsFileProperty().isNull().or(model.passwordProperty().isEmpty());
 
-		BooleanBinding isPKCSIncomplete = model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS11).or(model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS12))
-				.and(isEmptyFileOrPassword);
+		BooleanBinding isPKCSIncomplete = model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS11)
+				.or(model.tokenTypeProperty().isEqualTo(SignatureTokenType.PKCS12)).and(isEmptyFileOrPassword);
 
 		final BooleanBinding disableSignButton = isMandatoryFieldsEmpty.or(isUnderlyingEmpty).or(isPKCSIncomplete);
 
@@ -224,6 +233,7 @@ public class SignatureController implements Initializable {
 					public void handle(WorkerStateEvent event) {
 						save(service.getValue());
 						signButton.disableProperty().bind(disableSignButton);
+						model.setPassword(null);
 					}
 				});
 				service.setOnFailed(new EventHandler<WorkerStateEvent>() {
@@ -232,14 +242,13 @@ public class SignatureController implements Initializable {
 						Alert alert = new Alert(AlertType.ERROR, "Oops an error occurred : " + service.getMessage(), ButtonType.CLOSE);
 						alert.showAndWait();
 						signButton.disableProperty().bind(disableSignButton);
+						model.setPassword(null);
 					}
 				});
 
 				progressSign.progressProperty().bind(service.progressProperty());
 				signButton.disableProperty().bind(service.runningProperty());
 				service.start();
-
-				model.setPassword(null);
 			}
 		});
 	}
@@ -254,52 +263,52 @@ public class SignatureController implements Initializable {
 
 		if (signatureForm != null) {
 			switch (signatureForm) {
-				case CAdES:
-					envelopingRadio.setDisable(false);
-					detachedRadio.setDisable(false);
+			case CAdES:
+				envelopingRadio.setDisable(false);
+				detachedRadio.setDisable(false);
 
-					comboLevel.getItems().addAll(SignatureLevel.CAdES_BASELINE_B, SignatureLevel.CAdES_BASELINE_T, SignatureLevel.CAdES_BASELINE_LT,
-							SignatureLevel.CAdES_BASELINE_LTA);
-					comboLevel.setValue(SignatureLevel.CAdES_BASELINE_B);
-					break;
-				case PAdES:
-					envelopedRadio.setDisable(false);
+				comboLevel.getItems().addAll(SignatureLevel.CAdES_BASELINE_B, SignatureLevel.CAdES_BASELINE_T, SignatureLevel.CAdES_BASELINE_LT,
+						SignatureLevel.CAdES_BASELINE_LTA);
+				comboLevel.setValue(SignatureLevel.CAdES_BASELINE_B);
+				break;
+			case PAdES:
+				envelopedRadio.setDisable(false);
 
-					envelopedRadio.setSelected(true);
+				envelopedRadio.setSelected(true);
 
-					comboLevel.getItems().addAll(SignatureLevel.PAdES_BASELINE_B, SignatureLevel.PAdES_BASELINE_T, SignatureLevel.PAdES_BASELINE_LT,
-							SignatureLevel.PAdES_BASELINE_LTA);
-					comboLevel.setValue(SignatureLevel.PAdES_BASELINE_B);
-					break;
-				case XAdES:
-					envelopingRadio.setDisable(false);
-					envelopedRadio.setDisable(false);
-					detachedRadio.setDisable(false);
+				comboLevel.getItems().addAll(SignatureLevel.PAdES_BASELINE_B, SignatureLevel.PAdES_BASELINE_T, SignatureLevel.PAdES_BASELINE_LT,
+						SignatureLevel.PAdES_BASELINE_LTA);
+				comboLevel.setValue(SignatureLevel.PAdES_BASELINE_B);
+				break;
+			case XAdES:
+				envelopingRadio.setDisable(false);
+				envelopedRadio.setDisable(false);
+				detachedRadio.setDisable(false);
 
-					comboLevel.getItems().addAll(SignatureLevel.XAdES_BASELINE_B, SignatureLevel.XAdES_BASELINE_T, SignatureLevel.XAdES_BASELINE_LT,
-							SignatureLevel.XAdES_BASELINE_LTA);
-					comboLevel.setValue(SignatureLevel.XAdES_BASELINE_B);
-					break;
-				case ASiC_S:
-					detachedRadio.setDisable(false);
+				comboLevel.getItems().addAll(SignatureLevel.XAdES_BASELINE_B, SignatureLevel.XAdES_BASELINE_T, SignatureLevel.XAdES_BASELINE_LT,
+						SignatureLevel.XAdES_BASELINE_LTA);
+				comboLevel.setValue(SignatureLevel.XAdES_BASELINE_B);
+				break;
+			case ASiC_S:
+				detachedRadio.setDisable(false);
 
-					detachedRadio.setSelected(true);
+				detachedRadio.setSelected(true);
 
-					comboLevel.getItems().addAll(SignatureLevel.ASiC_S_BASELINE_B, SignatureLevel.ASiC_S_BASELINE_T, SignatureLevel.ASiC_S_BASELINE_LT,
-							SignatureLevel.ASiC_S_BASELINE_LTA);
-					comboLevel.setValue(SignatureLevel.ASiC_S_BASELINE_B);
-					break;
-				case ASiC_E:
-					detachedRadio.setDisable(false);
+				comboLevel.getItems().addAll(SignatureLevel.ASiC_S_BASELINE_B, SignatureLevel.ASiC_S_BASELINE_T, SignatureLevel.ASiC_S_BASELINE_LT,
+						SignatureLevel.ASiC_S_BASELINE_LTA);
+				comboLevel.setValue(SignatureLevel.ASiC_S_BASELINE_B);
+				break;
+			case ASiC_E:
+				detachedRadio.setDisable(false);
 
-					detachedRadio.setSelected(true);
+				detachedRadio.setSelected(true);
 
-					comboLevel.getItems().addAll(SignatureLevel.ASiC_E_BASELINE_B, SignatureLevel.ASiC_E_BASELINE_T, SignatureLevel.ASiC_E_BASELINE_LT,
-							SignatureLevel.ASiC_E_BASELINE_LTA);
-					comboLevel.setValue(SignatureLevel.ASiC_E_BASELINE_B);
-					break;
-				default:
-					break;
+				comboLevel.getItems().addAll(SignatureLevel.ASiC_E_BASELINE_B, SignatureLevel.ASiC_E_BASELINE_T, SignatureLevel.ASiC_E_BASELINE_LT,
+						SignatureLevel.ASiC_E_BASELINE_LTA);
+				comboLevel.setValue(SignatureLevel.ASiC_E_BASELINE_B);
+				break;
+			default:
+				break;
 			}
 		}
 	}
@@ -318,7 +327,7 @@ public class SignatureController implements Initializable {
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialFileName(signedDocument.getName());
 		MimeType mimeType = signedDocument.getMimeType();
-		ExtensionFilter extFilter = new ExtensionFilter(mimeType.getMimeTypeString(), "*." + mimeType.getExtension());
+		ExtensionFilter extFilter = new ExtensionFilter(mimeType.getMimeTypeString(), "*." + MimeType.getExtension(mimeType));
 		fileChooser.getExtensionFilters().add(extFilter);
 		File fileToSave = fileChooser.showSaveDialog(stage);
 
