@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="4.6.RC1.d4j.2"
+version="4.6.d4j.1"
 staging_url="https://oss.sonatype.org/service/local/staging/deploy/maven2/"
 #staging_url=file:/Users/rainer/tmp/test-local-repo
 repositoryId="ossrh"
