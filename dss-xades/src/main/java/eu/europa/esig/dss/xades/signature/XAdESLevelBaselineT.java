@@ -221,6 +221,11 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 			final CertificatePool certificatePool = getCertificatePool();
 			final boolean trustAnchorBPPolicy = params.bLevel().isTrustAnchorBPPolicy();
 			boolean trustAnchorIncluded = false;
+
+			//Custom Estonian functionality: OCSP responder certificate must have RESPONDER_CERT id attribute (needed only for jDigidoc interoperability)
+			int responderCertCounter = 0;
+			//End of Custom Estonian functionality
+
 			for (final CertificateToken certificateToken : toIncludeCertificates) {
 
 				if (trustAnchorBPPolicy && (certificatePool != null)) {
@@ -236,8 +241,10 @@ public class XAdESLevelBaselineT extends ExtensionBuilder implements SignatureEx
 				Element element = DSSXMLUtils.addElement(documentDom, certificateValuesDom, XAdES, XADES_ENCAPSULATED_X509_CERTIFICATE);
 
 				//BDoc-TM functionality: OCSP responder certificate must have RESPONDER_CERT id attribute (needed only for jDigidoc interoperability)
-				if(DSSASN1Utils.isOCSPSigning(certificateToken)) {
-					element.setAttribute("Id", xadesSignature.getId() + "-RESPONDER_CERT");
+				boolean isCaCert = certificateToken.getCertificate().getBasicConstraints() != -1;
+				if(DSSASN1Utils.isOCSPSigning(certificateToken) && !isCaCert) {
+					element.setAttribute("Id", xadesSignature.getId() + "-RESPONDER_CERT-" + responderCertCounter);
+					responderCertCounter++;
 				}
 				//End of BDoc-TM functionality
 
