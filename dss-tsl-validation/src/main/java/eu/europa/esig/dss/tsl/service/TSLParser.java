@@ -401,10 +401,13 @@ public class TSLParser implements Callable<TSLParserResult> {
 								QualificationsType qt = (QualificationsType) jaxbElement.getValue();
 								if ((qt != null) && CollectionUtils.isNotEmpty(qt.getQualificationElement())) {
 									for (QualificationElementType qualificationElement : qt.getQualificationElement()) {
-										List<String> qualifiers = extractQualifiers(qualificationElement);
-										Condition condition = getCondition(qualificationElement.getCriteriaList());
-										if (CollectionUtils.isNotEmpty(qualifiers) && (condition != null)) {
-											conditionsForQualifiers.add(new TSLConditionsForQualifiers(qualifiers, condition));
+										CriteriaListType criteriaList = qualificationElement.getCriteriaList();
+										if(criteriaList != null) { //Added null check for TSL v5
+											List<String> qualifiers = extractQualifiers(qualificationElement);
+											Condition condition = getCondition(criteriaList);
+											if (CollectionUtils.isNotEmpty(qualifiers) && (condition != null)) {
+												conditionsForQualifiers.add(new TSLConditionsForQualifiers(qualifiers, condition));
+											}
 										}
 									}
 								}

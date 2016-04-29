@@ -76,4 +76,21 @@ public class TSLParserTest {
 		assertEquals(oldResult, certs.size());
 	}
 
+	@Test
+	public void countCertificatesEE_TSLv5() throws Exception {
+		int oldResult = 41;
+		TSLParser parser = new TSLParser(new FileInputStream(new File("src/test/resources/tsls/tl-estonia_v5.xml")));
+		TSLParserResult model = parser.call();
+
+		Set<CertificateToken> certs = new HashSet<CertificateToken>();
+		List<TSLServiceProvider> serviceProviders = model.getServiceProviders();
+		for (TSLServiceProvider tslServiceProvider : serviceProviders) {
+			List<TSLService> services = tslServiceProvider.getServices();
+			for (TSLService tslService : services) {
+				certs.addAll( tslService.getCertificates());
+			}
+		}
+		assertEquals(oldResult, certs.size());
+	}
+
 }

@@ -800,7 +800,8 @@ public class X509CertificateValidation {
 			status = trustedServiceProviderXmlDom == null ? "" : trustedServiceProviderXmlDom.getValue("./Status/text()");
 			acceptableStatus = TSLConstant.SERVICE_STATUS_UNDERSUPERVISION.equals(status) || TSLConstant.SERVICE_STATUS_SUPERVISIONINCESSATION.equals(status) || TSLConstant.SERVICE_STATUS_ACCREDITED
 					.equals(status) || TSLConstant.SERVICE_STATUS_UNDERSUPERVISION_119612.equals(status) || TSLConstant.SERVICE_STATUS_SUPERVISIONINCESSATION_119612
-					.equals(status) || TSLConstant.SERVICE_STATUS_ACCREDITED_119612.equals(status);
+					.equals(status) || TSLConstant.SERVICE_STATUS_ACCREDITED_119612.equals(status) ||
+					TSLConstant.SERVICE_STATUS_GRANTED.equals(status) || TSLConstant.SERVICE_STATUS_RECOGNISED_NATIONAL_LEVEL.equals(status); //Support for TSL v5 (temporary fix until DSS provides a proper TSL v5 support)
 			if (acceptableStatus) {
 				break;
 			}
@@ -853,7 +854,8 @@ public class X509CertificateValidation {
 				final String status = trustedServiceProviderXmlDom == null ? "" : trustedServiceProviderXmlDom.getValue("./Status/text()");
 				found = TSLConstant.SERVICE_STATUS_UNDERSUPERVISION.equals(status) || TSLConstant.SERVICE_STATUS_SUPERVISIONINCESSATION.equals(status) || TSLConstant.SERVICE_STATUS_ACCREDITED
 						.equals(status) || TSLConstant.SERVICE_STATUS_UNDERSUPERVISION_119612.equals(status) || TSLConstant.SERVICE_STATUS_SUPERVISIONINCESSATION_119612
-						.equals(status) || TSLConstant.SERVICE_STATUS_ACCREDITED_119612.equals(status);
+						.equals(status) || TSLConstant.SERVICE_STATUS_ACCREDITED_119612.equals(status) ||
+						TSLConstant.SERVICE_STATUS_GRANTED.equals(status) || TSLConstant.SERVICE_STATUS_RECOGNISED_NATIONAL_LEVEL.equals(status); //Support for TSL v5 (temporary fix until DSS provides a proper TSL v5 support)
 				if (found) {
 					break;
 				}

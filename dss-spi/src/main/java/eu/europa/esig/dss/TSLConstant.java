@@ -130,6 +130,11 @@ public interface TSLConstant {
 	public static final String SERVICE_STATUS_ACCREDITED = "http://uri.etsi.org/TrstSvc/eSigDir-1999-93-EC-TrustedList/Svcstatus/accredited";
 	public static final String SERVICE_STATUS_ACCREDITED_119612 = "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/accredited";
 
+	//Support for TSL v5 (temporary fix until DSS provides a proper TSL v5 support)
+	public static final String SERVICE_STATUS_GRANTED = "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/granted";
+	public static final String SERVICE_STATUS_RECOGNISED_NATIONAL_LEVEL = "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/recognisedatnationallevel";
+	//End of support for TSL v5
+
 
 	public static final String TSL = "http://uri.etsi.org/02231/v2#";
 
