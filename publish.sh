@@ -14,7 +14,7 @@ export GPG_AGENT_INFO
 mvn gpg:sign-and-deploy-file -DpomFile=pom.xml -Dfile=pom.xml -Durl=$staging_url -DrepositoryId=$repositoryId
 
 # Deploy each sub module artifacts
-for submodule in dss-asic dss-cades dss-diagnostic-jaxb dss-document dss-model dss-service dss-spi dss-token dss-tsl-jaxb dss-tsl-validation dss-xades validation-policy
+for submodule in dss-asic dss-cades dss-diagnostic-jaxb dss-document dss-model dss-service dss-spi dss-token dss-tsl-jaxb dss-tsl-validation dss-pades dss-xades validation-policy
 do
 	echo "Deploying submodule $submodule"
     cd $submodule

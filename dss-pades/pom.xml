@@ -13,7 +13,50 @@
 	<artifactId>dss-pades</artifactId>
 	<name>DSS PAdES</name>
 	<description>DSS PAdES contains the code for the creation and validation of PAdES signatures.</description>
-	
+
+	<url>https://github.com/open-eid/sd-dss</url>
+	<licenses>
+		<license>
+			<name>GNU Lesser General Public License, Version 2.1</name>
+			<url>http://www.gnu.org/licenses/lgpl-2.1.html</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<id>naramski</id>
+			<name>David Naramski</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>vandenbroucke</id>
+			<name>Pierrick Vandenbroucke</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>pirard</id>
+			<name>Nicolas Pirard</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>abinet</id>
+			<name>Axel Abinet</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:git@github.com:open-eid/sd-dss.git</connection>
+		<developerConnection>scm:git:git@github.com:open-eid/sd-dss.git</developerConnection>
+		<url>https://github.com/open-eid/sd-dss.git</url>
+	</scm>
+
 	<dependencies>
         <dependency>
             <groupId>org.digidoc4j.dss</groupId>

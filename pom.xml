@@ -417,14 +417,11 @@
 				<artifactId>dss-cades</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			<!-- Dependency not used by DigiDoc4j -->
-			<!--
 			<dependency>
 				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-pades</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			-->
 			<dependency>
 				<groupId>org.digidoc4j.dss</groupId>
 				<artifactId>dss-xades</artifactId>
@@ -785,6 +782,7 @@
 				<module>dss-token</module>
 				<module>dss-tsl-jaxb</module>
 				<module>dss-tsl-validation</module>
+				<module>dss-pades</module>
 				<module>dss-xades</module>
 				<module>validation-policy</module>
 				<module>dss-test</module>
