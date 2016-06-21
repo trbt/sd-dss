@@ -45,6 +45,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.xml.security.Init;
 import org.apache.xml.security.algorithms.JCEMapper;
 import org.apache.xml.security.keys.KeyInfo;
@@ -870,7 +871,9 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	 */
 	public boolean hasTProfile() {
 		if(BDocTmSupport.hasBDocTmPolicyId(signatureElement, xPathQueryHolder)) {
-			return true;
+			//BDoc-TM has policy id and OCSP response containing TimeMark
+			boolean hasOcspResponse = StringUtils.isNotBlank(DSSXMLUtils.getValue(signatureElement, xPathQueryHolder.XPATH_ENCAPSULATED_OCSP_VALUE));
+			return hasOcspResponse;
 		}
 		return DSSXMLUtils.isNotEmpty(signatureElement, xPathQueryHolder.XPATH_SIGNATURE_TIMESTAMP);
 	}
