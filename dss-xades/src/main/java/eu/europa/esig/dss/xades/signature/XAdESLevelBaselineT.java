@@ -22,10 +22,10 @@ package eu.europa.esig.dss.xades.signature;
 
 import static eu.europa.esig.dss.SignatureLevel.XAdES_BASELINE_T;
 import static eu.europa.esig.dss.SignaturePackaging.ENVELOPED;
-import static eu.europa.esig.dss.XAdESNamespaces.XAdES;
-import static eu.europa.esig.dss.XAdESNamespaces.XAdES141;
 import static eu.europa.esig.dss.x509.TimestampType.SIGNATURE_TIMESTAMP;
 import static eu.europa.esig.dss.xades.ProfileParameters.Operation.SIGNING;
+import static eu.europa.esig.dss.xades.XAdESNamespaces.XAdES;
+import static eu.europa.esig.dss.xades.XAdESNamespaces.XAdES141;
 import static javax.xml.crypto.dsig.XMLSignature.XMLNS;
 
 import java.io.IOException;
@@ -47,7 +47,6 @@ import eu.europa.esig.dss.DSSASN1Utils;
 import eu.europa.esig.dss.DSSDocument;
 import eu.europa.esig.dss.DSSException;
 import eu.europa.esig.dss.DSSUtils;
-import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.DigestAlgorithm;
 import eu.europa.esig.dss.InMemoryDocument;
 import eu.europa.esig.dss.MimeType;
@@ -61,6 +60,7 @@ import eu.europa.esig.dss.x509.CertificatePool;
 import eu.europa.esig.dss.x509.CertificateToken;
 import eu.europa.esig.dss.x509.TimestampType;
 import eu.europa.esig.dss.x509.tsp.TSPSource;
+import eu.europa.esig.dss.xades.DSSXMLUtils;
 import eu.europa.esig.dss.xades.ProfileParameters;
 import eu.europa.esig.dss.xades.ProfileParameters.Operation;
 import eu.europa.esig.dss.xades.XAdESSignatureParameters;
