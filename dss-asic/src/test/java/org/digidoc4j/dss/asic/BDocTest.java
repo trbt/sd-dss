@@ -21,15 +21,15 @@
 package org.digidoc4j.dss.asic;
 
 import eu.europa.esig.dss.DSSDocument;
-import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.InMemoryDocument;
 import eu.europa.esig.dss.Policy;
-import eu.europa.esig.dss.XPathQueryHolder;
 import eu.europa.esig.dss.asic.signature.asice.ASiCELevelLTTest;
 import eu.europa.esig.dss.validation.AdvancedSignature;
 import eu.europa.esig.dss.validation.SignedDocumentValidator;
 import eu.europa.esig.dss.validation.TimestampToken;
 import eu.europa.esig.dss.x509.SignaturePolicy;
+import eu.europa.esig.dss.xades.DSSXMLUtils;
+import eu.europa.esig.dss.xades.XPathQueryHolder;
 import eu.europa.esig.dss.xades.validation.XAdESSignature;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;

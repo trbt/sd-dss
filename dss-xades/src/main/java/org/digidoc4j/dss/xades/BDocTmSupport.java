@@ -20,10 +20,10 @@
  */
 package org.digidoc4j.dss.xades;
 
-import eu.europa.esig.dss.DSSXMLUtils;
 import eu.europa.esig.dss.Policy;
-import eu.europa.esig.dss.XPathQueryHolder;
+import eu.europa.esig.dss.xades.DSSXMLUtils;
 import eu.europa.esig.dss.xades.XAdESSignatureParameters;
+import eu.europa.esig.dss.xades.XPathQueryHolder;
 import org.apache.commons.lang.StringUtils;
 import org.w3c.dom.Element;
 
