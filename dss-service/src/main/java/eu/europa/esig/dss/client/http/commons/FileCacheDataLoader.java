@@ -323,19 +323,4 @@ public class FileCacheDataLoader extends CommonsDataLoader {
 		}
 		return false;
 	}
-
-	private boolean isCacheExpired(File file) {
-		if (cacheExpirationTime == null) {
-			return false;
-		}
-		if (!file.exists()) {
-			return true;
-		}
-		long currentTime = new Date().getTime();
-		if (file.lastModified() + cacheExpirationTime < currentTime) {
-			LOG.debug("Cache is expired");
-			return true;
-		}
-		return false;
-	}
 }
