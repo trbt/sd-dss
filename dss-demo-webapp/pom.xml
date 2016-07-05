@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.digidoc4j.dss</groupId>
 		<artifactId>sd-dss</artifactId>
-		<version>4.7.RC1</version>
+		<version>4.7.RC1.d4j.1</version>
 	</parent>
 
 	<artifactId>dss-demo-webapp</artifactId>
@@ -179,7 +179,7 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+			<groupId>org.digidoc4j.dss</groupId>
 			<artifactId>dss-validation-soap</artifactId>
 			<scope>compile</scope>
 		</dependency>
@@ -191,7 +191,7 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>eu.europa.ec.joinup.sd-dss</groupId>
+			<groupId>org.digidoc4j.dss</groupId>
 			<artifactId>dss-validation-rest</artifactId>
 			<scope>compile</scope>
 		</dependency>
