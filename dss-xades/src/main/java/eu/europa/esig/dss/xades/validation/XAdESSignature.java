@@ -879,7 +879,7 @@ public class XAdESSignature extends DefaultAdvancedSignature {
 	public boolean hasTProfile() {
 		if(BDocTmSupport.hasBDocTmPolicyId(signatureElement, xPathQueryHolder)) {
 			//BDoc-TM has policy id and OCSP response containing TimeMark
-			boolean hasOcspResponse = StringUtils.isNotBlank(DSSXMLUtils.getValue(signatureElement, xPathQueryHolder.XPATH_ENCAPSULATED_OCSP_VALUE));
+			boolean hasOcspResponse = StringUtils.isNotBlank(DSSXMLUtils.getValue(signatureElement, xPathQueryHolder.XPATH_OCSP_VALUES_ENCAPSULATED_OCSP));
 			return hasOcspResponse;
 		}
 		return DSSXMLUtils.isNotEmpty(signatureElement, xPathQueryHolder.XPATH_SIGNATURE_TIMESTAMP);
