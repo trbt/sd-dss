@@ -357,7 +357,7 @@ public abstract class XAdESSignatureBuilder extends XAdESBuilder implements Sign
 
 		final Element referenceDom = DSSXMLUtils.addElement(documentDom, signedInfoDom, XMLNS, DS_REFERENCE);
 		referenceDom.setAttribute(ID, dssReference.getId());
-		final String uri = BDocTmSupport.uriEncode(dssReference.getUri());	//BDoc-TM functionality needs the data file reference uri to be encoded
+		final String uri = dssReference.getUri();
 		referenceDom.setAttribute(URI, uri);
 		referenceDom.setAttribute(TYPE, dssReference.getType());
 
