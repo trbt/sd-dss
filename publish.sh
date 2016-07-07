@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="4.6.d4j.2"
+version="4.7.RC1.d4j.1"
 staging_url="https://oss.sonatype.org/service/local/staging/deploy/maven2/"
 #staging_url=file:/Users/rainer/tmp/test-local-repo
 repositoryId="ossrh"
@@ -14,7 +14,7 @@ export GPG_AGENT_INFO
 mvn gpg:sign-and-deploy-file -DpomFile=pom.xml -Dfile=pom.xml -Durl=$staging_url -DrepositoryId=$repositoryId
 
 # Deploy each sub module artifacts
-for submodule in dss-asic dss-cades dss-diagnostic-jaxb dss-document dss-model dss-service dss-spi dss-token dss-tsl-jaxb dss-tsl-validation dss-pades dss-xades validation-policy
+for submodule in dss-common-validation-jaxb dss-detailed-report-jaxb dss-diagnostic-jaxb dss-document dss-model dss-policy-jaxb dss-reports dss-service dss-simple-report-jaxb dss-spi dss-token dss-tsl-jaxb dss-tsl-validation dss-xades validation-policy dss-pades dss-cades
 do
 	echo "Deploying submodule $submodule"
     cd $submodule
