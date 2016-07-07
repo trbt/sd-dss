@@ -25,6 +25,8 @@ import eu.europa.esig.dss.xades.DSSXMLUtils;
 import eu.europa.esig.dss.xades.XAdESSignatureParameters;
 import eu.europa.esig.dss.xades.XPathQueryHolder;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 import java.io.Serializable;
@@ -36,6 +38,7 @@ import java.net.URLEncoder;
  */
 public class BDocTmSupport implements Serializable {
 
+    private static final Logger LOG = LoggerFactory.getLogger(BDocTmSupport.class);
     public static final String BDOC_TM_POLICY_ID = "urn:oid:1.3.6.1.4.1.10015.1000.3.2.1";
     public static final String BDOC_TM_POLICY_QUALIFIER = "OIDAsURN";
 
@@ -70,7 +73,12 @@ public class BDocTmSupport implements Serializable {
                     .replaceAll("\\%29", ")")
                     .replaceAll("\\%7E", "~");
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            LOG.error("Unable to decode '" + string + "' : " + e.getMessage(), e);
+            return string;
         }
+    }
+
+    public static String fixEncoding(String string) {
+        return string.replaceAll("\\+", "%2B");
     }
 }

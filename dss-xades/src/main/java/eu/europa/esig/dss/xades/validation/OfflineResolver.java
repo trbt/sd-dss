@@ -32,6 +32,7 @@ import org.apache.xml.security.utils.resolver.ResourceResolverContext;
 import org.apache.xml.security.utils.resolver.ResourceResolverException;
 import org.apache.xml.security.utils.resolver.ResourceResolverSpi;
 import org.apache.xml.utils.URI;
+import org.digidoc4j.dss.xades.BDocTmSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
@@ -63,16 +64,22 @@ public class OfflineResolver extends ResourceResolverSpi {
 	public boolean engineCanResolveURI(final ResourceResolverContext context) {
 		final Attr uriAttr = context.attr;
 		if (uriAttr != null) {
-			String documentUri = uriAttr.getNodeValue();
-			documentUri = decodeUrl(documentUri);
+			String encodedDocumentUri = uriAttr.getNodeValue();
+			String documentUri = decodeUrl(encodedDocumentUri);
 			if ("".equals(documentUri) || documentUri.startsWith("#")) {
 				return false;
 			}
+			if (isKnown(documentUri) != null) {
+				LOG.debug("I state that I can resolve '" + documentUri.toString() + "' (external document)");
+				return true;
+			}
+			documentUri = BDocTmSupport.fixEncoding(encodedDocumentUri);
+			documentUri = decodeUrl(documentUri);
+			if (isKnown(documentUri) != null) {
+				LOG.debug("I state that I can resolve '" + documentUri.toString() + "' (external document)");
+				return true;
+			}
 			try {
-				if (isKnown(documentUri) != null) {
-					LOG.debug("I state that I can resolve '" + documentUri.toString() + "' (external document)");
-					return true;
-				}
 				final String baseUriString = context.baseUri;
 				if (StringUtils.isNotEmpty(baseUriString)) {
 					final URI baseUri = new URI(baseUriString);
@@ -104,8 +111,16 @@ public class OfflineResolver extends ResourceResolverSpi {
 		} else if (uriAttr != null) {
 			documentUri = uriAttr.getNodeValue();
 		}
-		documentUri = decodeUrl(documentUri);
-		final DSSDocument document = getDocument(documentUri);
+		String decodedDocumentUri = decodeUrl(documentUri);
+		DSSDocument document = isKnown(decodedDocumentUri);
+		if(document == null) {
+			decodedDocumentUri = BDocTmSupport.fixEncoding(documentUri);
+			decodedDocumentUri = decodeUrl(decodedDocumentUri);
+			document = isKnown(documentUri);
+		}
+		if(document == null) {
+			document = getDocument(decodedDocumentUri);
+		}
 		if (document != null) {
 
 			// The input stream is closed automatically by XMLSignatureInput class
@@ -115,15 +130,15 @@ public class OfflineResolver extends ResourceResolverSpi {
 			// TODO-Vin (05/09/2014): Can you create an isolated test-case JIRA DSS-?
 			InputStream inputStream = document.openStream();
 			final XMLSignatureInput result = new XMLSignatureInput(inputStream);
-			result.setSourceURI(documentUri);
+			result.setSourceURI(decodedDocumentUri);
 			final MimeType mimeType = document.getMimeType();
 			if (mimeType != null) {
 				result.setMIMEType(mimeType.getMimeTypeString());
 			}
 			return result;
 		} else {
-			Object exArgs[] = { "The uriNodeValue " + documentUri + " is not configured for offline work" };
-			throw new ResourceResolverException("generic.EmptyMessage", exArgs, documentUri, context.baseUri);
+			Object exArgs[] = { "The uriNodeValue " + decodedDocumentUri + " is not configured for offline work" };
+			throw new ResourceResolverException("generic.EmptyMessage", exArgs, decodedDocumentUri, context.baseUri);
 		}
 	}
 
