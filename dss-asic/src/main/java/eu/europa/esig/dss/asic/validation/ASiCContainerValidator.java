@@ -222,6 +222,7 @@ public class ASiCContainerValidator extends SignedDocumentValidator {
 			} else {
 				throw new DSSException("The format of the signature is unknown! It is neither XAdES nor CAdES, nor timestamp signature!");
 			}
+
 			if (previousValidator != null) {
 				previousValidator.setNextValidator(currentSubordinatedValidator);
 			} else {
@@ -493,11 +494,13 @@ public class ASiCContainerValidator extends SignedDocumentValidator {
 	@Override
 	public Reports validateDocument(final ValidationPolicy validationPolicy) {
 
+		ensureCertificatePoolInitialized();
+
 		Reports lastReports = null;
 		Reports firstReport = null;
 		DocumentValidator currentSubordinatedValidator = subordinatedValidator;
 		do {
-
+			currentSubordinatedValidator.setCertificateVerifier(certificateVerifier);
 			currentSubordinatedValidator.setProcessExecutor(processExecutor);
 			if (MimeType.ASICE.equals(asicMimeType) && currentSubordinatedValidator instanceof ASiCCMSDocumentValidator) {
 
@@ -509,7 +512,6 @@ public class ASiCContainerValidator extends SignedDocumentValidator {
 			} else {
 				currentSubordinatedValidator.setDetachedContents(detachedContents);
 			}
-			currentSubordinatedValidator.setCertificateVerifier(certificateVerifier);
 			final Reports currentReports = currentSubordinatedValidator.validateDocument(validationPolicy);
 			if (lastReports == null) {
 				firstReport = currentReports;
@@ -536,10 +538,13 @@ public class ASiCContainerValidator extends SignedDocumentValidator {
 		if (validatedSignatures != null) {
 			return validatedSignatures;
 		}
+
+		ensureCertificatePoolInitialized();
+
 		validatedSignatures = new ArrayList<AdvancedSignature>();
 		DocumentValidator currentSubordinatedValidator = subordinatedValidator;
 		do {
-
+			currentSubordinatedValidator.setCertificateVerifier(certificateVerifier);
 			final List<AdvancedSignature> signatures = currentSubordinatedValidator.getSignatures();
 			for (final AdvancedSignature signature : signatures) {
 
